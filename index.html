@@ -54,6 +54,19 @@
         .delete-card { background: #6c757d; color: white; border: none; padding: 6px 10px; border-radius: 5px; cursor: pointer; }
         .min-card { background: #0056b3; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-left: auto; }
         .train-card.minimized .table-responsive { display: none; }
+
+        /* ===== Botón descargar bitácora (PDF) ===== */
+        .pdf-btn { background-color: #6f42c1; color: white; }
+
+        /* ===== Panel de ATRASO (motivo + texto, minimizable) ===== */
+        .atraso-wrap { display: none; }
+        .atraso-wrap.visible { display: block; }
+        .atraso-edit { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
+        .obs-text { flex: 1; min-width: 110px; padding: 6px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .motivo-select { padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-weight: bold; background: #fff; }
+        .ok-atraso { background: #0056b3; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; white-space: nowrap; }
+        .atraso-resumen { display: none; background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; padding: 6px 8px; cursor: pointer; font-size: 0.9em; color: #8a6d00; }
+        .editar-hint { color: #0056b3; font-size: 0.8em; margin-left: 4px; }
     </style>
 </head>
 <body>
@@ -71,6 +84,7 @@
     <div class="main-controls">
         <button class="btn add-btn" onclick="addService()">+ Nuevo Servicio</button>
         <button class="btn delete-all-btn" onclick="borrarTodo()">🗑️ Borrar Todo</button>
+        <button class="btn pdf-btn" onclick="descargarBitacoraPDF()">📄 Descargar Bitácora</button>
 
     <div class="whatsapp-container">
             <select id="whatsapp-number">
@@ -492,6 +506,79 @@
 
     let serviceCount = 0;
 
+    // ===== Helpers para el panel de ATRASO (motivo desplegable + texto) =====
+    function escAttr(s){ return String(s == null ? "" : s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function escHtml(s){ return String(s == null ? "" : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    // Construye la celda de "Observación" con menú de motivos + cuadro de texto.
+    // Motivos fijos solicitados: Señalización, Pasajeros, Prevenciones, Equipo.
+    function obsCellHTML(rowId, motivo, obs) {
+        motivo = motivo || "";
+        obs = obs || "";
+        const opts = ["Señalización", "Pasajeros", "Prevenciones", "Equipo", "Otro"];
+        let optHTML = `<option value="">-- Motivo --</option>`;
+        opts.forEach(o => {
+            optHTML += `<option value="${escAttr(o)}"${motivo === o ? ' selected' : ''}>${escHtml(o)}</option>`;
+        });
+        return `
+          <div class="atraso-wrap" id="wrap-${rowId}">
+            <div class="atraso-edit" id="edit-${rowId}">
+              <input type="text" id="obs-${rowId}" class="obs-text" placeholder="Escribe aquí (opcional)" value="${escAttr(obs)}" oninput="guardarEstado()">
+              <select id="motivo-${rowId}" class="motivo-select" onchange="guardarEstado()">${optHTML}</select>
+              <button type="button" class="ok-atraso" onclick="confirmarAtraso('${rowId}')">✓ Listo</button>
+            </div>
+            <div class="atraso-resumen" id="resumen-${rowId}" onclick="editarAtraso('${rowId}')"></div>
+          </div>`;
+    }
+
+    // Muestra el panel de edición del atraso (expandido) y hace foco en el texto.
+    function mostrarEdicionAtraso(rowId) {
+        const wrap = document.getElementById(`wrap-${rowId}`);
+        if (!wrap) return;
+        wrap.classList.add('visible');
+        const edit = document.getElementById(`edit-${rowId}`);
+        const resumen = document.getElementById(`resumen-${rowId}`);
+        if (edit) edit.style.display = 'flex';
+        if (resumen) resumen.style.display = 'none';
+        const obs = document.getElementById(`obs-${rowId}`);
+        if (obs) obs.focus();
+    }
+
+    // Minimiza el atraso: deja visible solo el motivo elegido y lo escrito.
+    function confirmarAtraso(rowId) {
+        const motivoEl = document.getElementById(`motivo-${rowId}`);
+        const obsEl = document.getElementById(`obs-${rowId}`);
+        const motivo = motivoEl ? motivoEl.value : "";
+        const obs = obsEl ? obsEl.value.trim() : "";
+        const resumen = document.getElementById(`resumen-${rowId}`);
+        const edit = document.getElementById(`edit-${rowId}`);
+        let txt = motivo || "Atraso (sin motivo)";
+        if (obs) txt += (motivo ? " · " : ": ") + obs;
+        if (resumen) {
+            resumen.innerHTML = `⚠️ <b>${escHtml(txt)}</b><span class="editar-hint">(editar)</span>`;
+            resumen.style.display = 'block';
+        }
+        if (edit) edit.style.display = 'none';
+        guardarEstado();
+    }
+
+    // Re-abre el panel para editar un atraso ya minimizado.
+    function editarAtraso(rowId) {
+        mostrarEdicionAtraso(rowId);
+    }
+
+    // Devuelve el detalle de un atraso (motivo + texto) para WhatsApp/reportes.
+    function getAtrasoDetalle(row) {
+        const motivoEl = row.querySelector('.motivo-select');
+        const obsEl = row.querySelector('.obs-text');
+        const m = motivoEl ? motivoEl.value : "";
+        const o = obsEl ? obsEl.value.trim() : "";
+        if (m && o) return `${m}: ${o}`;
+        if (m) return m;
+        if (o) return o;
+        return "";
+    }
+
     function addVacio() {
         serviceCount++;
         const list = document.getElementById('services-list');
@@ -530,13 +617,13 @@
                             <td><input type="text" id="vacio-origen-${serviceCount}" placeholder="Estación Origen" style="width:90%; padding:5px;"></td>
                             <td><input type="text" id="time-${serviceCount}-origen" class="time-input" placeholder="--:--"></td>
                             <td><button class="status-btn status-none" id="btn-${serviceCount}-origen" onclick="toggleStatus('${serviceCount}-origen')">-</button></td>
-                            <td><input type="text" id="obs-${serviceCount}-origen" class="obs-input" placeholder="Novedad"></td>
+                            <td>${obsCellHTML(serviceCount + '-origen', '', '')}</td>
                         </tr>
                         <tr>
                             <td><input type="text" id="vacio-destino-${serviceCount}" placeholder="Estación Destino" style="width:90%; padding:5px;"></td>
                             <td><input type="text" id="time-${serviceCount}-destino" class="time-input" placeholder="--:--"></td>
                             <td><button class="status-btn status-none" id="btn-${serviceCount}-destino" onclick="toggleStatus('${serviceCount}-destino')">-</button></td>
-                            <td><input type="text" id="obs-${serviceCount}-destino" class="obs-input" placeholder="Novedad"></td>
+                            <td>${obsCellHTML(serviceCount + '-destino', '', '')}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -577,9 +664,12 @@
                 const statusClass = btn.classList.contains('status-ontime') ? 'status-ontime' : 
                                     btn.classList.contains('status-late') ? 'status-late' : 'status-none';
                 const btnText = btn.innerText;
-                const obs = document.getElementById(`obs-${rowId}`).value;
-                
-                filas.push({ time, statusClass, btnText, obs });
+                const obsEl = document.getElementById(`obs-${rowId}`);
+                const motivoEl = document.getElementById(`motivo-${rowId}`);
+                const obs = obsEl ? obsEl.value : "";
+                const motivo = motivoEl ? motivoEl.value : "";
+
+                filas.push({ time, statusClass, btnText, obs, motivo });
             });
 
             estado.push({ idNumber, dia, tren, ruta, eqTipo, eqNum, filas });
@@ -677,16 +767,25 @@
         tbody.innerHTML = "";
 
         stations.forEach((st, index) => {
-            const filaGuardada = data.filas[index] || { time: "", statusClass: "status-none", btnText: "-", obs: "" };
+            const filaGuardada = data.filas[index] || { time: "", statusClass: "status-none", btnText: "-", obs: "", motivo: "" };
             const rowId = `row-${data.idNumber}-${index}`;
-            const displayObs = filaGuardada.statusClass === 'status-late' ? 'visible' : '';
 
             tbody.innerHTML += `<tr>
                 <td style="font-weight:600; font-size:0.85em;">${st}</td>
-                <td><input type="text" id="time-${rowId}" class="time-input" placeholder="--:--" value="${filaGuardada.time}" onchange="guardarEstado()"></td>
+                <td><input type="text" id="time-${rowId}" class="time-input" placeholder="--:--" value="${escAttr(filaGuardada.time)}" onchange="guardarEstado()"></td>
                 <td><button class="status-btn ${filaGuardada.statusClass}" id="btn-${rowId}" onclick="toggleStatus('${rowId}')">${filaGuardada.btnText}</button></td>
-                <td><input type="text" id="obs-${rowId}" class="obs-input ${displayObs}" placeholder="¿Motivo?" value="${filaGuardada.obs}" onchange="guardarEstado()"></td>
+                <td>${obsCellHTML(rowId, filaGuardada.motivo || "", filaGuardada.obs || "")}</td>
             </tr>`;
+        });
+
+        // Restaura los atrasos guardados dejándolos minimizados (motivo + texto).
+        stations.forEach((st, index) => {
+            const filaGuardada = data.filas[index];
+            if (filaGuardada && filaGuardada.statusClass === 'status-late') {
+                const rowId = `row-${data.idNumber}-${index}`;
+                const wrap = document.getElementById(`wrap-${rowId}`);
+                if (wrap) { wrap.classList.add('visible'); confirmarAtraso(rowId); }
+            }
         });
     }
 
@@ -701,7 +800,7 @@
                 <td style="font-weight:600; font-size:0.85em;">${st}</td>
                 <td><input type="text" id="time-${rowId}" class="time-input" placeholder="--:--" onchange="guardarEstado()"></td>
                 <td><button class="status-btn status-none" id="btn-${rowId}" onclick="toggleStatus('${rowId}')">-</button></td>
-                <td><input type="text" id="obs-${rowId}" class="obs-input" placeholder="¿Motivo?" onchange="guardarEstado()"></td>
+                <td>${obsCellHTML(rowId, "", "")}</td>
             </tr>`;
         });
     }
@@ -725,23 +824,35 @@
 
     function toggleStatus(rowId) {
         const btn = document.getElementById(`btn-${rowId}`);
+        const wrap = document.getElementById(`wrap-${rowId}`);
         const obs = document.getElementById(`obs-${rowId}`);
-        if (btn.classList.contains('status-none')) { 
-            btn.classList.replace('status-none', 'status-ontime'); 
-            btn.innerText = "HORA"; 
-            obs.classList.remove('visible'); 
+        const motivo = document.getElementById(`motivo-${rowId}`);
+
+        // 1er click: HORA
+        if (btn.classList.contains('status-none')) {
+            btn.classList.replace('status-none', 'status-ontime');
+            btn.innerText = "HORA";
+            if (wrap) wrap.classList.remove('visible');
         }
-        else if (btn.classList.contains('status-ontime')) { 
-            btn.classList.replace('status-ontime', 'status-late'); 
-            btn.innerText = "ATRASO"; 
-            obs.classList.add('visible'); 
-            obs.focus(); 
+        // 2do click: ATRASO -> abre el menú de motivo + texto
+        else if (btn.classList.contains('status-ontime')) {
+            btn.classList.replace('status-ontime', 'status-late');
+            btn.innerText = "ATRASO";
+            mostrarEdicionAtraso(rowId);
         }
-        else { 
-            btn.classList.replace('status-late', 'status-none'); 
-            btn.innerText = "-"; 
-            obs.classList.remove('visible'); 
-            obs.value = ""; 
+        // 3er click: reset. Si hay algo escrito/seleccionado, pide confirmación.
+        else {
+            const hayTexto = obs && obs.value.trim() !== "";
+            const hayMotivo = motivo && motivo.value !== "";
+            if ((hayTexto || hayMotivo) &&
+                !confirm("Esta estación tiene un atraso con información registrada.\n\n¿Seguro que quieres resetearla y borrar el motivo/texto?")) {
+                return; // Se cancela el reset: sigue en ATRASO tal como estaba.
+            }
+            btn.classList.replace('status-late', 'status-none');
+            btn.innerText = "-";
+            if (wrap) wrap.classList.remove('visible');
+            if (obs) obs.value = "";
+            if (motivo) motivo.value = "";
         }
         guardarEstado();
     }
@@ -823,11 +934,11 @@
 
             const stSalida = firstRow.cells[0].innerText;
             const btnSalida = firstRow.querySelector('.status-btn');
-            const obsSalida = firstRow.querySelector('.obs-input').value;
+            const obsSalida = getAtrasoDetalle(firstRow);
 
             const stLlegada = lastRow.cells[0].innerText;
             const btnLlegada = lastRow.querySelector('.status-btn');
-            const obsLlegada = lastRow.querySelector('.obs-input').value;
+            const obsLlegada = getAtrasoDetalle(lastRow);
 
             let novedad = "";
             if(btnSalida.classList.contains('status-late')) novedad += `<li><b>Salida ${stSalida}:</b> <span class="late">Atraso</span> - ${obsSalida || 'Sin justificar'}</li>`;
@@ -866,6 +977,108 @@
         // Si todavía no hay horarios cargados, usa la ruta completa (primer y último tramo).
         if (firstIdx === -1) { firstIdx = 0; lastIdx = rows.length - 1; }
         return { firstRow: rows[firstIdx], lastRow: rows[lastIdx] };
+    }
+
+    // --- DESCARGA DE BITÁCORA COMPLETA EN PDF ---
+    // Genera un documento con TODAS las pasadas de cada servicio (todas las
+    // estaciones), su horario, el estado (A hora / Atraso) y, en caso de atraso
+    // en cualquier estación, el motivo y el texto escrito. Se abre el diálogo de
+    // impresión del navegador para "Guardar como PDF".
+    function descargarBitacoraPDF() {
+        const cards = document.querySelectorAll('.train-card');
+        if (cards.length === 0) return alert("No hay servicios cargados para descargar.");
+
+        const rutaNombres = {
+            l2_ida: "L2: Concepción ➔ Coronel",
+            l2_vuelta: "L2: Coronel ➔ Concepción",
+            laja_ida: "L1: Mercado ➔ Laja",
+            laja_vuelta: "L1: Laja ➔ Mercado",
+            hualqui_ida: "L1: Mercado ➔ Hualqui",
+            hualqui_vuelta: "L1: Hualqui ➔ Mercado"
+        };
+        const diaNombres = { LV: "Lun-Vie", SAB: "Sábado", DOM: "Domingo" };
+
+        const ahora = new Date();
+        let html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
+            <title>Bitácora EFE Sur</title>
+            <style>
+                * { box-sizing: border-box; }
+                body { font-family: Arial, sans-serif; color: #222; padding: 15px; }
+                h1 { color: #003399; margin: 0 0 4px; font-size: 20px; }
+                .fecha { color: #555; font-size: 12px; margin: 0 0 15px; }
+                .serv { border: 1px solid #bbb; border-radius: 8px; margin-bottom: 14px; page-break-inside: avoid; overflow: hidden; }
+                .serv-head { background: #003399; color: #fff; padding: 8px 10px; font-size: 13px; }
+                .serv-head b { font-size: 15px; }
+                .serv-sub { background: #eef1f8; padding: 5px 10px; font-size: 12px; color: #333; }
+                table { width: 100%; border-collapse: collapse; }
+                th { background: #e9ecef; font-size: 11px; text-align: left; padding: 6px 8px; border-bottom: 1px solid #ccc; }
+                td { font-size: 12px; padding: 5px 8px; border-bottom: 1px solid #eee; vertical-align: top; }
+                .est-hora { color: #2e7d32; font-weight: bold; }
+                .est-atraso { color: #d32f2f; font-weight: bold; }
+                .est-none { color: #999; }
+                .detalle { color: #8a4b00; }
+                @media print { body { padding: 0; } }
+            </style></head><body>`;
+        html += `<h1>Bitácora de Operaciones — EFE Sur</h1>`;
+        html += `<p class="fecha">Fecha: ${ahora.toLocaleDateString()} · Generada: ${ahora.toLocaleTimeString()}</p>`;
+
+        cards.forEach(card => {
+            const idNumber = card.id.split('-')[1];
+            const q = sel => card.querySelector(sel);
+            const numTren = (q(`#tren-num-${idNumber}`) && q(`#tren-num-${idNumber}`).value) || "[S/N]";
+            const diaEl = q(`#dia-${idNumber}`);
+            const routeEl = q(`#route-${idNumber}`);
+            const dia = diaEl ? (diaNombres[diaEl.value] || diaEl.value) : "";
+            const rutaTxt = routeEl ? (rutaNombres[routeEl.value] || routeEl.value) : "";
+            const eqTipoEl = q(`#eq-tipo-${idNumber}`);
+            const eqNumEl = q(`#eq-num-${idNumber}`);
+            const eqTipo = eqTipoEl ? eqTipoEl.value : "";
+            const eqNum = eqNumEl ? eqNumEl.value : "";
+            const infoEquipo = eqNum ? `${eqTipo}-${eqNum}` : "No registrado";
+            const maqEl = q(`#maquinista-${idNumber}`);
+            const ayuEl = q(`#ayudante-${idNumber}`);
+            const maq = (maqEl && maqEl.value.trim()) ? maqEl.value.trim() : "—";
+            const ayu = (ayuEl && ayuEl.value.trim()) ? ayuEl.value.trim() : "—";
+
+            html += `<div class="serv">
+                <div class="serv-head"><b>Servicio ${escHtml(numTren)}</b> &nbsp; ${escHtml(rutaTxt)} ${dia ? '· ' + escHtml(dia) : ''}</div>
+                <div class="serv-sub">Equipo: <b>${escHtml(infoEquipo)}</b> &nbsp;·&nbsp; Maquinista: <b>${escHtml(maq)}</b> &nbsp;·&nbsp; Ayudante: <b>${escHtml(ayu)}</b></div>
+                <table><thead><tr><th style="width:34%">Estación</th><th style="width:14%">Horario</th><th style="width:16%">Estado</th><th style="width:36%">Observación</th></tr></thead><tbody>`;
+
+            const rows = card.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                const estacion = row.cells[0] ? row.cells[0].innerText : "";
+                const timeEl = row.querySelector('.time-input');
+                const hora = timeEl ? (timeEl.value || "—") : "—";
+                const btn = row.querySelector('.status-btn');
+                let estadoHTML = `<span class="est-none">—</span>`;
+                let detalle = "";
+                if (btn && btn.classList.contains('status-ontime')) {
+                    estadoHTML = `<span class="est-hora">A hora</span>`;
+                } else if (btn && btn.classList.contains('status-late')) {
+                    estadoHTML = `<span class="est-atraso">Atraso</span>`;
+                    detalle = getAtrasoDetalle(row) || "Sin motivo indicado";
+                }
+                html += `<tr>
+                    <td>${escHtml(estacion)}</td>
+                    <td>${escHtml(hora)}</td>
+                    <td>${estadoHTML}</td>
+                    <td class="detalle">${escHtml(detalle)}</td>
+                </tr>`;
+            });
+
+            html += `</tbody></table></div>`;
+        });
+
+        html += `</body></html>`;
+
+        const w = window.open('', '_blank');
+        if (!w) return alert("Permite las ventanas emergentes para poder descargar la bitácora.");
+        w.document.write(html);
+        w.document.close();
+        w.focus();
+        // Da un instante para renderizar antes de abrir el diálogo de impresión.
+        setTimeout(function () { w.print(); }, 400);
     }
 
     //funcion whatsaaaaaappppp
@@ -915,11 +1128,11 @@
         // Estaciones de Origen y Destino
         const stSalida = firstRow.cells[0].innerText;
         const btnSalida = firstRow.querySelector('.status-btn');
-        const obsSalida = firstRow.querySelector('.obs-input').value;
+        const obsSalida = getAtrasoDetalle(firstRow);
 
         const stLlegada = lastRow.cells[0].innerText;
         const btnLlegada = lastRow.querySelector('.status-btn');
-        const obsLlegada = lastRow.querySelector('.obs-input').value;
+        const obsLlegada = getAtrasoDetalle(lastRow);
 
         // Lógica para determinar el texto de cada tramo
         let detalleSalida = "";
