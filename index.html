@@ -60,16 +60,24 @@
         /* ===== Botón descargar bitácora (PDF) ===== */
         .pdf-btn { background-color: #6f42c1; color: white; }
 
-        /* ===== Panel de ATRASO (motivo + texto, minimizable) ===== */
-        /* Los controles se apilan verticalmente para no ensanchar la columna en el móvil */
+        /* ===== ATRASO: chip compacto en la tabla (la edición va en un modal) ===== */
         .atraso-wrap { display: none; }
         .atraso-wrap.visible { display: block; }
-        .atraso-edit { display: flex; flex-direction: column; gap: 5px; align-items: stretch; }
-        .obs-text { width: 100%; min-width: 0; padding: 6px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        .motivo-select { width: 100%; min-width: 0; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-weight: bold; background: #fff; box-sizing: border-box; }
-        .ok-atraso { width: 100%; background: #0056b3; color: white; border: none; padding: 8px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; box-sizing: border-box; }
-        .atraso-resumen { display: none; background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; padding: 6px 8px; cursor: pointer; font-size: 0.9em; color: #8a6d00; word-break: break-word; }
+        .atraso-resumen { background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; padding: 6px 8px; cursor: pointer; font-size: 0.9em; color: #8a6d00; word-break: break-word; }
         .editar-hint { color: #0056b3; font-size: 0.8em; margin-left: 4px; }
+
+        /* ===== Modal de edición de atraso (ventana amplia) ===== */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 15px; }
+        .modal-box { background: #fff; border-radius: 12px; padding: 18px; width: 100%; max-width: 460px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); box-sizing: border-box; }
+        .modal-box h3 { margin: 0 0 4px; color: #003399; font-size: 1.15em; }
+        .modal-box label { display: block; font-weight: bold; font-size: 0.85em; color: #555; margin: 12px 0 4px; }
+        .modal-select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-weight: bold; box-sizing: border-box; font-size: 1em; background: #fff; }
+        .modal-textarea { width: 100%; min-height: 100px; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 1em; font-family: inherit; resize: vertical; }
+        .modal-actions { display: flex; align-items: center; gap: 8px; margin-top: 18px; flex-wrap: wrap; }
+        .modal-btn { border: none; padding: 10px 14px; border-radius: 6px; font-weight: bold; cursor: pointer; box-shadow: 0 3px 5px rgba(0,0,0,0.1); }
+        .modal-btn.guardar { background: #28a745; color: #fff; }
+        .modal-btn.cancelar { background: #e2e3e5; color: #333; }
+        .modal-btn.borrar { background: #dc3545; color: #fff; }
     </style>
 </head>
 <body>
@@ -101,6 +109,30 @@
     </div>
 
     <div id="services-list"></div>
+</div>
+
+<!-- ===== Modal para registrar/editar un atraso (amplio, fuera de la tabla) ===== -->
+<div id="atraso-modal" class="modal-overlay">
+    <div class="modal-box">
+        <h3 id="atraso-modal-title">Registrar atraso</h3>
+        <label for="atraso-modal-motivo">Motivo</label>
+        <select id="atraso-modal-motivo" class="modal-select">
+            <option value="">-- Selecciona motivo --</option>
+            <option value="Señalización">Señalización</option>
+            <option value="Pasajeros">Pasajeros</option>
+            <option value="Prevenciones">Prevenciones</option>
+            <option value="Equipo">Equipo</option>
+            <option value="Otro">Otro</option>
+        </select>
+        <label for="atraso-modal-texto">Detalle (opcional)</label>
+        <textarea id="atraso-modal-texto" class="modal-textarea" placeholder="Escribe aquí lo que quieras (o déjalo en blanco)..."></textarea>
+        <div class="modal-actions">
+            <button type="button" class="modal-btn borrar" onclick="borrarAtrasoModal()">🗑️ Borrar atraso</button>
+            <div style="flex:1"></div>
+            <button type="button" class="modal-btn cancelar" onclick="cerrarAtrasoModal()">Cancelar</button>
+            <button type="button" class="modal-btn guardar" onclick="guardarAtrasoModal()">✓ Guardar</button>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -513,67 +545,104 @@
     function escAttr(s){ return String(s == null ? "" : s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
     function escHtml(s){ return String(s == null ? "" : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-    // Construye la celda de "Observación" con menú de motivos + cuadro de texto.
-    // Motivos fijos solicitados: Señalización, Pasajeros, Prevenciones, Equipo.
+    // Construye la celda de "Observación": guarda motivo/texto ocultos y muestra
+    // un chip compacto. La edición se hace en un modal amplio (no dentro de la tabla),
+    // así la columna nunca se ensancha ni se estira la pantalla.
     function obsCellHTML(rowId, motivo, obs) {
         motivo = motivo || "";
         obs = obs || "";
-        const opts = ["Señalización", "Pasajeros", "Prevenciones", "Equipo", "Otro"];
-        let optHTML = `<option value="">-- Motivo --</option>`;
-        opts.forEach(o => {
-            optHTML += `<option value="${escAttr(o)}"${motivo === o ? ' selected' : ''}>${escHtml(o)}</option>`;
-        });
         return `
           <div class="atraso-wrap" id="wrap-${rowId}">
-            <div class="atraso-edit" id="edit-${rowId}">
-              <input type="text" id="obs-${rowId}" class="obs-text" placeholder="Escribe aquí (opcional)" value="${escAttr(obs)}" oninput="guardarEstado()">
-              <select id="motivo-${rowId}" class="motivo-select" onchange="guardarEstado()">${optHTML}</select>
-              <button type="button" class="ok-atraso" onclick="confirmarAtraso('${rowId}')">✓ Listo</button>
-            </div>
+            <input type="hidden" id="obs-${rowId}" class="atraso-obs" value="${escAttr(obs)}">
+            <input type="hidden" id="motivo-${rowId}" class="atraso-motivo" value="${escAttr(motivo)}">
             <div class="atraso-resumen" id="resumen-${rowId}" onclick="editarAtraso('${rowId}')"></div>
           </div>`;
     }
 
-    // Muestra el panel de edición del atraso (expandido) y hace foco en el texto.
-    function mostrarEdicionAtraso(rowId) {
+    function _val(id) { const e = document.getElementById(id); return e ? e.value : ""; }
+
+    // Pinta el chip compacto del atraso (motivo · texto) en la celda.
+    function renderResumenAtraso(rowId) {
+        const motivo = _val(`motivo-${rowId}`);
+        const obs = (_val(`obs-${rowId}`) || "").trim();
         const wrap = document.getElementById(`wrap-${rowId}`);
-        if (!wrap) return;
-        wrap.classList.add('visible');
-        const edit = document.getElementById(`edit-${rowId}`);
         const resumen = document.getElementById(`resumen-${rowId}`);
-        if (edit) edit.style.display = 'flex';
-        if (resumen) resumen.style.display = 'none';
-        const obs = document.getElementById(`obs-${rowId}`);
-        if (obs) obs.focus();
+        if (wrap) wrap.classList.add('visible');
+        if (resumen) {
+            let txt = motivo || "Atraso (sin motivo)";
+            if (obs) txt += (motivo ? " · " : ": ") + obs;
+            resumen.innerHTML = `⚠️ <b>${escHtml(txt)}</b><span class="editar-hint">(tocar para editar)</span>`;
+        }
     }
 
-    // Minimiza el atraso: deja visible solo el motivo elegido y lo escrito.
-    function confirmarAtraso(rowId) {
-        const motivoEl = document.getElementById(`motivo-${rowId}`);
+    // Deja la estación sin estado ("-") y limpia sus datos de atraso.
+    function resetEstacion(rowId) {
+        const btn = document.getElementById(`btn-${rowId}`);
+        const wrap = document.getElementById(`wrap-${rowId}`);
+        const obs = document.getElementById(`obs-${rowId}`);
+        const motivo = document.getElementById(`motivo-${rowId}`);
+        if (btn) { btn.classList.remove('status-late', 'status-ontime'); btn.classList.add('status-none'); btn.innerText = "-"; }
+        if (wrap) wrap.classList.remove('visible');
+        if (obs) obs.value = "";
+        if (motivo) motivo.value = "";
+    }
+
+    // ===== Modal de atraso (ventana amplia para escribir cómodo) =====
+    let atrasoModalRowId = null;
+
+    function editarAtraso(rowId) { openAtrasoModal(rowId); }
+
+    function openAtrasoModal(rowId) {
+        atrasoModalRowId = rowId;
+        const btn = document.getElementById(`btn-${rowId}`);
+        const row = btn ? btn.closest('tr') : null;
+        const estacion = (row && row.cells[0]) ? row.cells[0].innerText : "";
+        document.getElementById('atraso-modal-title').innerText = estacion ? `Atraso — ${estacion}` : 'Registrar atraso';
+        document.getElementById('atraso-modal-motivo').value = _val(`motivo-${rowId}`);
+        document.getElementById('atraso-modal-texto').value = _val(`obs-${rowId}`);
+        document.getElementById('atraso-modal').style.display = 'flex';
+        setTimeout(() => { const t = document.getElementById('atraso-modal-texto'); if (t) t.focus(); }, 50);
+    }
+
+    function cerrarAtrasoModal() {
+        document.getElementById('atraso-modal').style.display = 'none';
+        atrasoModalRowId = null;
+    }
+
+    // Guarda lo escrito en el modal, deja la estación en ATRASO y muestra el chip.
+    function guardarAtrasoModal() {
+        if (!atrasoModalRowId) return cerrarAtrasoModal();
+        const rowId = atrasoModalRowId;
+        const motivo = document.getElementById('atraso-modal-motivo').value;
+        const texto = document.getElementById('atraso-modal-texto').value;
         const obsEl = document.getElementById(`obs-${rowId}`);
-        const motivo = motivoEl ? motivoEl.value : "";
-        const obs = obsEl ? obsEl.value.trim() : "";
-        const resumen = document.getElementById(`resumen-${rowId}`);
-        const edit = document.getElementById(`edit-${rowId}`);
-        let txt = motivo || "Atraso (sin motivo)";
-        if (obs) txt += (motivo ? " · " : ": ") + obs;
-        if (resumen) {
-            resumen.innerHTML = `⚠️ <b>${escHtml(txt)}</b><span class="editar-hint">(editar)</span>`;
-            resumen.style.display = 'block';
+        const motivoEl = document.getElementById(`motivo-${rowId}`);
+        if (obsEl) obsEl.value = texto;
+        if (motivoEl) motivoEl.value = motivo;
+        const btn = document.getElementById(`btn-${rowId}`);
+        if (btn && !btn.classList.contains('status-late')) {
+            btn.classList.remove('status-none', 'status-ontime');
+            btn.classList.add('status-late');
+            btn.innerText = "ATRASO";
         }
-        if (edit) edit.style.display = 'none';
+        renderResumenAtraso(rowId);
+        cerrarAtrasoModal();
         guardarEstado();
     }
 
-    // Re-abre el panel para editar un atraso ya minimizado.
-    function editarAtraso(rowId) {
-        mostrarEdicionAtraso(rowId);
+    // Botón "Borrar atraso" del modal: resetea la estación a "-".
+    function borrarAtrasoModal() {
+        if (!atrasoModalRowId) return cerrarAtrasoModal();
+        const rowId = atrasoModalRowId;
+        resetEstacion(rowId);
+        cerrarAtrasoModal();
+        guardarEstado();
     }
 
     // Devuelve el detalle de un atraso (motivo + texto) para WhatsApp/reportes.
     function getAtrasoDetalle(row) {
-        const motivoEl = row.querySelector('.motivo-select');
-        const obsEl = row.querySelector('.obs-text');
+        const motivoEl = row.querySelector('.atraso-motivo');
+        const obsEl = row.querySelector('.atraso-obs');
         const m = motivoEl ? motivoEl.value : "";
         const o = obsEl ? obsEl.value.trim() : "";
         if (m && o) return `${m}: ${o}`;
@@ -787,7 +856,7 @@
             if (filaGuardada && filaGuardada.statusClass === 'status-late') {
                 const rowId = `row-${data.idNumber}-${index}`;
                 const wrap = document.getElementById(`wrap-${rowId}`);
-                if (wrap) { wrap.classList.add('visible'); confirmarAtraso(rowId); }
+                if (wrap) { wrap.classList.add('visible'); renderResumenAtraso(rowId); }
             }
         });
     }
@@ -836,12 +905,15 @@
             btn.classList.replace('status-none', 'status-ontime');
             btn.innerText = "HORA";
             if (wrap) wrap.classList.remove('visible');
+            guardarEstado();
         }
-        // 2do click: ATRASO -> abre el menú de motivo + texto
+        // 2do click: ATRASO -> muestra el chip y abre el modal amplio para escribir
         else if (btn.classList.contains('status-ontime')) {
             btn.classList.replace('status-ontime', 'status-late');
             btn.innerText = "ATRASO";
-            mostrarEdicionAtraso(rowId);
+            renderResumenAtraso(rowId);   // deja un chip "Atraso (sin motivo)" por si se cancela
+            openAtrasoModal(rowId);       // ventana amplia para elegir motivo y escribir
+            guardarEstado();
         }
         // 3er click: reset. Si hay algo escrito/seleccionado, pide confirmación.
         else {
@@ -851,13 +923,9 @@
                 !confirm("Esta estación tiene un atraso con información registrada.\n\n¿Seguro que quieres resetearla y borrar el motivo/texto?")) {
                 return; // Se cancela el reset: sigue en ATRASO tal como estaba.
             }
-            btn.classList.replace('status-late', 'status-none');
-            btn.innerText = "-";
-            if (wrap) wrap.classList.remove('visible');
-            if (obs) obs.value = "";
-            if (motivo) motivo.value = "";
+            resetEstacion(rowId);
+            guardarEstado();
         }
-        guardarEstado();
     }
 
     function removeCard(id) {
