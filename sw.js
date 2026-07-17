@@ -5,7 +5,7 @@
    para forzar la actualización en los teléfonos ya instalados.
    ============================================================ */
 
-const CACHE = 'bitacora-efe-v1';
+const CACHE = 'bitacora-efe-v2';
 
 // Archivos que componen la app (el "app-shell").
 const ASSETS = [
