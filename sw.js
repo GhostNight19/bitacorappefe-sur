@@ -1,61 +1,69 @@
 /* ============================================================
    Service Worker - Bitácora EFE Sur
-   Estrategia: "cache-first" para el app-shell (funciona offline).
-   Sube el número de versión (CACHE) cada vez que cambies el HTML
-   para forzar la actualización en los teléfonos ya instalados.
+   Versión 3: actualiza el HTML desde internet cuando hay conexión
+   y conserva una copia para poder seguir usando la app sin señal.
    ============================================================ */
 
-const CACHE = 'bitacora-efe-v2';
+const CACHE = 'bitacora-efe-v3';
 
-// Archivos que componen la app (el "app-shell").
+// Archivos que componen la aplicación. Todos existen en el repositorio.
 const ASSETS = [
-  './',
   './index.html',
   './manifest.json',
-  './icon-192.png',
-  './icon-512.png',
-  './icon-512-maskable.png',
-  './icon-180.png'
+  './icon-512.png'
 ];
 
-// 1) Instalación: se descargan y guardan los archivos en caché.
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE).then((cache) => cache.addAll(ASSETS))
   );
-  self.skipWaiting(); // activa la nueva versión de inmediato
+  self.skipWaiting();
 });
 
-// 2) Activación: borra cachés viejas de versiones anteriores.
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
+      Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key)))
     )
   );
   self.clients.claim();
 });
 
-// 3) Fetch: responde desde caché; si no está, va a la red y la guarda.
 self.addEventListener('fetch', (event) => {
-  const req = event.request;
+  const request = event.request;
+  const requestUrl = new URL(request.url);
 
-  // Solo gestionamos peticiones GET del mismo origen (la app).
-  if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) {
-    return; // wa.me, enlaces externos, etc. pasan directo a la red.
+  if (request.method !== 'GET' || requestUrl.origin !== self.location.origin) {
+    return;
   }
 
-  event.respondWith(
-    caches.match(req).then((cached) => {
-      if (cached) return cached; // offline: servimos lo cacheado
-      return fetch(req)
-        .then((resp) => {
-          // Guardamos una copia para la próxima vez.
-          const copy = resp.clone();
-          caches.open(CACHE).then((cache) => cache.put(req, copy));
-          return resp;
+  // Las páginas se consultan primero en internet para recibir las mejoras nuevas.
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          const copy = response.clone();
+          caches.open(CACHE).then((cache) => cache.put(request, copy));
+          return response;
         })
-        .catch(() => caches.match('./index.html')); // fallback offline
+        .catch(() =>
+          caches.match(request).then((cached) =>
+            cached || caches.match('./index.html')
+          )
+        )
+    );
+    return;
+  }
+
+  // Los demás recursos se sirven desde caché y se descargan si aún no existen.
+  event.respondWith(
+    caches.match(request).then((cached) => {
+      if (cached) return cached;
+      return fetch(request).then((response) => {
+        const copy = response.clone();
+        caches.open(CACHE).then((cache) => cache.put(request, copy));
+        return response;
+      });
     })
   );
 });

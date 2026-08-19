@@ -11,16 +11,30 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Bitácora EFE Sur">
     <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-    <link rel="apple-touch-icon" href="icon-180.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+    <link rel="apple-touch-icon" href="icon-512.png">
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; margin: 0; padding: 10px; }
-        .container { max-width: 850px; margin: auto; }
-        
-        /* Modificamos el header para que el reloj quede a la derecha */
-        header { background-color: #003399; color: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        :root { --azul-efe: #003399; --azul-profundo: #061d3d; --cian: #5de2ee; --amarillo: #ffd166; --rojo: #b4232f; --verde: #087a43; }
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: #eef2f7; color: #172033; margin: 0; padding: 10px; }
+        .container { max-width: 980px; margin: auto; }
+
+        header { background: linear-gradient(135deg, #003399, #0756a5); color: white; padding: 18px 20px; border-radius: 14px; margin-bottom: 10px; box-shadow: 0 8px 24px rgba(0, 51, 153, 0.18); }
         .header-titles { text-align: left; }
-        .live-clock { font-size: 1.6em; font-weight: bold; background: #001a4d; padding: 8px 20px; border-radius: 8px; border: 1px solid #3366cc; font-family: monospace; letter-spacing: 2px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.5); }
+        .header-titles h2 { letter-spacing: -0.02em; }
+
+        /* Reloj operativo: queda visible al bajar por la bitácora. */
+        .clock-dock { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 8px); z-index: 900; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 18px; margin: 0 0 16px; padding: 12px 18px; color: white; background: linear-gradient(110deg, #06152f, var(--azul-profundo) 58%, #123c67); border: 1px solid rgba(93, 226, 238, 0.45); border-radius: 14px; box-shadow: 0 12px 28px rgba(4, 20, 45, 0.28); }
+        .clock-title { display: flex; align-items: center; gap: 8px; color: #dcecff; font-size: 0.78rem; font-weight: 800; letter-spacing: 0.12em; white-space: nowrap; }
+        .clock-pulse { width: 9px; height: 9px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 0 4px rgba(74, 222, 128, 0.15); }
+        .live-clock { justify-self: center; font-family: ui-monospace, 'SFMono-Regular', Consolas, monospace; font-size: clamp(2.4rem, 8vw, 4.8rem); line-height: 0.95; font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: -0.065em; text-shadow: 0 3px 18px rgba(0,0,0,0.35); white-space: nowrap; }
+        .clock-hours { color: #ffffff; }
+        .clock-minutes { color: var(--cian); }
+        .clock-seconds { color: var(--amarillo); }
+        .clock-separator { color: #8da7c5; padding: 0 0.04em; }
+        .clock-meta { display: grid; gap: 3px; min-width: 180px; text-align: right; }
+        .clock-date { color: #ffffff; font-weight: 750; text-transform: capitalize; }
+        .clock-zone { color: #a9c7e7; font-size: 0.75rem; }
         
         .main-controls { display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
         .btn { border: none; padding: 12px 18px; border-radius: 8px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.2s; }
@@ -43,11 +57,26 @@
         th { background-color: #e9ecef; font-size: 0.8em; padding: 10px; text-align: left; }
         td { padding: 8px; border-bottom: 1px solid #eee; }
         
-        .time-input { width: 75px; padding: 6px; border: 1px solid #0056b3; border-radius: 4px; text-align: center; font-weight: bold; }
-        .status-btn { padding: 6px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; width: 100%; font-size: 0.8em; }
-        .status-none { background-color: #e2e3e5; }
-        .status-ontime { background-color: #28a745 !important; color: white !important; }
-        .status-late { background-color: #dc3545 !important; color: white !important; }
+        .time-input { width: 112px; min-height: 44px; padding: 8px; border: 2px solid #2672bd; border-radius: 7px; background: #f8fbff; text-align: center; font-weight: 850; font-size: 1.1rem; font-variant-numeric: tabular-nums; }
+        .status-btn { display: grid; grid-template-columns: 1fr 1fr 30px; gap: 3px; min-width: 190px; }
+        .status-option { min-height: 42px; padding: 6px 5px; border: 2px solid transparent; border-radius: 7px; background: #e7ebf0; color: #344054; font-size: 0.88rem; font-weight: 800; cursor: pointer; transition: background-color .15s, color .15s, transform .15s; }
+        .status-option:hover { background: #dbe2ea; }
+        .status-option:active { transform: scale(0.97); }
+        .status-clear { padding-inline: 5px; color: #5f6b7a; }
+        .status-btn.status-ontime .status-option-ontime { background: var(--verde); color: #fff; border-color: #065f35; }
+        .status-btn.status-late .status-option-late { background: var(--rojo); color: #fff; border-color: #8f1823; }
+        .status-none { color: inherit; }
+        .status-ontime { color: inherit; }
+        .status-late { color: inherit; }
+        .conductor-corto { flex: 1 1 100%; display: flex; align-items: center; gap: 7px; padding-top: 8px; border-top: 1px dashed #cbd5e1; }
+        .conductor-corto[hidden] { display: none !important; }
+        .conductor-corto label { color: #3f4b5c; font-size: 0.9rem; font-weight: 800; white-space: nowrap; }
+        .conductor-corto input { min-width: 220px; flex: 1 1 220px; }
+
+        @media (min-width: 721px) {
+            table th:nth-child(2), table td:nth-child(2) { width: 132px; }
+            table th:nth-child(3), table td:nth-child(3) { width: 198px; }
+        }
         
         .obs-input { width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; display: none; box-sizing: border-box; }
         .visible { display: block; }
@@ -60,23 +89,62 @@
         /* ===== Botón descargar bitácora (PDF) ===== */
         .pdf-btn { background-color: #6f42c1; color: white; }
 
-        /* ===== ATRASO: chip compacto en la tabla (la edición va en un modal) ===== */
+        /* ===== ATRASO: se marca al instante; el motivo se edita solo si hace falta ===== */
         .atraso-wrap { display: none; }
         .atraso-wrap.visible { display: block; }
-        .atraso-resumen { display: inline-block; background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px; padding: 6px 10px; cursor: pointer; font-size: 0.85em; font-weight: bold; color: #8a6d00; white-space: nowrap; }
+        .atraso-resumen { min-height: 40px; display: inline-flex; align-items: center; background: #fff4ce; border: 1px solid #d9a400; border-radius: 7px; padding: 7px 10px; cursor: pointer; font-size: 0.84rem; font-weight: 800; color: #6d5200; white-space: nowrap; }
+        .atraso-editor { margin-top: 7px; padding: 10px; min-width: 250px; background: #fffaf0; border: 1px solid #e4bf55; border-radius: 9px; box-shadow: 0 5px 16px rgba(84, 61, 0, 0.1); }
+        .atraso-editor[hidden] { display: none; }
+        .atraso-editor label { display: block; margin: 0 0 4px; color: #4b5563; font-size: 0.76rem; font-weight: 800; }
+        .atraso-select, .atraso-texto { width: 100%; padding: 9px; border: 1px solid #b9a66d; border-radius: 7px; background: #fff; color: #172033; font: inherit; }
+        .atraso-texto { min-height: 68px; margin-top: 8px; resize: vertical; }
+        .atraso-listo { min-height: 38px; margin-top: 8px; padding: 7px 13px; border: 0; border-radius: 7px; background: #234f82; color: #fff; font-weight: 800; cursor: pointer; }
+        button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid #ffbf47; outline-offset: 2px; }
 
-        /* ===== Modal de edición de atraso (ventana amplia) ===== */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 15px; }
-        .modal-box { background: #fff; border-radius: 12px; padding: 18px; width: 100%; max-width: 460px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); box-sizing: border-box; }
-        .modal-box h3 { margin: 0 0 4px; color: #003399; font-size: 1.15em; }
-        .modal-box label { display: block; font-weight: bold; font-size: 0.85em; color: #555; margin: 12px 0 4px; }
-        .modal-select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-weight: bold; box-sizing: border-box; font-size: 1em; background: #fff; }
-        .modal-textarea { width: 100%; min-height: 100px; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 1em; font-family: inherit; resize: vertical; }
-        .modal-actions { display: flex; align-items: center; gap: 8px; margin-top: 18px; flex-wrap: wrap; }
-        .modal-btn { border: none; padding: 10px 14px; border-radius: 6px; font-weight: bold; cursor: pointer; box-shadow: 0 3px 5px rgba(0,0,0,0.1); }
-        .modal-btn.guardar { background: #28a745; color: #fff; }
-        .modal-btn.cancelar { background: #e2e3e5; color: #333; }
-        .modal-btn.borrar { background: #dc3545; color: #fff; }
+        @media (max-width: 720px) {
+            body { padding: 6px; }
+            header { padding: 14px 15px; border-radius: 11px; }
+            .clock-dock { top: calc(env(safe-area-inset-top, 0px) + 4px); grid-template-columns: 1fr auto; gap: 5px 10px; padding: 10px 12px; border-radius: 11px; }
+            .clock-title { font-size: 0.68rem; }
+            .live-clock { grid-column: 1 / -1; grid-row: 2; justify-self: center; font-size: clamp(2.45rem, 16vw, 4rem); }
+            .clock-meta { grid-column: 2; grid-row: 1; min-width: 0; }
+            .clock-date { font-size: 0.78rem; }
+            .clock-zone { display: none; }
+            .main-controls { width: 100%; gap: 7px; }
+            .btn { min-height: 44px; }
+            .whatsapp-container { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 7px; padding: 8px; }
+            .whatsapp-container select { width: 100%; min-width: 0; }
+            .whatsapp-container .whatsapp-btn { min-width: 0; padding-inline: 13px; }
+            .train-header { padding: 10px; align-items: stretch; }
+            .train-header > div { width: 100%; max-width: 100%; margin-left: 0 !important; padding-left: 0 !important; border-left: 0 !important; }
+            .train-header > div > div { width: 100%; max-width: 100%; display: flex !important; flex-wrap: wrap; margin-left: 0 !important; }
+            .train-header input, .train-header select { min-width: 0; max-width: 100%; font-size: 1rem; }
+            .train-header > div input { width: auto !important; flex: 1 1 120px; }
+            .min-card { min-height: 44px; margin-left: 0; flex: 1 1 auto; }
+            .delete-card { min-width: 44px; min-height: 44px; }
+            .table-responsive { overflow: visible; }
+            table, thead, tbody, tr, th, td { display: block; width: 100%; }
+            thead { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+            tbody tr { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 10px 8px; padding: 14px 10px 16px; border-bottom: 1px solid #dfe5ec; }
+            tbody td { padding: 0; border: 0; }
+            tbody td:nth-child(1) { grid-column: 1 / -1; padding: 2px 0 4px; font-size: 1.18rem !important; font-weight: 750 !important; line-height: 1.3; letter-spacing: -0.01em; }
+            tbody td:nth-child(2) { grid-column: 1; }
+            tbody td:nth-child(3) { grid-column: 2; }
+            tbody td:nth-child(4) { grid-column: 1 / -1; }
+            .time-input { width: 100%; min-height: 48px; font-size: 1.18rem; }
+            .status-btn { min-width: 0; width: 100%; grid-template-columns: 1fr 1fr 28px; gap: 3px; }
+            .status-option { min-width: 0; min-height: 44px; padding: 6px 1px; font-size: 0.9rem; }
+            .conductor-corto { padding-top: 10px; }
+            .conductor-corto label { width: 100%; font-size: 1rem; }
+            .conductor-corto input { min-height: 44px; min-width: 0; flex-basis: 100%; }
+            .atraso-resumen { min-height: 44px; }
+            .atraso-editor { min-width: 0; }
+        }
+
+        @media (prefers-reduced-motion: no-preference) {
+            .clock-pulse { animation: pulso-reloj 2s ease-out infinite; }
+            @keyframes pulso-reloj { 0%, 55%, 100% { box-shadow: 0 0 0 4px rgba(74, 222, 128, 0.12); } 25% { box-shadow: 0 0 0 8px rgba(74, 222, 128, 0); } }
+        }
     </style>
 </head>
 <body>
@@ -87,9 +155,16 @@
             <h2 style="margin:0">Bitácora de Operaciones</h2>
             <small>Control de Cabina EFE Sur</small>
         </div>
-        <!-- AQUÍ ESTÁ LA NUEVA CASILLA DEL RELOJ -->
-        <div id="reloj-tiempo-real" class="live-    clock">--:--:--</div>
     </header>
+
+    <section class="clock-dock" role="timer" aria-label="Hora de Chile continental" aria-live="off">
+        <div class="clock-title"><span class="clock-pulse" aria-hidden="true"></span> HORA CHILE</div>
+        <div id="reloj-tiempo-real" class="live-clock">--:--:--</div>
+        <div class="clock-meta">
+            <span id="reloj-fecha" class="clock-date">Cargando fecha…</span>
+            <span id="reloj-zona" class="clock-zone">Chile continental · America/Santiago</span>
+        </div>
+    </section>
 
     <div class="main-controls">
         <button class="btn add-btn" onclick="addService()">+ Nuevo Servicio</button>
@@ -108,31 +183,6 @@
     </div>
 
     <div id="services-list"></div>
-</div>
-
-<!-- ===== Modal para registrar/editar un atraso (amplio, fuera de la tabla) ===== -->
-<div id="atraso-modal" class="modal-overlay">
-    <div class="modal-box">
-        <h3 id="atraso-modal-title">Registrar atraso</h3>
-        <label for="atraso-modal-motivo">Motivo</label>
-        <select id="atraso-modal-motivo" class="modal-select">
-            <option value="">-- Selecciona motivo --</option>
-            <option value="Señalización">Señalización</option>
-            <option value="Pasajeros">Pasajeros</option>
-            <option value="Prevenciones">Prevenciones</option>
-            <option value="Equipo">Equipo</option>
-            <option value="Cruzamiento">Cruzamiento</option>
-            <option value="Combinación">Combinación</option>
-            <option value="Otro">Otro</option>
-        </select>
-        <label for="atraso-modal-texto">Detalle (opcional)</label>
-        <textarea id="atraso-modal-texto" class="modal-textarea" placeholder="Escribe aquí lo que quieras (o déjalo en blanco)..."></textarea>
-        <div class="modal-actions">
-            <button type="button" class="modal-btn guardar" onclick="guardarAtrasoModal()">✓ Guardar</button>
-            <button type="button" class="modal-btn cancelar" onclick="cerrarAtrasoModal()">Cancelar</button>
-            <button type="button" class="modal-btn borrar" onclick="borrarAtrasoModal()">🗑️ Borrar atraso</button>
-        </div>
-    </div>
 </div>
 
 <!-- ===== jsPDF + AutoTable (incrustados para funcionar offline) ===== -->
@@ -929,29 +979,51 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
 
     let serviceCount = 0;
 
-    // ===== Helpers para el panel de ATRASO (motivo desplegable + texto) =====
+    // ===== Estados y detalle opcional de ATRASO (sin ventanas emergentes) =====
     function escAttr(s){ return String(s == null ? "" : s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
     function escHtml(s){ return String(s == null ? "" : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-    // Construye la celda de "Observación": guarda motivo/texto ocultos y muestra
-    // un chip compacto. La edición se hace en un modal amplio (no dentro de la tabla),
-    // así la columna nunca se ensancha ni se estira la pantalla.
+    const motivosAtraso = ["", "Señalización", "Pasajeros", "Prevenciones", "Equipo", "Cruzamiento", "Combinación", "Otro"];
+
+    function motivoOptionsHTML(actual) {
+        return motivosAtraso.map(motivo => {
+            const texto = motivo || "Seleccionar motivo (opcional)";
+            return `<option value="${escAttr(motivo)}"${motivo === actual ? ' selected' : ''}>${escHtml(texto)}</option>`;
+        }).join('');
+    }
+
+    // Conserva las clases status-* porque las usan el guardado, PDF y WhatsApp.
+    function statusControlHTML(rowId, statusClass) {
+        const estado = ['status-none', 'status-ontime', 'status-late'].includes(statusClass) ? statusClass : 'status-none';
+        const esHora = estado === 'status-ontime';
+        const esAtraso = estado === 'status-late';
+        return `
+          <div class="status-btn ${estado}" id="btn-${rowId}" role="group" aria-label="Estado de la estación">
+            <button type="button" class="status-option status-option-ontime" data-state="ontime" aria-pressed="${esHora}" onclick="setStatus('${rowId}', 'ontime')">A hora</button>
+            <button type="button" class="status-option status-option-late" data-state="late" aria-pressed="${esAtraso}" onclick="setStatus('${rowId}', 'late')">Atraso</button>
+            <button type="button" class="status-option status-clear" data-state="none" aria-pressed="${!esHora && !esAtraso}" onclick="setStatus('${rowId}', 'none')" title="Limpiar estado" aria-label="Limpiar estado">×</button>
+          </div>`;
+    }
+
+    // El atraso se registra con un toque. Motivo y detalle se abren solo si se necesitan.
     function obsCellHTML(rowId, motivo, obs) {
         motivo = motivo || "";
         obs = obs || "";
         return `
           <div class="atraso-wrap" id="wrap-${rowId}">
-            <input type="hidden" id="obs-${rowId}" class="atraso-obs" value="${escAttr(obs)}">
-            <input type="hidden" id="motivo-${rowId}" class="atraso-motivo" value="${escAttr(motivo)}">
-            <div class="atraso-resumen" id="resumen-${rowId}" onclick="editarAtraso('${rowId}')"></div>
+            <button type="button" class="atraso-resumen" id="resumen-${rowId}" aria-expanded="false" aria-controls="editor-${rowId}" onclick="toggleAtrasoEditor('${rowId}')">＋ Motivo</button>
+            <div class="atraso-editor" id="editor-${rowId}" hidden>
+              <label for="motivo-${rowId}">Motivo del atraso (opcional)</label>
+              <select id="motivo-${rowId}" class="atraso-select atraso-motivo" onchange="actualizarDetalleAtraso('${rowId}')">${motivoOptionsHTML(motivo)}</select>
+              <label for="obs-${rowId}" style="margin-top:8px;">Detalle (opcional)</label>
+              <textarea id="obs-${rowId}" class="atraso-texto atraso-obs" placeholder="Escribe una observación breve…" oninput="actualizarDetalleAtraso('${rowId}')">${escHtml(obs)}</textarea>
+              <button type="button" class="atraso-listo" onclick="toggleAtrasoEditor('${rowId}', false)">Listo</button>
+            </div>
           </div>`;
     }
 
     function _val(id) { const e = document.getElementById(id); return e ? e.value : ""; }
 
-    // Deja en la celda solo un botón compacto "Editar" (no ocupa espacio).
-    // Toda la información (motivo + texto) queda guardada en los campos ocultos
-    // y se muestra completa en el tooltip; al tocar se abre el modal para editar.
     function renderResumenAtraso(rowId) {
         const motivo = _val(`motivo-${rowId}`);
         const obs = (_val(`obs-${rowId}`) || "").trim();
@@ -962,72 +1034,109 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
             let full = motivo || "Atraso (sin motivo)";
             if (obs) full += (motivo ? " · " : ": ") + obs;
             resumen.title = full;
-            resumen.innerHTML = `✏️ Editar`;
+            resumen.textContent = (motivo || obs) ? `✎ ${motivo || 'Editar detalle'}` : '＋ Motivo (opcional)';
         }
     }
 
-    // Deja la estación sin estado ("-") y limpia sus datos de atraso.
-    function resetEstacion(rowId) {
-        const btn = document.getElementById(`btn-${rowId}`);
-        const wrap = document.getElementById(`wrap-${rowId}`);
+    function actualizarControlEstado(rowId) {
+        const control = document.getElementById(`btn-${rowId}`);
+        if (!control) return;
+        const estado = control.classList.contains('status-ontime') ? 'ontime' : control.classList.contains('status-late') ? 'late' : 'none';
+        control.querySelectorAll('[data-state]').forEach(opcion => {
+            opcion.setAttribute('aria-pressed', String(opcion.dataset.state === estado));
+        });
+    }
+
+    function cerrarEditorAtraso(rowId) {
+        const editor = document.getElementById(`editor-${rowId}`);
+        const resumen = document.getElementById(`resumen-${rowId}`);
+        if (editor) editor.hidden = true;
+        if (resumen) resumen.setAttribute('aria-expanded', 'false');
+    }
+
+    function limpiarDatosAtraso(rowId) {
         const obs = document.getElementById(`obs-${rowId}`);
         const motivo = document.getElementById(`motivo-${rowId}`);
-        if (btn) { btn.classList.remove('status-late', 'status-ontime'); btn.classList.add('status-none'); btn.innerText = "-"; }
-        if (wrap) wrap.classList.remove('visible');
         if (obs) obs.value = "";
         if (motivo) motivo.value = "";
     }
 
-    // ===== Modal de atraso (ventana amplia para escribir cómodo) =====
-    let atrasoModalRowId = null;
+    function setStatus(rowId, estado) {
+        const control = document.getElementById(`btn-${rowId}`);
+        if (!control) return;
+        const saliendoDeAtraso = control.classList.contains('status-late') && estado !== 'late';
+        const hayDetalle = _val(`motivo-${rowId}`) !== '' || (_val(`obs-${rowId}`) || '').trim() !== '';
 
-    function editarAtraso(rowId) { openAtrasoModal(rowId); }
+        if (saliendoDeAtraso && hayDetalle && !confirm('Este atraso tiene un motivo o detalle guardado.\n\n¿Cambiar el estado y borrar ese detalle?')) return;
 
-    function openAtrasoModal(rowId) {
-        atrasoModalRowId = rowId;
-        const btn = document.getElementById(`btn-${rowId}`);
-        const row = btn ? btn.closest('tr') : null;
-        const estacion = (row && row.cells[0]) ? row.cells[0].innerText : "";
-        document.getElementById('atraso-modal-title').innerText = estacion ? `Atraso — ${estacion}` : 'Registrar atraso';
-        document.getElementById('atraso-modal-motivo').value = _val(`motivo-${rowId}`);
-        document.getElementById('atraso-modal-texto').value = _val(`obs-${rowId}`);
-        document.getElementById('atraso-modal').style.display = 'flex';
-        setTimeout(() => { const t = document.getElementById('atraso-modal-texto'); if (t) t.focus(); }, 50);
-    }
+        control.classList.remove('status-none', 'status-ontime', 'status-late');
+        control.classList.add(estado === 'ontime' ? 'status-ontime' : estado === 'late' ? 'status-late' : 'status-none');
+        actualizarControlEstado(rowId);
 
-    function cerrarAtrasoModal() {
-        document.getElementById('atraso-modal').style.display = 'none';
-        atrasoModalRowId = null;
-    }
-
-    // Guarda lo escrito en el modal, deja la estación en ATRASO y muestra el chip.
-    function guardarAtrasoModal() {
-        if (!atrasoModalRowId) return cerrarAtrasoModal();
-        const rowId = atrasoModalRowId;
-        const motivo = document.getElementById('atraso-modal-motivo').value;
-        const texto = document.getElementById('atraso-modal-texto').value;
-        const obsEl = document.getElementById(`obs-${rowId}`);
-        const motivoEl = document.getElementById(`motivo-${rowId}`);
-        if (obsEl) obsEl.value = texto;
-        if (motivoEl) motivoEl.value = motivo;
-        const btn = document.getElementById(`btn-${rowId}`);
-        if (btn && !btn.classList.contains('status-late')) {
-            btn.classList.remove('status-none', 'status-ontime');
-            btn.classList.add('status-late');
-            btn.innerText = "ATRASO";
+        const wrap = document.getElementById(`wrap-${rowId}`);
+        if (estado === 'late') {
+            renderResumenAtraso(rowId);
+        } else {
+            if (saliendoDeAtraso || estado === 'none') limpiarDatosAtraso(rowId);
+            if (wrap) wrap.classList.remove('visible');
+            cerrarEditorAtraso(rowId);
         }
-        renderResumenAtraso(rowId);
-        cerrarAtrasoModal();
         guardarEstado();
     }
 
-    // Botón "Borrar atraso" del modal: resetea la estación a "-".
-    function borrarAtrasoModal() {
-        if (!atrasoModalRowId) return cerrarAtrasoModal();
-        const rowId = atrasoModalRowId;
-        resetEstacion(rowId);
-        cerrarAtrasoModal();
-        guardarEstado();
+    // Compatibilidad con copias antiguas que aún llamen al control cíclico.
+    function toggleStatus(rowId) {
+        const control = document.getElementById(`btn-${rowId}`);
+        if (!control) return;
+        if (control.classList.contains('status-none')) setStatus(rowId, 'ontime');
+        else if (control.classList.contains('status-ontime')) setStatus(rowId, 'late');
+        else setStatus(rowId, 'none');
+    }
+
+    let atrasoGuardadoTimer = null;
+
+    function actualizarDetalleAtraso(rowId) {
+        renderResumenAtraso(rowId);
+        clearTimeout(atrasoGuardadoTimer);
+        atrasoGuardadoTimer = setTimeout(guardarEstado, 250);
+    }
+
+    function toggleAtrasoEditor(rowId, forzar) {
+        const editor = document.getElementById(`editor-${rowId}`);
+        const resumen = document.getElementById(`resumen-${rowId}`);
+        if (!editor || !resumen) return;
+        const abrir = typeof forzar === 'boolean' ? forzar : editor.hidden;
+
+        if (abrir) {
+            document.querySelectorAll('.atraso-editor:not([hidden])').forEach(otro => {
+                if (otro !== editor) {
+                    otro.hidden = true;
+                    const boton = document.querySelector(`[aria-controls="${otro.id}"]`);
+                    if (boton) boton.setAttribute('aria-expanded', 'false');
+                }
+            });
+        }
+
+        editor.hidden = !abrir;
+        resumen.setAttribute('aria-expanded', String(abrir));
+        if (abrir) {
+            const destino = _val(`motivo-${rowId}`) ? document.getElementById(`obs-${rowId}`) : document.getElementById(`motivo-${rowId}`);
+            if (destino) destino.focus();
+        } else {
+            renderResumenAtraso(rowId);
+            guardarEstado();
+        }
+    }
+
+    // Deja la estación sin estado y limpia sus datos de atraso.
+    function resetEstacion(rowId) {
+        const btn = document.getElementById(`btn-${rowId}`);
+        const wrap = document.getElementById(`wrap-${rowId}`);
+        if (btn) { btn.classList.remove('status-late', 'status-ontime'); btn.classList.add('status-none'); }
+        if (wrap) wrap.classList.remove('visible');
+        limpiarDatosAtraso(rowId);
+        cerrarEditorAtraso(rowId);
+        actualizarControlEstado(rowId);
     }
 
     // Devuelve el detalle de un atraso (motivo + texto) para WhatsApp/reportes.
@@ -1079,13 +1188,13 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
                         <tr>
                             <td><input type="text" id="vacio-origen-${serviceCount}" placeholder="Estación Origen" style="width:90%; padding:5px;"></td>
                             <td><input type="text" id="time-${serviceCount}-origen" class="time-input" placeholder="--:--"></td>
-                            <td><button class="status-btn status-none" id="btn-${serviceCount}-origen" onclick="toggleStatus('${serviceCount}-origen')">-</button></td>
+                            <td>${statusControlHTML(serviceCount + '-origen', 'status-none')}</td>
                             <td>${obsCellHTML(serviceCount + '-origen', '', '')}</td>
                         </tr>
                         <tr>
                             <td><input type="text" id="vacio-destino-${serviceCount}" placeholder="Estación Destino" style="width:90%; padding:5px;"></td>
                             <td><input type="text" id="time-${serviceCount}-destino" class="time-input" placeholder="--:--"></td>
-                            <td><button class="status-btn status-none" id="btn-${serviceCount}-destino" onclick="toggleStatus('${serviceCount}-destino')">-</button></td>
+                            <td>${statusControlHTML(serviceCount + '-destino', 'status-none')}</td>
                             <td>${obsCellHTML(serviceCount + '-destino', '', '')}</td>
                         </tr>
                     </tbody>
@@ -1095,14 +1204,58 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
         list.appendChild(card);
     }
 
-    // --- FUNCIÓN DEL RELOJ EN TIEMPO REAL ---
-    function actualizarReloj() {
-        const ahora = new Date();
-        const horas = String(ahora.getHours()).padStart(2, '0');
-        const minutos = String(ahora.getMinutes()).padStart(2, '0');
-        const segundos = String(ahora.getSeconds()).padStart(2, '0');
-        document.getElementById('reloj-tiempo-real').innerText = `${horas}:${minutos}:${segundos}`;
+    // --- HORA DE CHILE CONTINENTAL (incluye cambios UTC-4 / UTC-3) ---
+    const zonaHorariaChile = 'America/Santiago';
+    const formatoHoraChile = new Intl.DateTimeFormat('es-CL', {
+        timeZone: zonaHorariaChile,
+        hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23'
+    });
+    const formatoFechaChile = new Intl.DateTimeFormat('es-CL', {
+        timeZone: zonaHorariaChile,
+        weekday: 'short', day: '2-digit', month: 'short'
+    });
+    const formatoFechaReporteChile = new Intl.DateTimeFormat('es-CL', {
+        timeZone: zonaHorariaChile,
+        day: '2-digit', month: '2-digit', year: 'numeric'
+    });
+    const formatoZonaChile = new Intl.DateTimeFormat('es-CL', {
+        timeZone: zonaHorariaChile,
+        timeZoneName: 'shortOffset'
+    });
+    let relojTimer = null;
+
+    function horaChile(fecha) { return formatoHoraChile.format(fecha || new Date()); }
+    function fechaChile(fecha) { return formatoFechaReporteChile.format(fecha || new Date()); }
+    function fechaArchivoChile(fecha) {
+        const partes = formatoFechaReporteChile.formatToParts(fecha || new Date());
+        const valores = Object.fromEntries(partes.filter(p => p.type !== 'literal').map(p => [p.type, p.value]));
+        return `${valores.year}-${valores.month}-${valores.day}`;
     }
+
+    function actualizarReloj() {
+        clearTimeout(relojTimer);
+        const ahoraMs = Date.now();
+        const ahora = new Date(ahoraMs);
+        const reloj = document.getElementById('reloj-tiempo-real');
+        if (!reloj) return;
+
+        const partes = Object.fromEntries(formatoHoraChile.formatToParts(ahora).filter(p => p.type !== 'literal').map(p => [p.type, p.value]));
+        reloj.innerHTML = `<span class="clock-hours">${partes.hour}</span><span class="clock-separator">:</span><span class="clock-minutes">${partes.minute}</span><span class="clock-separator">:</span><span class="clock-seconds">${partes.second}</span>`;
+        reloj.setAttribute('aria-label', `${partes.hour} horas, ${partes.minute} minutos y ${partes.second} segundos`);
+
+        const fecha = document.getElementById('reloj-fecha');
+        if (fecha) fecha.textContent = formatoFechaChile.format(ahora).replace(/\./g, '');
+        const zona = document.getElementById('reloj-zona');
+        const zonaTexto = formatoZonaChile.formatToParts(ahora).find(p => p.type === 'timeZoneName');
+        if (zona) zona.textContent = `Chile continental · ${(zonaTexto ? zonaTexto.value : zonaHorariaChile).replace('GMT', 'UTC')}`;
+
+        if (!document.hidden) relojTimer = setTimeout(actualizarReloj, 1000 - (ahoraMs % 1000) + 18);
+    }
+
+    document.addEventListener('visibilitychange', function () {
+        if (!document.hidden) actualizarReloj();
+    });
+    window.addEventListener('pageshow', actualizarReloj);
 
     // --- FUNCIONES DE AUTOGUARDADO ---
     function guardarEstado() {
@@ -1117,6 +1270,10 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
             
             const eqTipo = document.getElementById(`eq-tipo-${idNumber}`).value;
             const eqNum = document.getElementById(`eq-num-${idNumber}`).value;
+            const maquinista = document.getElementById(`maquinista-${idNumber}`).value;
+            const ayudante = document.getElementById(`ayudante-${idNumber}`).value;
+            const conductorEl = document.getElementById(`conductor-${idNumber}`);
+            const conductor = conductorEl ? conductorEl.value : "";
             
             const filas = [];
             const rows = card.querySelectorAll('tbody tr');
@@ -1126,7 +1283,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
                 const btn = document.getElementById(`btn-${rowId}`);
                 const statusClass = btn.classList.contains('status-ontime') ? 'status-ontime' : 
                                     btn.classList.contains('status-late') ? 'status-late' : 'status-none';
-                const btnText = btn.innerText;
+                const btnText = statusClass === 'status-ontime' ? 'HORA' : statusClass === 'status-late' ? 'ATRASO' : '-';
                 const obsEl = document.getElementById(`obs-${rowId}`);
                 const motivoEl = document.getElementById(`motivo-${rowId}`);
                 const obs = obsEl ? obsEl.value : "";
@@ -1135,7 +1292,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
                 filas.push({ time, statusClass, btnText, obs, motivo });
             });
 
-            estado.push({ idNumber, dia, tren, ruta, eqTipo, eqNum, filas });
+            estado.push({ idNumber, dia, tren, ruta, eqTipo, eqNum, maquinista, ayudante, conductor, filas });
         });
 
         localStorage.setItem('bitacoraEfeSur', JSON.stringify(estado));
@@ -1143,9 +1300,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     }
 
     window.onload = function() {
-        // Iniciar el reloj de inmediato y que se actualice cada segundo
+        // Iniciar el reloj alineado al segundo real.
         actualizarReloj();
-        setInterval(actualizarReloj, 1000);
 
         const datosGuardados = localStorage.getItem('bitacoraEfeSur');
         if (datosGuardados) {
@@ -1173,7 +1329,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
         card.innerHTML = `
             <div class="train-header">
                 <select id="dia-${id}" onchange="guardarEstado()"><option value="LV">Lun-Vie</option><option value="SAB">Sábado</option><option value="DOM">Domingo</option></select>
-                <input type="text" id="tren-num-${id}" placeholder="N° Tren" style="width: 70px;" onchange="guardarEstado()">
+                <input type="text" id="tren-num-${id}" placeholder="N° Tren" style="width: 70px;" oninput="guardarEstado()">
                 <button class="search-btn" onclick="buscarHorarios(${id})">🔍 Cargar</button>
                 <select id="route-${id}" onchange="updateTable(${id}, this.value); guardarEstado();">
                     <option value="l2_ida">L2: Concepción ➔ Coronel</option>
@@ -1201,6 +1357,11 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
                         <input type="text" id="maquinista-${id}" placeholder="Maquinista" style="width: 140px; padding: 5px; border-radius: 4px; border: 1px solid #ccc;" oninput="guardarEstado()">
                         <input type="text" id="ayudante-${id}" placeholder="Ayudante" style="width: 140px; padding: 5px; border-radius: 4px; border: 1px solid #ccc;" oninput="guardarEstado()">
                     </div>
+
+                    <div id="conductor-wrap-${id}" class="conductor-corto" hidden>
+                        <label for="conductor-${id}">Conductor/a Laja o Talcamávida:</label>
+                        <input type="text" id="conductor-${id}" placeholder="Nombre del conductor o conductora" autocomplete="name" oninput="guardarEstado()">
+                    </div>
                 </div>
 
                 <button class="min-card" onclick="toggleMinimize(${id})">🔽 Minimizar</button>
@@ -1224,6 +1385,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
 
         if (data.eqTipo) document.getElementById(`eq-tipo-${data.idNumber}`).value = data.eqTipo;
         if (data.eqNum) document.getElementById(`eq-num-${data.idNumber}`).value = data.eqNum;
+        document.getElementById(`maquinista-${data.idNumber}`).value = data.maquinista || "";
+        document.getElementById(`ayudante-${data.idNumber}`).value = data.ayudante || "";
+        document.getElementById(`conductor-${data.idNumber}`).value = data.conductor || "";
 
         const tbody = document.getElementById(`body-${data.idNumber}`);
         const stations = rutas[data.ruta];
@@ -1235,8 +1399,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
 
             tbody.innerHTML += `<tr>
                 <td style="font-weight:600; font-size:0.85em;">${st}</td>
-                <td><input type="text" id="time-${rowId}" class="time-input" placeholder="--:--" value="${escAttr(filaGuardada.time)}" onchange="guardarEstado()"></td>
-                <td><button class="status-btn ${filaGuardada.statusClass}" id="btn-${rowId}" onclick="toggleStatus('${rowId}')">${filaGuardada.btnText}</button></td>
+                <td><input type="text" id="time-${rowId}" class="time-input" placeholder="--:--" value="${escAttr(filaGuardada.time)}" oninput="actualizarCampoConductor(${data.idNumber})" onchange="guardarEstado()"></td>
+                <td>${statusControlHTML(rowId, filaGuardada.statusClass)}</td>
                 <td>${obsCellHTML(rowId, filaGuardada.motivo || "", filaGuardada.obs || "")}</td>
             </tr>`;
         });
@@ -1250,9 +1414,29 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
                 if (wrap) { wrap.classList.add('visible'); renderResumenAtraso(rowId); }
             }
         });
+        actualizarCampoConductor(data.idNumber);
     }
 
     // --- FUNCIONES DE OPERACIÓN ---
+    const ESTACIONES_CON_CONDUCTOR = new Set(['Laja', 'Talcamávida']);
+
+    function tarjetaRequiereConductor(id) {
+        const card = document.getElementById(`card-${id}`);
+        const rows = card ? card.querySelectorAll('tbody tr') : [];
+        if (!rows.length) return false;
+
+        const { firstRow, lastRow } = obtenerTramosReales(rows);
+        return [firstRow, lastRow].some(row => {
+            const estacion = row && row.cells[0] ? row.cells[0].textContent.trim() : '';
+            return ESTACIONES_CON_CONDUCTOR.has(estacion);
+        });
+    }
+
+    function actualizarCampoConductor(id) {
+        const campo = document.getElementById(`conductor-wrap-${id}`);
+        if (campo) campo.hidden = !tarjetaRequiereConductor(id);
+    }
+
     function updateTable(id, routeKey) {
         const tbody = document.getElementById(`body-${id}`);
         const stations = rutas[routeKey];
@@ -1261,11 +1445,12 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
             const rowId = `row-${id}-${index}`;
             tbody.innerHTML += `<tr>
                 <td style="font-weight:600; font-size:0.85em;">${st}</td>
-                <td><input type="text" id="time-${rowId}" class="time-input" placeholder="--:--" onchange="guardarEstado()"></td>
-                <td><button class="status-btn status-none" id="btn-${rowId}" onclick="toggleStatus('${rowId}')">-</button></td>
+                <td><input type="text" id="time-${rowId}" class="time-input" placeholder="--:--" oninput="actualizarCampoConductor(${id})" onchange="guardarEstado()"></td>
+                <td>${statusControlHTML(rowId, 'status-none')}</td>
                 <td>${obsCellHTML(rowId, "", "")}</td>
             </tr>`;
         });
+        actualizarCampoConductor(id);
     }
 
     function buscarHorarios(id) {
@@ -1279,43 +1464,10 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
                 const input = document.getElementById(`time-row-${id}-${index}`);
                 if(input && hora !== null) input.value = hora;
             });
+            actualizarCampoConductor(id);
             guardarEstado();
         } else {
             alert("El servicio no está en la memoria maestra. Puedes escribir los horarios a mano.");
-        }
-    }
-
-    function toggleStatus(rowId) {
-        const btn = document.getElementById(`btn-${rowId}`);
-        const wrap = document.getElementById(`wrap-${rowId}`);
-        const obs = document.getElementById(`obs-${rowId}`);
-        const motivo = document.getElementById(`motivo-${rowId}`);
-
-        // 1er click: HORA
-        if (btn.classList.contains('status-none')) {
-            btn.classList.replace('status-none', 'status-ontime');
-            btn.innerText = "HORA";
-            if (wrap) wrap.classList.remove('visible');
-            guardarEstado();
-        }
-        // 2do click: ATRASO -> muestra el chip y abre el modal amplio para escribir
-        else if (btn.classList.contains('status-ontime')) {
-            btn.classList.replace('status-ontime', 'status-late');
-            btn.innerText = "ATRASO";
-            renderResumenAtraso(rowId);   // deja un chip "Atraso (sin motivo)" por si se cancela
-            openAtrasoModal(rowId);       // ventana amplia para elegir motivo y escribir
-            guardarEstado();
-        }
-        // 3er click: reset. Si hay algo escrito/seleccionado, pide confirmación.
-        else {
-            const hayTexto = obs && obs.value.trim() !== "";
-            const hayMotivo = motivo && motivo.value !== "";
-            if ((hayTexto || hayMotivo) &&
-                !confirm("Esta estación tiene un atraso con información registrada.\n\n¿Seguro que quieres resetearla y borrar el motivo/texto?")) {
-                return; // Se cancela el reset: sigue en ATRASO tal como estaba.
-            }
-            resetEstacion(rowId);
-            guardarEstado();
         }
     }
 
@@ -1349,6 +1501,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     // --- FUNCIONES DE DESCARGA Y REPORTES ---
     function downloadBitacoraCompleta() {
         document.querySelectorAll('input').forEach(input => input.setAttribute('value', input.value || ''));
+        document.querySelectorAll('textarea').forEach(textarea => { textarea.textContent = textarea.value || ''; });
         document.querySelectorAll('select').forEach(select => {
             Array.from(select.options).forEach(opt => {
                 if (opt.value === select.value) opt.setAttribute('selected', 'selected');
@@ -1357,14 +1510,13 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
         });
         document.querySelectorAll('.status-btn').forEach(btn => {
             btn.setAttribute('class', btn.className);
-            btn.innerHTML = btn.innerText;
         });
 
         const content = document.documentElement.outerHTML;
         const blob = new Blob([content], { type: 'text/html' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = `Mi_Bitacora_Completa_${new Date().toLocaleDateString().replace(/\//g, '-')}.html`;
+        a.download = `Mi_Bitacora_Completa_${fechaArchivoChile()}.html`;
         a.click();
     }
 
@@ -1379,7 +1531,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
             .item { margin-bottom: 8px; font-size: 1.1em; }
             .late { color: #d32f2f; font-weight: bold; }
             .ontime { color: #2e7d32; font-weight: bold; }
-        </style></head><body><h2>Resumen Ejecutivo de Cabina - EFE Sur</h2><p>Fecha: ${new Date().toLocaleDateString()}</p>`;
+        </style></head><body><h2>Resumen Ejecutivo de Cabina - EFE Sur</h2><p>Fecha: ${fechaChile()}</p>`;
 
         cards.forEach(card => {
             const idNumber = card.id.split('-')[1];
@@ -1388,6 +1540,11 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
             const eqTipo = card.querySelector(`#eq-tipo-${idNumber}`).value;
             const eqNum = card.querySelector(`#eq-num-${idNumber}`).value;
             const infoEquipo = eqNum ? `${eqTipo}-${eqNum}` : "No Registrado";
+            const routeEl = card.querySelector(`#route-${idNumber}`);
+            const conductorEl = card.querySelector(`#conductor-${idNumber}`);
+            const conductor = routeEl && tarjetaRequiereConductor(idNumber) && conductorEl
+                ? conductorEl.value.trim()
+                : "";
 
             const rows = card.querySelectorAll('tbody tr');
             if(rows.length === 0) return;
@@ -1407,6 +1564,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
             if(btnLlegada.classList.contains('status-late')) novedad += `<li><b>Llegada ${stLlegada}:</b> <span class="late">Atraso</span> - ${obsLlegada || 'Sin justificar'}</li>`;
 
             reportHTML += `<div class="report-card"><div class="title">Servicio ${numTren} | Equipo: ${infoEquipo}</div>`;
+            if (conductor) reportHTML += `<div class="item"><b>Conductor/a:</b> ${escHtml(conductor)}</div>`;
             if(novedad === "") {
                 reportHTML += `<div class="item ontime">✓ Salida y llegada a horario.</div>`;
             } else {
@@ -1419,7 +1577,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
         const blob = new Blob([reportHTML], { type: 'text/html' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = `Reporte_Jefatura_${new Date().toLocaleDateString().replace(/\//g,'-')}.html`;
+        a.download = `Reporte_Jefatura_${fechaArchivoChile()}.html`;
         a.click();
     }
 
@@ -1477,7 +1635,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
         doc.text("Bitácora de Operaciones - EFE Sur", margin, y); y += 16;
         doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(90, 90, 90);
         const ahora = new Date();
-        doc.text("Fecha: " + ahora.toLocaleDateString() + "   Generada: " + ahora.toLocaleTimeString(), margin, y);
+        doc.text("Fecha: " + fechaChile(ahora) + "   Generada: " + horaChile(ahora), margin, y);
         y += 14;
 
         cards.forEach(card => {
@@ -1486,6 +1644,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
             const numTren = (q(`#tren-num-${idNumber}`) && q(`#tren-num-${idNumber}`).value) || "[S/N]";
             const diaEl = q(`#dia-${idNumber}`);
             const routeEl = q(`#route-${idNumber}`);
+            const routeKey = routeEl ? routeEl.value : "";
             const dia = diaEl ? (DIA_NOMBRES[diaEl.value] || diaEl.value) : "";
             const rutaTxt = routeEl ? (RUTA_NOMBRES_PDF[routeEl.value] || routeEl.value) : "";
             const eqTipoEl = q(`#eq-tipo-${idNumber}`);
@@ -1497,6 +1656,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
             const ayuEl = q(`#ayudante-${idNumber}`);
             const maq = (maqEl && maqEl.value.trim()) ? maqEl.value.trim() : "-";
             const ayu = (ayuEl && ayuEl.value.trim()) ? ayuEl.value.trim() : "-";
+            const conductorEl = q(`#conductor-${idNumber}`);
+            const conductor = tarjetaRequiereConductor(idNumber) && conductorEl ? conductorEl.value.trim() : "";
 
             if (y > pageH - 120) { doc.addPage(); y = margin; }
 
@@ -1509,10 +1670,12 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
             y += 20;
 
             // Sub-línea equipo / tripulación
-            doc.setFillColor(238, 241, 248); doc.rect(margin, y, pageW - margin * 2, 16, 'F');
+            const altoTripulacion = conductor ? 30 : 16;
+            doc.setFillColor(238, 241, 248); doc.rect(margin, y, pageW - margin * 2, altoTripulacion, 'F');
             doc.setTextColor(50, 50, 50); doc.setFontSize(9);
             doc.text("Equipo: " + infoEquipo + "     Maquinista: " + maq + "     Ayudante: " + ayu, margin + 8, y + 11);
-            y += 16;
+            if (conductor) doc.text("Conductor/a Laja o Talcamávida: " + conductor, margin + 8, y + 25);
+            y += altoTripulacion;
 
             // Filas: todas las estaciones
             const body = [];
@@ -1554,7 +1717,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
             y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y) + 16;
         });
 
-        doc.save(`Bitacora_${new Date().toLocaleDateString().replace(/\//g, '-')}.pdf`);
+        doc.save(`Bitacora_${fechaArchivoChile()}.pdf`);
     }
 
     // --- RESPALDO: descarga por impresión del navegador ("Guardar como PDF") ---
@@ -1595,7 +1758,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
                 @media print { body { padding: 0; } }
             </style></head><body>`;
         html += `<h1>Bitácora de Operaciones — EFE Sur</h1>`;
-        html += `<p class="fecha">Fecha: ${ahora.toLocaleDateString()} · Generada: ${ahora.toLocaleTimeString()}</p>`;
+        html += `<p class="fecha">Fecha: ${fechaChile(ahora)} · Generada: ${horaChile(ahora)}</p>`;
 
         cards.forEach(card => {
             const idNumber = card.id.split('-')[1];
@@ -1614,10 +1777,14 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
             const ayuEl = q(`#ayudante-${idNumber}`);
             const maq = (maqEl && maqEl.value.trim()) ? maqEl.value.trim() : "—";
             const ayu = (ayuEl && ayuEl.value.trim()) ? ayuEl.value.trim() : "—";
+            const conductorEl = q(`#conductor-${idNumber}`);
+            const conductor = routeEl && tarjetaRequiereConductor(idNumber) && conductorEl
+                ? conductorEl.value.trim()
+                : "";
 
             html += `<div class="serv">
                 <div class="serv-head"><b>Servicio ${escHtml(numTren)}</b> &nbsp; ${escHtml(rutaTxt)} ${dia ? '· ' + escHtml(dia) : ''}</div>
-                <div class="serv-sub">Equipo: <b>${escHtml(infoEquipo)}</b> &nbsp;·&nbsp; Maquinista: <b>${escHtml(maq)}</b> &nbsp;·&nbsp; Ayudante: <b>${escHtml(ayu)}</b></div>
+                <div class="serv-sub">Equipo: <b>${escHtml(infoEquipo)}</b> &nbsp;·&nbsp; Maquinista: <b>${escHtml(maq)}</b> &nbsp;·&nbsp; Ayudante: <b>${escHtml(ayu)}</b>${conductor ? `<br>Conductor/a Laja o Talcamávida: <b>${escHtml(conductor)}</b>` : ''}</div>
                 <table><thead><tr><th style="width:34%">Estación</th><th style="width:14%">Horario</th><th style="width:16%">Estado</th><th style="width:36%">Observación</th></tr></thead><tbody>`;
 
             const rows = card.querySelectorAll('tbody tr');
@@ -1655,7 +1822,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     // por eso se usa un iframe oculto para imprimir; si el navegador no soporta
     // impresión, se descarga la bitácora como archivo para abrirla en Chrome.
     function imprimirODescargar(html) {
-        const nombre = `Bitacora_${new Date().toLocaleDateString().replace(/\//g, '-')}`;
+        const nombre = `Bitacora_${fechaArchivoChile()}`;
 
         // Fallback: descargar como archivo HTML (se abre y se imprime/guarda como PDF).
         const descargarArchivo = () => {
@@ -1707,7 +1874,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
 
     // Encabezado actualizado según tu petición
     let textoReporte = `*NOVEDADES - EFE SUR*%0A`;
-    textoReporte += `Fecha: ${new Date().toLocaleDateString()}%0A`;
+    textoReporte += `Fecha: ${fechaChile()}%0A`;
     textoReporte += `----------------------------------------%0A%0A`;
 
     // --- Tripulación / Equipo: se imprime al inicio y SOLO cuando hay cambio ---
@@ -1733,6 +1900,11 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
         const eqTipo = card.querySelector(`#eq-tipo-${idNumber}`).value;
         const eqNum = card.querySelector(`#eq-num-${idNumber}`).value;
         const infoEquipo = eqNum ? `${eqTipo}-${eqNum}` : "No Regist.";
+        const routeEl = card.querySelector(`#route-${idNumber}`);
+        const conductorEl = card.querySelector(`#conductor-${idNumber}`);
+        const conductorRaw = routeEl && tarjetaRequiereConductor(idNumber) && conductorEl
+            ? (conductorEl.value || "").trim()
+            : "";
 
         // Valores REALMENTE ingresados en este servicio (vacío = sin dato).
         const maqRaw = (card.querySelector(`#maquinista-${idNumber}`).value || "").trim();
@@ -1791,6 +1963,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
 
         // Construcción del mensaje del servicio
         textoReporte += `*Servicio ${numTren}*%0A`;
+        if (conductorRaw) textoReporte += `*Conductor/a:* ${conductorRaw}%0A`;
         textoReporte += `- Salida ${stSalida}: ${detalleSalida}%0A`;
         textoReporte += `- Llegada ${stLlegada}: ${detalleLlegada}%0A%0A`;
     });
