@@ -1223,6 +1223,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
         timeZoneName: 'shortOffset'
     });
     let relojTimer = null;
+    let relojUltimaActualizacion = 0;
 
     function horaChile(fecha) { return formatoHoraChile.format(fecha || new Date()); }
     function fechaChile(fecha) { return formatoFechaReporteChile.format(fecha || new Date()); }
@@ -1238,6 +1239,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
         const ahora = new Date(ahoraMs);
         const reloj = document.getElementById('reloj-tiempo-real');
         if (!reloj) return;
+        relojUltimaActualizacion = ahoraMs;
 
         const partes = Object.fromEntries(formatoHoraChile.formatToParts(ahora).filter(p => p.type !== 'literal').map(p => [p.type, p.value]));
         reloj.innerHTML = `<span class="clock-hours">${partes.hour}</span><span class="clock-separator">:</span><span class="clock-minutes">${partes.minute}</span><span class="clock-separator">:</span><span class="clock-seconds">${partes.second}</span>`;
@@ -1252,10 +1254,25 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
         if (!document.hidden) relojTimer = setTimeout(actualizarReloj, 1000 - (ahoraMs % 1000) + 18);
     }
 
+    function reanudarReloj() {
+        actualizarReloj();
+    }
+
     document.addEventListener('visibilitychange', function () {
-        if (!document.hidden) actualizarReloj();
+        if (!document.hidden) reanudarReloj();
     });
-    window.addEventListener('pageshow', actualizarReloj);
+    window.addEventListener('pageshow', reanudarReloj);
+    window.addEventListener('focus', reanudarReloj);
+    document.addEventListener('resume', reanudarReloj);
+
+    // Algunos celulares pausan los temporizadores al cambiar de aplicación y
+    // no siempre notifican correctamente el regreso. Esta vigilancia mantiene
+    // el reloj vivo y lo recupera sin que el usuario tenga que refrescar.
+    setInterval(function () {
+        if (!document.hidden && Date.now() - relojUltimaActualizacion > 1500) {
+            reanudarReloj();
+        }
+    }, 1000);
 
     // --- FUNCIONES DE AUTOGUARDADO ---
     function guardarEstado() {
