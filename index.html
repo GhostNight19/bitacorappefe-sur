@@ -72,6 +72,10 @@
         .conductor-corto[hidden] { display: none !important; }
         .conductor-corto label { color: #3f4b5c; font-size: 0.9rem; font-weight: 800; white-space: nowrap; }
         .conductor-corto input { min-width: 220px; flex: 1 1 220px; }
+        .station-cell { font-weight: 600; font-size: 0.85em; }
+        .station-name { display: block; }
+        .descenso-aviso { display: inline-flex; align-items: center; max-width: 100%; margin-top: 6px; padding: 5px 8px; border: 1px solid #b9abec; border-radius: 999px; background: #f3f0ff; color: #3f278f; font-size: 0.78rem; font-weight: 850; line-height: 1.25; white-space: normal; }
+        .descenso-aviso[hidden] { display: none !important; }
 
         @media (min-width: 721px) {
             table th:nth-child(2), table td:nth-child(2) { width: 132px; }
@@ -137,6 +141,7 @@
             .conductor-corto { padding-top: 10px; }
             .conductor-corto label { width: 100%; font-size: 1rem; }
             .conductor-corto input { min-height: 44px; min-width: 0; flex-basis: 100%; }
+            .descenso-aviso { margin-top: 7px; padding: 6px 9px; font-size: 0.84rem; }
             .atraso-resumen { min-height: 44px; }
             .atraso-editor { min-width: 0; }
         }
@@ -1415,8 +1420,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
             const rowId = `row-${data.idNumber}-${index}`;
 
             tbody.innerHTML += `<tr>
-                <td style="font-weight:600; font-size:0.85em;">${st}</td>
-                <td><input type="text" id="time-${rowId}" class="time-input" placeholder="--:--" value="${escAttr(filaGuardada.time)}" oninput="actualizarCampoConductor(${data.idNumber})" onchange="guardarEstado()"></td>
+                ${estacionCellHTML(st, rowId)}
+                <td><input type="text" id="time-${rowId}" class="time-input" placeholder="--:--" value="${escAttr(filaGuardada.time)}" oninput="actualizarCampoConductor(${data.idNumber}); actualizarAvisosDescenso(${data.idNumber})" onchange="guardarEstado()"></td>
                 <td>${statusControlHTML(rowId, filaGuardada.statusClass)}</td>
                 <td>${obsCellHTML(rowId, filaGuardada.motivo || "", filaGuardada.obs || "")}</td>
             </tr>`;
@@ -1432,10 +1437,73 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
             }
         });
         actualizarCampoConductor(data.idNumber);
+        actualizarAvisosDescenso(data.idNumber);
     }
 
     // --- FUNCIONES DE OPERACIÓN ---
     const ESTACIONES_CON_CONDUCTOR = new Set(['Laja', 'Talcamávida']);
+
+    const AVISOS_DESCENSO_LAJA = {
+        hacia_laja: {
+            'Quilacoya': 'Descenso por las 5 primeras puertas',
+            'San Miguel': 'Descenso por las 2 últimas puertas',
+            'Unihue': 'Descenso por las 4 primeras puertas',
+            'V. Chanco': 'Descenso por las 2 primeras puertas',
+            'Los Acacios': 'Descenso por las 2 últimas puertas',
+            'Talcamávida': 'Descenso por las 4 primeras puertas',
+            'Gomero': 'Descenso por el coche intermedio',
+            'Buenuraqui': 'Descenso por las 3 primeras puertas'
+        },
+        desde_laja: {
+            'Buenuraqui': 'Descenso por las 3 últimas puertas',
+            'Gomero': 'Descenso por el coche intermedio',
+            'Talcamávida': 'Descenso por las 4 últimas puertas',
+            'Los Acacios': 'Descenso por las 2 primeras puertas',
+            'V. Chanco': 'Descenso por las 2 últimas puertas',
+            'Unihue': 'Descenso por las 4 últimas puertas',
+            'San Miguel': 'Descenso por las 2 primeras puertas',
+            'Quilacoya': 'Descenso por las 5 últimas puertas'
+        }
+    };
+
+    function estacionCellHTML(estacion, rowId) {
+        return `<td class="station-cell"><span class="station-name">${escHtml(estacion)}</span><span id="descenso-${rowId}" class="descenso-aviso" role="note" hidden></span></td>`;
+    }
+
+    function nombreEstacionFila(row) {
+        if (!row) return '';
+        const nombre = row.querySelector('.station-name');
+        if (nombre) return nombre.textContent.trim();
+        const input = row.cells[0] ? row.cells[0].querySelector('input') : null;
+        return (input ? input.value : (row.cells[0] ? row.cells[0].textContent : '')).trim();
+    }
+
+    // El sentido lo entrega el orden de la ruta. Así también reciben avisos
+    // los servicios parciales 20200, 20397, 20398 y 20399, aunque su extremo
+    // real sea Talcamávida en vez de Laja.
+    function obtenerSentidoAvisosDescenso(id) {
+        const ruta = document.getElementById(`route-${id}`);
+        if (!ruta) return '';
+        if (ruta.value === 'laja_ida') return 'hacia_laja';
+        if (ruta.value === 'laja_vuelta') return 'desde_laja';
+        return '';
+    }
+
+    function actualizarAvisosDescenso(id) {
+        const card = document.getElementById(`card-${id}`);
+        if (!card) return;
+        const sentido = obtenerSentidoAvisosDescenso(id);
+        const avisos = AVISOS_DESCENSO_LAJA[sentido] || {};
+
+        card.querySelectorAll('tbody tr').forEach(row => {
+            const aviso = row.querySelector('.descenso-aviso');
+            if (!aviso) return;
+            const horario = row.querySelector('.time-input');
+            const texto = horario && horario.value.trim() ? avisos[nombreEstacionFila(row)] : '';
+            aviso.textContent = texto ? `↓ ${texto}` : '';
+            aviso.hidden = !texto;
+        });
+    }
 
     function tarjetaRequiereConductor(id) {
         const card = document.getElementById(`card-${id}`);
@@ -1444,7 +1512,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
 
         const { firstRow, lastRow } = obtenerTramosReales(rows);
         return [firstRow, lastRow].some(row => {
-            const estacion = row && row.cells[0] ? row.cells[0].textContent.trim() : '';
+            const estacion = nombreEstacionFila(row);
             return ESTACIONES_CON_CONDUCTOR.has(estacion);
         });
     }
@@ -1461,13 +1529,14 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
         stations.forEach((st, index) => {
             const rowId = `row-${id}-${index}`;
             tbody.innerHTML += `<tr>
-                <td style="font-weight:600; font-size:0.85em;">${st}</td>
-                <td><input type="text" id="time-${rowId}" class="time-input" placeholder="--:--" oninput="actualizarCampoConductor(${id})" onchange="guardarEstado()"></td>
+                ${estacionCellHTML(st, rowId)}
+                <td><input type="text" id="time-${rowId}" class="time-input" placeholder="--:--" oninput="actualizarCampoConductor(${id}); actualizarAvisosDescenso(${id})" onchange="guardarEstado()"></td>
                 <td>${statusControlHTML(rowId, 'status-none')}</td>
                 <td>${obsCellHTML(rowId, "", "")}</td>
             </tr>`;
         });
         actualizarCampoConductor(id);
+        actualizarAvisosDescenso(id);
     }
 
     function buscarHorarios(id) {
@@ -1482,6 +1551,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
                 if(input && hora !== null) input.value = hora;
             });
             actualizarCampoConductor(id);
+            actualizarAvisosDescenso(id);
             guardarEstado();
         } else {
             alert("El servicio no está en la memoria maestra. Puedes escribir los horarios a mano.");
@@ -1568,11 +1638,11 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
 
             const { firstRow, lastRow } = obtenerTramosReales(rows);
 
-            const stSalida = firstRow.cells[0].innerText;
+            const stSalida = nombreEstacionFila(firstRow);
             const btnSalida = firstRow.querySelector('.status-btn');
             const obsSalida = getAtrasoDetalle(firstRow);
 
-            const stLlegada = lastRow.cells[0].innerText;
+            const stLlegada = nombreEstacionFila(lastRow);
             const btnLlegada = lastRow.querySelector('.status-btn');
             const obsLlegada = getAtrasoDetalle(lastRow);
 
@@ -1697,7 +1767,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
             // Filas: todas las estaciones
             const body = [];
             card.querySelectorAll('tbody tr').forEach(row => {
-                const estacion = row.cells[0] ? row.cells[0].innerText : "";
+                const estacion = nombreEstacionFila(row);
                 const timeEl = row.querySelector('.time-input');
                 const hora = timeEl ? (timeEl.value || "-") : "-";
                 const btn = row.querySelector('.status-btn');
@@ -1806,7 +1876,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
 
             const rows = card.querySelectorAll('tbody tr');
             rows.forEach(row => {
-                const estacion = row.cells[0] ? row.cells[0].innerText : "";
+                const estacion = nombreEstacionFila(row);
                 const timeEl = row.querySelector('.time-input');
                 const hora = timeEl ? (timeEl.value || "—") : "—";
                 const btn = row.querySelector('.status-btn');
@@ -1934,11 +2004,11 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
         const { firstRow, lastRow } = obtenerTramosReales(rows);
 
         // Estaciones de Origen y Destino
-        const stSalida = firstRow.cells[0].innerText;
+        const stSalida = nombreEstacionFila(firstRow);
         const btnSalida = firstRow.querySelector('.status-btn');
         const obsSalida = getAtrasoDetalle(firstRow);
 
-        const stLlegada = lastRow.cells[0].innerText;
+        const stLlegada = nombreEstacionFila(lastRow);
         const btnLlegada = lastRow.querySelector('.status-btn');
         const obsLlegada = getAtrasoDetalle(lastRow);
 

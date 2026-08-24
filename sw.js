@@ -1,10 +1,10 @@
 /* ============================================================
    Service Worker - Bitácora EFE Sur
-   Versión 3: actualiza el HTML desde internet cuando hay conexión
+   Versión 6: actualiza el HTML desde internet cuando hay conexión
    y conserva una copia para poder seguir usando la app sin señal.
    ============================================================ */
 
-const CACHE = 'bitacora-efe-v3';
+const CACHE = 'bitacora-efe-v6';
 
 // Archivos que componen la aplicación. Todos existen en el repositorio.
 const ASSETS = [
