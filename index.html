@@ -105,6 +105,68 @@
         .atraso-listo { min-height: 38px; margin-top: 8px; padding: 7px 13px; border: 0; border-radius: 7px; background: #234f82; color: #fff; font-weight: 800; cursor: pointer; }
         button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid #ffbf47; outline-offset: 2px; }
 
+        /* ===== PLANIFICADOR DE VIAJES (ventana interna) ===== */
+        .plan-btn { background-color: #0b5ed7; color: white; }
+        .plan-overlay { position: fixed; inset: 0; z-index: 1200; display: none; padding: 16px; background: rgba(6, 21, 47, 0.72); backdrop-filter: blur(3px); overflow-y: auto; overscroll-behavior: contain; }
+        .plan-overlay.abierto { display: block; }
+        body.plan-abierto { overflow: hidden; }
+        .plan-panel { max-width: 780px; margin: 0 auto; background: #eef2f7; border-radius: 16px; box-shadow: 0 24px 60px rgba(4, 20, 45, 0.45); overflow: hidden; }
+        .plan-head { display: flex; align-items: center; gap: 12px; padding: 16px 18px; color: #fff; background: linear-gradient(135deg, #003399, #0756a5); }
+        .plan-head h3 { margin: 0; font-size: 1.15rem; letter-spacing: -0.02em; }
+        .plan-head small { display: block; color: #b9d4f5; font-size: 0.76rem; font-weight: 600; }
+        .plan-cerrar { margin-left: auto; min-width: 42px; min-height: 42px; border: 0; border-radius: 10px; background: rgba(255,255,255,0.16); color: #fff; font-size: 1.25rem; font-weight: 800; cursor: pointer; }
+        .plan-cerrar:hover { background: rgba(255,255,255,0.28); }
+
+        .plan-form { display: grid; grid-template-columns: minmax(0,1fr) auto minmax(0,1fr); gap: 10px; align-items: end; padding: 16px 18px; background: #fff; border-bottom: 1px solid #dbe3ec; }
+        .plan-campo { display: grid; gap: 5px; min-width: 0; }
+        .plan-campo label { color: #46536a; font-size: 0.72rem; font-weight: 850; letter-spacing: 0.05em; text-transform: uppercase; }
+        .plan-campo select, .plan-campo input { width: 100%; min-height: 46px; padding: 9px 10px; border: 2px solid #cbd7e6; border-radius: 9px; background: #f8fbff; color: #172033; font: inherit; font-weight: 700; }
+        .plan-campo select:focus, .plan-campo input:focus { border-color: #2672bd; }
+        .plan-swap { min-width: 46px; min-height: 46px; margin-bottom: 1px; border: 2px solid #cbd7e6; border-radius: 9px; background: #fff; color: var(--azul-efe); font-size: 1.15rem; font-weight: 800; cursor: pointer; transition: 0.15s; }
+        .plan-swap:hover { background: #eaf2ff; border-color: #2672bd; }
+        .plan-swap:active { transform: rotate(180deg); }
+        .plan-fila { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr) auto; gap: 10px; align-items: end; }
+        .plan-buscar { min-height: 46px; padding: 0 22px; border: 0; border-radius: 9px; background: var(--azul-efe); color: #fff; font-weight: 850; font-size: 0.98rem; cursor: pointer; box-shadow: 0 4px 12px rgba(0,51,153,0.25); }
+        .plan-buscar:hover { background: #0043c4; }
+
+        .plan-cuerpo { padding: 16px 18px 22px; }
+        .plan-seccion-titulo { display: flex; align-items: center; gap: 8px; margin: 4px 0 12px; color: #1d2b45; font-size: 0.86rem; font-weight: 900; letter-spacing: 0.06em; text-transform: uppercase; }
+        .plan-seccion-titulo::after { content: ""; flex: 1; height: 2px; border-radius: 2px; background: linear-gradient(90deg, #c3d3e8, transparent); }
+        .plan-vacio { padding: 26px 16px; border: 2px dashed #c3d0e0; border-radius: 12px; background: #f6f9fd; color: #55637a; text-align: center; font-weight: 650; line-height: 1.5; }
+        .plan-hint { margin: 0 0 14px; color: #55637a; font-size: 0.85rem; font-weight: 650; }
+
+        .plan-card { margin-bottom: 11px; padding: 13px 15px; background: #fff; border: 1px solid #dde5ef; border-left: 5px solid var(--verde); border-radius: 11px; box-shadow: 0 3px 10px rgba(23,32,51,0.07); }
+        .plan-card.plan-combo { border-left-color: #d97706; }
+        .plan-card-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .plan-horas { display: flex; align-items: baseline; gap: 9px; font-variant-numeric: tabular-nums; }
+        .plan-hora { font-size: 1.5rem; font-weight: 900; letter-spacing: -0.03em; color: #0f1c33; }
+        .plan-flecha { color: #8ba3bd; font-weight: 800; }
+        .plan-badge { padding: 4px 10px; border-radius: 999px; background: #e7f0ff; color: #14459c; font-size: 0.82rem; font-weight: 900; letter-spacing: 0.02em; }
+        .plan-badge.plan-badge-2 { background: #fff2dd; color: #92500b; }
+        .plan-dur { margin-left: auto; padding: 4px 10px; border-radius: 999px; background: #eef2f7; color: #46536a; font-size: 0.8rem; font-weight: 800; white-space: nowrap; }
+        .plan-detalle { margin-top: 7px; color: #55637a; font-size: 0.84rem; font-weight: 650; line-height: 1.45; }
+        .plan-tramo { display: grid; grid-template-columns: auto minmax(0,1fr); gap: 4px 11px; align-items: baseline; padding: 8px 0; }
+        .plan-tramo + .plan-tramo { border-top: 1px dashed #dbe3ec; }
+        .plan-tramo-hora { font-variant-numeric: tabular-nums; font-size: 1.05rem; font-weight: 900; color: #0f1c33; white-space: nowrap; }
+        .plan-tramo-txt { color: #37455e; font-size: 0.87rem; font-weight: 700; line-height: 1.4; }
+        .plan-transbordo { display: inline-flex; align-items: center; gap: 6px; margin: 2px 0; padding: 5px 11px; border-radius: 999px; background: #fff7e8; border: 1px solid #ecc37a; color: #8a5200; font-size: 0.8rem; font-weight: 850; }
+        .plan-mas { width: 100%; min-height: 46px; margin: 2px 0 16px; border: 2px dashed #b9c8dc; border-radius: 10px; background: #f6f9fd; color: #2b3d5c; font-weight: 850; font-size: 0.9rem; cursor: pointer; }
+        .plan-mas:hover { background: #eaf2ff; border-color: #2672bd; }
+
+        @media (max-width: 720px) {
+            .plan-overlay { padding: 0; }
+            .plan-panel { min-height: 100%; border-radius: 0; }
+            .plan-head { position: sticky; top: 0; z-index: 5; padding-top: calc(env(safe-area-inset-top, 0px) + 14px); }
+            .plan-form { grid-template-columns: 1fr; padding: 14px; }
+            .plan-swap { justify-self: center; margin: -3px 0; }
+            .plan-swap:active { transform: none; }
+            .plan-fila { grid-template-columns: 1fr 1fr; }
+            .plan-buscar { grid-column: 1 / -1; }
+            .plan-cuerpo { padding: 14px 14px 30px; }
+            .plan-hora { font-size: 1.35rem; }
+            .plan-dur { margin-left: 0; }
+        }
+
         @media (max-width: 720px) {
             body { padding: 6px; }
             header { padding: 14px 15px; border-radius: 11px; }
@@ -173,6 +235,7 @@
 
     <div class="main-controls">
         <button class="btn add-btn" onclick="addService()">+ Nuevo Servicio</button>
+        <button class="btn plan-btn" onclick="abrirPlanificador()">🧭 Planificar Viaje</button>
         <button class="btn delete-all-btn" onclick="borrarTodo()">🗑️ Borrar Todo</button>
         <button class="btn pdf-btn" onclick="descargarBitacoraPDF()">📄 Descargar Bitácora</button>
 
@@ -188,6 +251,49 @@
     </div>
 
     <div id="services-list"></div>
+</div>
+
+<!-- ===== Planificador de viajes: ventana interna de consulta de horarios ===== -->
+<div id="plan-overlay" class="plan-overlay" role="dialog" aria-modal="true" aria-labelledby="plan-titulo" hidden>
+    <div class="plan-panel" role="document">
+        <div class="plan-head">
+            <div>
+                <h3 id="plan-titulo">🧭 Planificador de Viajes</h3>
+                <small>Horarios, servicios y combinaciones · EFE Sur</small>
+            </div>
+            <button type="button" class="plan-cerrar" onclick="cerrarPlanificador()" aria-label="Cerrar planificador">✕</button>
+        </div>
+
+        <div class="plan-form">
+            <div class="plan-campo">
+                <label for="plan-origen">Desde</label>
+                <select id="plan-origen"></select>
+            </div>
+            <button type="button" class="plan-swap" onclick="invertirPlanificador()" title="Invertir origen y destino" aria-label="Invertir origen y destino">⇅</button>
+            <div class="plan-campo">
+                <label for="plan-destino">Hasta</label>
+                <select id="plan-destino"></select>
+            </div>
+
+            <div class="plan-fila">
+                <div class="plan-campo">
+                    <label for="plan-dia">Día</label>
+                    <select id="plan-dia">
+                        <option value="LV">Lunes a Viernes</option>
+                        <option value="SAB">Sábado</option>
+                        <option value="DOM">Domingo</option>
+                    </select>
+                </div>
+                <div class="plan-campo">
+                    <label for="plan-hora">Desde las</label>
+                    <input type="time" id="plan-hora" step="60">
+                </div>
+                <button type="button" class="plan-buscar" onclick="ejecutarPlanificador()">🔍 Buscar</button>
+            </div>
+        </div>
+
+        <div class="plan-cuerpo" id="plan-resultados" aria-live="polite"></div>
+    </div>
 </div>
 
 <!-- ===== jsPDF + AutoTable (incrustados para funcionar offline) ===== -->
@@ -2062,6 +2168,278 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     const url = `https://wa.me/${numero}?text=${textoFinal}`;
     window.open(url, '_blank');
 }
+
+/* =========================================================================
+   PLANIFICADOR DE VIAJES
+   Consulta de horarios sobre la misma memoria maestra (baseDatosTrenes):
+   busca servicios directos y, cuando no los hay, arma combinaciones.
+   ========================================================================= */
+
+const PLAN_MIN_TRANSBORDO = 4;   // minutos mínimos para bajarse y tomar el otro tren
+const PLAN_MAX_RESULTADOS = 8;   // servicios directos mostrados de una vez
+const PLAN_MAX_COMBOS = 4;
+
+const PLAN_RUTA_NOMBRES = {
+    l2_ida: "Línea 2 · hacia Coronel",
+    l2_vuelta: "Línea 2 · hacia Concepción",
+    laja_ida: "Línea 1 · hacia Laja",
+    laja_vuelta: "Línea 1 · hacia Talcahuano",
+    hualqui_ida: "Línea 1 · hacia Hualqui",
+    hualqui_vuelta: "Línea 1 · hacia Talcahuano"
+};
+
+let planEstado = { origen: "", destino: "", dia: "LV", desdeMin: 0, verAnteriores: false };
+
+function planMin(hora) {
+    if (!hora) return null;
+    const [h, m] = String(hora).split(':').map(Number);
+    return h * 60 + m;
+}
+function planHHMM(hora) { return String(hora || "").slice(0, 5); }
+function planDuracion(minutos) {
+    const h = Math.floor(minutos / 60), m = minutos % 60;
+    return h > 0 ? `${h} h ${String(m).padStart(2, '0')} min` : `${m} min`;
+}
+function planNombreRuta(ruta) { return PLAN_RUTA_NOMBRES[ruta] || ruta; }
+
+// Opciones del selector: agrupadas por línea, en orden geográfico de la vía.
+function planEstacionesHTML() {
+    const l1 = rutas.laja_ida;
+    const l2 = rutas.l2_ida.filter(e => !l1.includes(e));
+    const opcion = e => `<option value="${escAttr(e)}">${escHtml(e === "Concepción" ? "Concepción (combinación L1/L2)" : e)}</option>`;
+    return `<optgroup label="Línea 1 · Talcahuano – Laja">${l1.map(opcion).join('')}</optgroup>` +
+           `<optgroup label="Línea 2 · Concepción – Coronel">${l2.map(opcion).join('')}</optgroup>`;
+}
+
+// Servicios que hacen origen -> destino sin transbordo, ordenados por hora de salida.
+function planBuscarDirectos(origen, destino, dia) {
+    const base = baseDatosTrenes[dia] || {};
+    const encontrados = [];
+    for (const numero in base) {
+        const data = base[numero];
+        const estaciones = rutas[data.ruta];
+        if (!estaciones) continue;
+        const iOrigen = estaciones.indexOf(origen);
+        const iDestino = estaciones.indexOf(destino);
+        if (iOrigen < 0 || iDestino < 0 || iOrigen >= iDestino) continue;
+        const salida = data.horarios[iOrigen];
+        const llegada = data.horarios[iDestino];
+        if (!salida || !llegada) continue;   // el servicio no detiene en esa estación
+        encontrados.push({
+            servicio: numero,
+            ruta: data.ruta,
+            salida, llegada,
+            salidaMin: planMin(salida),
+            llegadaMin: planMin(llegada),
+            paradas: iDestino - iOrigen
+        });
+    }
+    encontrados.sort((a, b) => a.salidaMin - b.salidaMin);
+    return encontrados;
+}
+
+// Viajes con un transbordo, cuando no hay servicio directo (o cuando llega antes).
+function planBuscarCombinaciones(origen, destino, dia, desdeMin) {
+    const candidatas = new Set();
+    for (const clave in rutas) {
+        const estaciones = rutas[clave];
+        const iOrigen = estaciones.indexOf(origen);
+        if (iOrigen >= 0) estaciones.slice(iOrigen + 1).forEach(e => candidatas.add(e));
+    }
+    candidatas.delete(origen);
+    candidatas.delete(destino);
+
+    const combos = new Map();
+    candidatas.forEach(transbordo => {
+        const segundos = planBuscarDirectos(transbordo, destino, dia);
+        if (!segundos.length) return;
+        const primeros = planBuscarDirectos(origen, transbordo, dia).filter(s => s.salidaMin >= desdeMin);
+        primeros.slice(0, 5).forEach(tramo1 => {
+            const tramo2 = segundos.find(s => s.salidaMin >= tramo1.llegadaMin + PLAN_MIN_TRANSBORDO);
+            if (!tramo2) return;
+            const combo = {
+                transbordo, tramo1, tramo2,
+                espera: tramo2.salidaMin - tramo1.llegadaMin,
+                salidaMin: tramo1.salidaMin,
+                llegadaMin: tramo2.llegadaMin
+            };
+            // Si el mismo par de servicios permite varios puntos de cambio, dejamos
+            // el que obliga a esperar menos en andén.
+            const clave = `${tramo1.servicio}|${tramo2.servicio}`;
+            const previo = combos.get(clave);
+            if (!previo || combo.espera < previo.espera) combos.set(clave, combo);
+        });
+    });
+
+    return [...combos.values()].sort((a, b) => a.llegadaMin - b.llegadaMin || a.salidaMin - b.salidaMin);
+}
+
+function planTarjetaDirecto(op) {
+    return `
+        <div class="plan-card">
+            <div class="plan-card-top">
+                <div class="plan-horas">
+                    <span class="plan-hora">${planHHMM(op.salida)}</span>
+                    <span class="plan-flecha">→</span>
+                    <span class="plan-hora">${planHHMM(op.llegada)}</span>
+                </div>
+                <span class="plan-badge">Servicio ${escHtml(op.servicio)}</span>
+                <span class="plan-dur">${planDuracion(op.llegadaMin - op.salidaMin)}</span>
+            </div>
+            <div class="plan-detalle">${escHtml(planNombreRuta(op.ruta))} · ${op.paradas} ${op.paradas === 1 ? 'parada' : 'paradas'}</div>
+        </div>`;
+}
+
+function planTarjetaCombo(combo) {
+    const total = combo.llegadaMin - combo.salidaMin;
+    return `
+        <div class="plan-card plan-combo">
+            <div class="plan-card-top">
+                <div class="plan-horas">
+                    <span class="plan-hora">${planHHMM(combo.tramo1.salida)}</span>
+                    <span class="plan-flecha">→</span>
+                    <span class="plan-hora">${planHHMM(combo.tramo2.llegada)}</span>
+                </div>
+                <span class="plan-badge plan-badge-2">1 combinación</span>
+                <span class="plan-dur">${planDuracion(total)}</span>
+            </div>
+            <div class="plan-tramo">
+                <span class="plan-tramo-hora">${planHHMM(combo.tramo1.salida)}</span>
+                <span class="plan-tramo-txt">Tomar <strong>servicio ${escHtml(combo.tramo1.servicio)}</strong> (${escHtml(planNombreRuta(combo.tramo1.ruta))}) y bajar en <strong>${escHtml(combo.transbordo)}</strong> a las ${planHHMM(combo.tramo1.llegada)}.</span>
+            </div>
+            <div class="plan-tramo">
+                <span class="plan-tramo-hora">${planHHMM(combo.tramo2.salida)}</span>
+                <span class="plan-tramo-txt"><span class="plan-transbordo">⏱ ${combo.espera} min de espera en ${escHtml(combo.transbordo)}</span><br>Tomar <strong>servicio ${escHtml(combo.tramo2.servicio)}</strong> (${escHtml(planNombreRuta(combo.tramo2.ruta))}) y llegar a <strong>${escHtml(planEstado.destino)}</strong> a las ${planHHMM(combo.tramo2.llegada)}.</span>
+            </div>
+        </div>`;
+}
+
+function planRenderizar() {
+    const caja = document.getElementById('plan-resultados');
+    const { origen, destino, dia, desdeMin, verAnteriores } = planEstado;
+
+    if (!origen || !destino) {
+        caja.innerHTML = `<div class="plan-vacio">Elige una estación de origen y una de destino para ver los servicios.</div>`;
+        return;
+    }
+    if (origen === destino) {
+        caja.innerHTML = `<div class="plan-vacio">El origen y el destino son la misma estación.<br>Cambia una de las dos para poder planificar el viaje.</div>`;
+        return;
+    }
+
+    const directos = planBuscarDirectos(origen, destino, dia);
+    const posteriores = directos.filter(s => s.salidaMin >= desdeMin);
+    const anteriores = directos.filter(s => s.salidaMin < desdeMin);
+
+    const combos = planBuscarCombinaciones(origen, destino, dia, desdeMin);
+    const mejorDirecto = posteriores.length ? posteriores[0].llegadaMin : Infinity;
+    const combosUtiles = combos.filter(c => !posteriores.length || c.llegadaMin < mejorDirecto).slice(0, PLAN_MAX_COMBOS);
+
+    let html = `<p class="plan-hint">${escHtml(origen)} → ${escHtml(destino)} · ${escHtml(DIA_NOMBRES[dia])} · desde las ${String(Math.floor(desdeMin / 60)).padStart(2, '0')}:${String(desdeMin % 60).padStart(2, '0')}</p>`;
+
+    if (!directos.length && !combos.length) {
+        html += `<div class="plan-vacio">No hay ningún servicio que una <strong>${escHtml(origen)}</strong> con <strong>${escHtml(destino)}</strong> en ${escHtml(DIA_NOMBRES[dia])}.<br>Revisa el sentido del viaje o prueba con otro día.</div>`;
+        caja.innerHTML = html;
+        return;
+    }
+
+    if (directos.length) {
+        html += `<div class="plan-seccion-titulo">Servicios directos</div>`;
+        if (anteriores.length) {
+            html += verAnteriores
+                ? anteriores.map(planTarjetaDirecto).join('')
+                : `<button type="button" class="plan-mas" onclick="planVerAnteriores()">↑ Ver los ${anteriores.length} servicios anteriores</button>`;
+        }
+        html += posteriores.length
+            ? posteriores.slice(0, PLAN_MAX_RESULTADOS).map(planTarjetaDirecto).join('')
+            : `<div class="plan-vacio">No quedan servicios directos después de esa hora.${anteriores.length && !verAnteriores ? ' Usa el botón de arriba para ver los anteriores.' : ''}</div>`;
+    }
+
+    if (combosUtiles.length) {
+        html += `<div class="plan-seccion-titulo">${directos.length ? 'Alternativas con combinación' : 'Viajes con combinación'}</div>`;
+        if (!directos.length) {
+            html += `<p class="plan-hint">No existe servicio directo entre estas estaciones; hay que cambiar de tren.</p>`;
+        }
+        html += combosUtiles.map(planTarjetaCombo).join('');
+    }
+
+    caja.innerHTML = html;
+}
+
+function planVerAnteriores() {
+    planEstado.verAnteriores = true;
+    planRenderizar();
+}
+
+function ejecutarPlanificador() {
+    planEstado = {
+        origen: document.getElementById('plan-origen').value,
+        destino: document.getElementById('plan-destino').value,
+        dia: document.getElementById('plan-dia').value,
+        desdeMin: planMin(document.getElementById('plan-hora').value) ?? 0,
+        verAnteriores: false
+    };
+    planRenderizar();
+}
+
+function invertirPlanificador() {
+    const origen = document.getElementById('plan-origen');
+    const destino = document.getElementById('plan-destino');
+    [origen.value, destino.value] = [destino.value, origen.value];
+    ejecutarPlanificador();
+}
+
+// Día y hora sugeridos según el reloj de Chile continental.
+function planDiaActual() {
+    const dia = new Intl.DateTimeFormat('en-US', { timeZone: zonaHorariaChile, weekday: 'short' }).format(new Date());
+    if (dia === 'Sat') return 'SAB';
+    if (dia === 'Sun') return 'DOM';
+    return 'LV';
+}
+function planHoraActual() {
+    const partes = Object.fromEntries(
+        formatoHoraChile.formatToParts(new Date()).filter(p => p.type !== 'literal').map(p => [p.type, p.value])
+    );
+    return `${partes.hour}:${partes.minute}`;
+}
+
+let planInicializado = false;
+
+function abrirPlanificador() {
+    const overlay = document.getElementById('plan-overlay');
+    const origen = document.getElementById('plan-origen');
+    const destino = document.getElementById('plan-destino');
+
+    if (!planInicializado) {
+        const opciones = planEstacionesHTML();
+        origen.innerHTML = opciones;
+        destino.innerHTML = opciones;
+        origen.value = "Concepción";
+        destino.value = "Coronel";
+        planInicializado = true;
+    }
+    document.getElementById('plan-dia').value = planDiaActual();
+    document.getElementById('plan-hora').value = planHoraActual();
+
+    overlay.hidden = false;
+    overlay.classList.add('abierto');
+    document.body.classList.add('plan-abierto');
+    ejecutarPlanificador();
+}
+
+function cerrarPlanificador() {
+    const overlay = document.getElementById('plan-overlay');
+    overlay.classList.remove('abierto');
+    overlay.hidden = true;
+    document.body.classList.remove('plan-abierto');
+}
+
+document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && document.getElementById('plan-overlay').classList.contains('abierto')) cerrarPlanificador();
+});
+document.getElementById('plan-overlay').addEventListener('click', function (e) {
+    if (e.target === this) cerrarPlanificador();   // clic fuera del panel
+});
 </script>
 <!-- ===== PWA: registro del Service Worker (soporte offline) ===== -->
 <script>
