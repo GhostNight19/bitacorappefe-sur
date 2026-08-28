@@ -212,6 +212,68 @@
             .clock-pulse { animation: pulso-reloj 2s ease-out infinite; }
             @keyframes pulso-reloj { 0%, 55%, 100% { box-shadow: 0 0 0 4px rgba(74, 222, 128, 0.12); } 25% { box-shadow: 0 0 0 8px rgba(74, 222, 128, 0); } }
         }
+
+        /* ===== PAUTA DIARIA · MIS TURNOS ===== */
+        .pauta-btn { background-color: #6f42c1; color: #fff; }
+        .pauta-form { grid-template-columns: 1fr; }
+        .pauta-form .plan-fila { grid-template-columns: minmax(0,1fr) auto; }
+        .pauta-auto { position: relative; }
+        .pauta-auto input { width: 100%; min-height: 46px; padding: 9px 10px; border: 2px solid #cbd7e6; border-radius: 9px; background: #f8fbff; color: #172033; font: inherit; font-weight: 800; text-transform: uppercase; }
+        .pauta-auto input:focus { border-color: #6f42c1; outline: none; }
+        .pauta-sugerencias { position: absolute; z-index: 30; left: 0; right: 0; top: calc(100% + 4px); max-height: 264px; overflow-y: auto; background: #fff; border: 2px solid #cbd7e6; border-radius: 10px; box-shadow: 0 14px 30px rgba(9,25,55,0.20); }
+        .pauta-sug { display: block; width: 100%; padding: 11px 12px; border: 0; background: none; text-align: left; font: inherit; font-weight: 850; color: #172033; cursor: pointer; }
+        .pauta-sug + .pauta-sug { border-top: 1px solid #eef2f7; }
+        .pauta-sug:hover, .pauta-sug.activa { background: #eef0fd; }
+        .pauta-sug small { display: block; color: #7c8aa3; font-size: 0.74rem; font-weight: 750; }
+        .pauta-archivo { display: flex; align-items: center; justify-content: center; min-height: 46px; padding: 0 14px; border: 2px dashed #b9c8dc; border-radius: 9px; background: #f6f9fd; color: #2b3d5c; font-weight: 800; font-size: 0.86rem; text-align: center; cursor: pointer; }
+        .pauta-archivo:hover { background: #eef0fd; border-color: #6f42c1; }
+        .pauta-archivo input { display: none; }
+        .pauta-sec { min-height: 46px; padding: 0 14px; border: 2px solid #cbd7e6; border-radius: 9px; background: #fff; color: #2b3d5c; font-weight: 800; font-size: 0.86rem; cursor: pointer; white-space: nowrap; }
+        .pauta-sec:hover { background: #eef0fd; border-color: #6f42c1; }
+        .pauta-aviso { margin: 0 0 12px; padding: 10px 13px; border-radius: 10px; font-weight: 750; font-size: 0.88rem; line-height: 1.45; }
+        .pauta-aviso.ok { background: #e7f7ee; color: #0a5b36; border: 1px solid #9ed9bb; }
+        .pauta-aviso.info { background: #eaf2ff; color: #14459c; border: 1px solid #adc8f0; }
+        .pauta-aviso.error { background: #fdecec; color: #8d1d26; border: 1px solid #eab0b5; }
+
+        .pauta-turno { margin-bottom: 12px; padding: 13px 15px; background: #fff; border: 1px solid #dde5ef; border-left: 5px solid #6f42c1; border-radius: 11px; box-shadow: 0 3px 10px rgba(23,32,51,0.07); }
+        .pauta-turno.pauta-sin-servicio { border-left-color: #0b5ed7; }
+        .pauta-turno-top { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; margin-bottom: 9px; }
+        .pauta-n { padding: 4px 11px; border-radius: 999px; background: #efe7fd; color: #4c1d95; font-weight: 900; font-size: 0.86rem; }
+        .pauta-rol { padding: 4px 10px; border-radius: 999px; background: #e7f0ff; color: #14459c; font-weight: 850; font-size: 0.8rem; }
+        .pauta-rango { margin-left: auto; font-variant-numeric: tabular-nums; font-weight: 900; font-size: 1.02rem; color: #0f1c33; white-space: nowrap; }
+        .pauta-pareja { display: flex; flex-wrap: wrap; gap: 4px 12px; padding: 8px 11px; margin-bottom: 9px; border-radius: 9px; background: #f4f7fc; border: 1px solid #e3eaf4; color: #28374f; font-weight: 750; font-size: 0.87rem; }
+        .pauta-pareja b { color: #0f1c33; }
+        .pauta-servicios { color: #37455e; font-weight: 700; font-size: 0.9rem; line-height: 1.45; word-break: break-word; }
+        .pauta-datos { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 8px; margin: 10px 0 2px; }
+        .pauta-dato { padding: 7px 9px; border-radius: 9px; background: #f6f9fd; border: 1px solid #e3eaf4; }
+        .pauta-dato span { display: block; color: #6a7891; font-size: 0.67rem; font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase; }
+        .pauta-dato strong { font-size: 1.02rem; color: #0f1c33; font-variant-numeric: tabular-nums; }
+        .pauta-dato small { display: block; color: #55637a; font-weight: 750; font-size: 0.76rem; }
+        .pauta-trenes { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+        .pauta-tren { padding: 3px 9px; border-radius: 999px; background: #eef2f7; color: #28374f; font-weight: 850; font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+        .pauta-tren.sin-horario { background: #fff3e0; color: #8a5200; }
+        .pauta-cargar { width: 100%; min-height: 46px; margin-top: 11px; border: 0; border-radius: 9px; background: #6f42c1; color: #fff; font-weight: 850; font-size: 0.92rem; cursor: pointer; }
+        .pauta-cargar:hover { background: #5a34a3; }
+        .pauta-cargar.todo { margin: 0 0 14px; background: var(--azul-efe); }
+        .pauta-cargar.todo:hover { background: #0043c4; }
+        .pauta-chip { padding: 3px 9px; border-radius: 999px; background: #efe7fd; color: #4c1d95; font-weight: 900; font-size: 0.75rem; }
+        /* Aviso flotante al volver a la bitácora con los servicios cargados */
+        .pauta-toast { position: fixed; left: 12px; right: 12px; bottom: calc(env(safe-area-inset-bottom, 0px) + 18px); z-index: 1400; width: fit-content; max-width: min(540px, calc(100vw - 24px)); margin: 0 auto; padding: 13px 18px; border-radius: 12px; background: #0d2c1e; color: #d8f5e6; font-weight: 800; font-size: 0.92rem; line-height: 1.4; text-align: center; box-shadow: 0 14px 34px rgba(6, 20, 45, 0.38); transform: translateY(150%); opacity: 0; transition: transform 0.28s ease, opacity 0.28s ease; pointer-events: none; }
+        .pauta-toast.visible { transform: translateY(0); opacity: 1; }
+        .train-card.recien-cargada { animation: destello-tarjeta 1.6s ease-out 1; }
+        @keyframes destello-tarjeta { 0%, 100% { box-shadow: 0 2px 5px rgba(0,0,0,0.1); } 30% { box-shadow: 0 0 0 4px rgba(111, 66, 193, 0.45); } }
+
+        .pauta-pie { margin-top: 16px; padding-top: 12px; border-top: 1px dashed #cbd7e6; color: #6a7891; font-size: 0.78rem; font-weight: 700; line-height: 1.5; }
+
+        /* Pareja de turno mostrada dentro del planificador de viajes */
+        .plan-pareja { margin-top: 8px; padding: 6px 10px; border-radius: 8px; background: #f4f7fc; border: 1px solid #e3eaf4; color: #28374f; font-size: 0.83rem; font-weight: 750; line-height: 1.4; }
+        .plan-pareja-rol { margin-left: 3px; color: #7c8aa3; font-size: 0.78em; font-weight: 700; }
+
+        @media (max-width: 720px) {
+            .pauta-form .plan-fila { grid-template-columns: 1fr; }
+            .pauta-sec, .pauta-archivo { width: 100%; }
+            .pauta-rango { margin-left: 0; width: 100%; }
+        }
     </style>
 </head>
 <body>
@@ -236,6 +298,7 @@
     <div class="main-controls">
         <button class="btn add-btn" onclick="addService()">+ Nuevo Servicio</button>
         <button class="btn plan-btn" onclick="abrirPlanificador()">🧭 Planificar Viaje</button>
+        <button class="btn pauta-btn" onclick="abrirPauta()">👤 Mis Turnos</button>
         <button class="btn delete-all-btn" onclick="borrarTodo()">🗑️ Borrar Todo</button>
         <button class="btn pdf-btn" onclick="descargarBitacoraPDF()">📄 Descargar Bitácora</button>
 
@@ -278,7 +341,7 @@
             <div class="plan-fila">
                 <div class="plan-campo">
                     <label for="plan-dia">Día</label>
-                    <select id="plan-dia">
+                    <select id="plan-dia" onchange="planSincronizarPauta(); ejecutarPlanificador();">
                         <option value="LV">Lunes a Viernes</option>
                         <option value="SAB">Sábado</option>
                         <option value="DOM">Domingo</option>
@@ -290,9 +353,56 @@
                 </div>
                 <button type="button" class="plan-buscar" onclick="ejecutarPlanificador()">🔍 Buscar</button>
             </div>
+
+            <div class="plan-fila">
+                <div class="plan-campo" style="grid-column: 1 / -1;">
+                    <label for="plan-pauta">Pauta del día (para ver la pareja de cada servicio)</label>
+                    <select id="plan-pauta" onchange="planUsarPauta()"></select>
+                </div>
+            </div>
         </div>
 
         <div class="plan-cuerpo" id="plan-resultados" aria-live="polite"></div>
+    </div>
+</div>
+
+<!-- ===== Mis Turnos: lectura de la pauta diaria por nombre ===== -->
+<div id="pauta-overlay" class="plan-overlay" role="dialog" aria-modal="true" aria-labelledby="pauta-titulo" hidden>
+    <div class="plan-panel" role="document">
+        <div class="plan-head">
+            <div>
+                <h3 id="pauta-titulo">👤 Mis Turnos</h3>
+                <small>Pauta diaria · tripulaciones y servicios</small>
+            </div>
+            <button type="button" class="plan-cerrar" onclick="cerrarPauta()" aria-label="Cerrar mis turnos">✕</button>
+        </div>
+
+        <div class="plan-form pauta-form">
+            <div class="plan-campo">
+                <label for="pauta-nombre">Escribe tu apellido</label>
+                <div class="pauta-auto">
+                    <input type="text" id="pauta-nombre" autocomplete="off" autocapitalize="characters" spellcheck="false"
+                           placeholder="Escribe tu apellido"
+                           oninput="pautaAutocompletar()" onfocus="pautaAutocompletar()" onkeydown="pautaTeclaSugerencia(event)">
+                    <div id="pauta-sugerencias" class="pauta-sugerencias" role="listbox" hidden></div>
+                </div>
+            </div>
+
+            <div class="plan-fila">
+                <div class="plan-campo">
+                    <label for="pauta-fecha">Día de la pauta</label>
+                    <select id="pauta-fecha" onchange="pautaRenderizar()"></select>
+                </div>
+                <button type="button" class="plan-buscar" onclick="pautaRenderizar()">🔍 Ver turnos</button>
+            </div>
+
+            <!-- Las pautas llegan solas desde pautas/pautas.json, así que aquí no
+                 hay nada que cargar. Las funciones de subir un Excel a mano y de
+                 exportar el pautas.json siguen en el código (pautaSubirArchivos y
+                 pautaExportarJSON) por si alguna vez hace falta volver a mostrarlas. -->
+        </div>
+
+        <div class="plan-cuerpo" id="pauta-resultados" aria-live="polite"></div>
     </div>
 </div>
 
@@ -1420,7 +1530,10 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
                 filas.push({ time, statusClass, btnText, obs, motivo });
             });
 
-            estado.push({ idNumber, dia, tren, ruta, eqTipo, eqNum, maquinista, ayudante, conductor, filas });
+            const minimizada = card.classList.contains('minimized');
+            const pautaInfo = card.dataset.pauta || "";
+
+            estado.push({ idNumber, dia, tren, ruta, eqTipo, eqNum, maquinista, ayudante, conductor, filas, minimizada, pautaInfo });
         });
 
         localStorage.setItem('bitacoraEfeSur', JSON.stringify(estado));
@@ -1544,6 +1657,10 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
         });
         actualizarCampoConductor(data.idNumber);
         actualizarAvisosDescenso(data.idNumber);
+
+        // La marca del turno y el estado minimizado sobreviven a la recarga.
+        if (data.pautaInfo) pautaMarcarTarjeta(data.idNumber, data.pautaInfo);
+        if (data.minimizada) pautaMinimizarTarjeta(data.idNumber);
     }
 
     // --- FUNCIONES DE OPERACIÓN ---
@@ -2287,6 +2404,7 @@ function planTarjetaDirecto(op) {
                 <span class="plan-dur">${planDuracion(op.llegadaMin - op.salidaMin)}</span>
             </div>
             <div class="plan-detalle">${escHtml(planNombreRuta(op.ruta))} · ${op.paradas} ${op.paradas === 1 ? 'parada' : 'paradas'}</div>
+            ${planParejaHTML(op.servicio)}
         </div>`;
 }
 
@@ -2305,11 +2423,11 @@ function planTarjetaCombo(combo) {
             </div>
             <div class="plan-tramo">
                 <span class="plan-tramo-hora">${planHHMM(combo.tramo1.salida)}</span>
-                <span class="plan-tramo-txt">Tomar <strong>servicio ${escHtml(combo.tramo1.servicio)}</strong> (${escHtml(planNombreRuta(combo.tramo1.ruta))}) y bajar en <strong>${escHtml(combo.transbordo)}</strong> a las ${planHHMM(combo.tramo1.llegada)}.</span>
+                <span class="plan-tramo-txt">Tomar <strong>servicio ${escHtml(combo.tramo1.servicio)}</strong> (${escHtml(planNombreRuta(combo.tramo1.ruta))}) y bajar en <strong>${escHtml(combo.transbordo)}</strong> a las ${planHHMM(combo.tramo1.llegada)}.${planParejaHTML(combo.tramo1.servicio)}</span>
             </div>
             <div class="plan-tramo">
                 <span class="plan-tramo-hora">${planHHMM(combo.tramo2.salida)}</span>
-                <span class="plan-tramo-txt"><span class="plan-transbordo">⏱ ${combo.espera} min de espera en ${escHtml(combo.transbordo)}</span><br>Tomar <strong>servicio ${escHtml(combo.tramo2.servicio)}</strong> (${escHtml(planNombreRuta(combo.tramo2.ruta))}) y llegar a <strong>${escHtml(planEstado.destino)}</strong> a las ${planHHMM(combo.tramo2.llegada)}.</span>
+                <span class="plan-tramo-txt"><span class="plan-transbordo">⏱ ${combo.espera} min de espera en ${escHtml(combo.transbordo)}</span><br>Tomar <strong>servicio ${escHtml(combo.tramo2.servicio)}</strong> (${escHtml(planNombreRuta(combo.tramo2.ruta))}) y llegar a <strong>${escHtml(planEstado.destino)}</strong> a las ${planHHMM(combo.tramo2.llegada)}.${planParejaHTML(combo.tramo2.servicio)}</span>
             </div>
         </div>`;
 }
@@ -2439,6 +2557,1030 @@ document.addEventListener('keydown', function (e) {
 });
 document.getElementById('plan-overlay').addEventListener('click', function (e) {
     if (e.target === this) cerrarPlanificador();   // clic fuera del panel
+});
+
+/* =========================================================================
+   PAUTA DIARIA · MIS TURNOS
+   Lee las pautas diarias (las mismas planillas que llegan por WhatsApp) y
+   responde tres cosas: qué turnos hace una persona, con quién los hace y
+   qué servicios tiene que cargar en la bitácora.
+
+   Las pautas entran por dos caminos, y ambos terminan en el mismo lugar:
+     · automático → pautas/pautas.json, que viaja en el repositorio;
+     · manual     → el propio Excel, abierto aquí mismo desde el teléfono.
+   La planilla se guarda tal cual (filas de texto) y se interpreta acá, así
+   que da igual de dónde venga: el resultado es idéntico.
+   ========================================================================= */
+
+const PAUTA_ARCHIVO_REPO = 'pautas/pautas.json';
+const PAUTA_LLAVE_HOJAS  = 'pautasEfeSurHojas';   // planillas subidas a mano
+const PAUTA_LLAVE_NOMBRE = 'pautasEfeSurNombre';  // último nombre consultado
+const PAUTA_MAX_HOJAS    = 60;
+
+let PAUTA_HOJAS_REPO  = [];   // planillas que vienen del repositorio
+let PAUTA_HOJAS_LOCAL = [];   // planillas subidas desde este teléfono
+let PAUTAS            = [];   // pautas ya interpretadas, ordenadas por fecha
+let PAUTA_ROSTER      = [];   // nombres únicos que aparecen en las pautas
+
+/* ---------------------------------------------------------------- texto -- */
+
+function pautaNorm(txt) {
+    return String(txt == null ? '' : txt)
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .toUpperCase().replace(/\s+/g, ' ').trim();
+}
+
+// Quita las marcas que la pauta pone junto al nombre: (+), (-), (−), ** ...
+function pautaLimpiarNombre(txt) {
+    return String(txt == null ? '' : txt)
+        .replace(/[\(\[]\s*[-+−–]?\s*[\)\]]/g, ' ')
+        .replace(/[-+−–]\s*\)/g, ' ')
+        .replace(/\*+/g, ' ')
+        .replace(/\s+/g, ' ').trim();
+}
+
+const PAUTA_NO_NOMBRE = new Set([
+    'DESCANSO', 'LICENCIA MEDICA', 'FERIADO', 'FERIADO LEGAL', 'PERMISO ESPECIAL',
+    'VACACIONES', 'SIN TURNO', 'PRACTICA', 'PRACTICAS', 'JORNADA', 'MANIOBRA',
+    'EFE SUR', 'EQUIPO TRACCION CC', 'TURNOS', 'SERVICIOS', 'MAQUINISTA',
+    'AYUDANTE', 'APERTURA', 'TRASLADO', 'BASE', 'INICIO', 'INICIO SERVICIO',
+    'TERMINO', 'ENTREGA', 'REC', 'REC VALLE', 'REC EZ', 'REC PM', 'REC CC',
+    'ITINERARIO VIGENTE'
+]);
+
+// ¿La celda contiene el nombre de una persona y no un encabezado o una vía?
+function pautaEsNombre(txt) {
+    const t = pautaNorm(pautaLimpiarNombre(txt));
+    if (!t || t.length < 5 || t.length > 34) return false;
+    if (/[0-9]/.test(t)) return false;
+    if (!/^[A-ZÑ'. ]+$/.test(t)) return false;
+    if (PAUTA_NO_NOMBRE.has(t)) return false;
+    return t.split(' ').filter(Boolean).length >= 2;
+}
+
+// "N. J. HENRIQUEZ" -> "HENRIQUEZ" ; "I. BURGOS PILAR" -> "BURGOS PILAR"
+function pautaApellido(nombre) {
+    const t = pautaNorm(nombre);
+    return t.replace(/^(?:[A-ZÑ]\.?\s+)+/, '').trim() || t;
+}
+function pautaIniciales(nombre) {
+    const t = pautaNorm(nombre);
+    const m = t.match(/^(?:[A-ZÑ]\.?\s+)+/);
+    return m ? m[0].trim() : '';
+}
+
+/* -------------------------------------------------------------- servicios -- */
+
+// "20202-20301-304-309-20220" -> 20202, 20301, 20304, 20309, 20220
+// Los números cortos heredan el prefijo del último servicio completo. Si el
+// turno sigue en una segunda fila ("057-062-063-068"), el prefijo lo pone el
+// último servicio del tramo anterior.
+function pautaTrenesDeServicio(texto, prefijoPrevio) {
+    const bruto = String(texto || '');
+    if (!bruto) return [];
+
+    // Dentro de paréntesis solo sobreviven los servicios de 5 dígitos:
+    // "(baño 20844)" aporta el 20844, "(ZW V2/tope)" no aporta nada.
+    let limpio = bruto.replace(/[\(\[]([^)\]]*)[\)\]]/g, function (m, dentro) {
+        return ' ' + ((dentro.match(/\b\d{5}\b/g) || []).join(' ')) + ' ';
+    });
+    limpio = limpio
+        .replace(/\bV\s?\d+\b/gi, ' ')        // vías: V1, V2, V4, V8
+        .replace(/\bEMU\s*\d+/gi, ' ')        // material: EMU 117
+        .replace(/\bD\s?-\s?\d+/gi, ' ');     // locomotoras: D-7147
+
+    const trenes = [];
+    let ultimoCompleto = /^\d{5}$/.test(String(prefijoPrevio || '')) ? String(prefijoPrevio) : '';
+    limpio.split(/[^\d]+/).filter(Boolean).forEach(function (tok) {
+        let num = '';
+        if (tok.length === 5) { num = tok; ultimoCompleto = tok; }
+        else if (tok.length >= 2 && tok.length <= 4 && ultimoCompleto) {
+            num = ultimoCompleto.slice(0, 5 - tok.length) + tok;
+        }
+        if (num && trenes.indexOf(num) < 0) trenes.push(num);
+    });
+    return trenes;
+}
+
+/* ----------------------------------------------------------- interpretar -- */
+
+const PAUTA_SECCIONES = [
+    { clave: 'descanso',   etiqueta: 'Descanso',         re: /^DESCANSO$/ },
+    { clave: 'licencia',   etiqueta: 'Licencia médica',  re: /^LICENCIA MEDICA$/ },
+    { clave: 'feriado',    etiqueta: 'Feriado legal',    re: /^FERIADO( LEGAL)?$/ },
+    { clave: 'permiso',    etiqueta: 'Permiso especial', re: /^PERMISO ESPECIAL$/ },
+    { clave: 'vacaciones', etiqueta: 'Vacaciones',       re: /^VACACIONES$/ },
+    { clave: 'sinturno',   etiqueta: 'Sin turno',        re: /^SIN TURNO$/ }
+];
+
+function pautaGrupoDia(iso) {
+    const d = new Date(iso + 'T12:00:00');
+    const n = d.getDay();
+    return n === 6 ? 'SAB' : n === 0 ? 'DOM' : 'LV';
+}
+function pautaFechaLarga(iso) {
+    const d = new Date(iso + 'T12:00:00');
+    const txt = new Intl.DateTimeFormat('es-CL', {
+        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+    }).format(d);
+    return txt.charAt(0).toUpperCase() + txt.slice(1);
+}
+function pautaFechaCorta(iso) {
+    const d = new Date(iso + 'T12:00:00');
+    const txt = new Intl.DateTimeFormat('es-CL', {
+        weekday: 'short', day: '2-digit', month: 'short'
+    }).format(d);
+    return txt.charAt(0).toUpperCase() + txt.slice(1);
+}
+
+// Convierte una planilla (filas de texto) en la pauta del día.
+function pautaInterpretarHoja(hoja) {
+    const filas = (hoja && hoja.filas) || [];
+    const celda = (f, i) => String((f && f[i]) || '').trim();
+
+    // 1) Fila de encabezados: la que empieza con "TURNOS".
+    let iCab = -1;
+    for (let i = 0; i < Math.min(filas.length, 14); i++) {
+        if (pautaNorm(celda(filas[i], 0)).indexOf('TURNO') === 0) { iCab = i; break; }
+    }
+    if (iCab < 0) return null;
+
+    // 2) La pauta viene en dos formatos. Entre semana hay una columna en
+    //    blanco entre MAQUINISTA y AYUDANTE (y dos columnas más de término);
+    //    el fin de semana esa columna no existe.
+    const cab = filas[iCab] || [];
+    const formatoLargo = pautaNorm(celda(cab, 4)).indexOf('AYUDANTE') >= 0;
+    const iAyudante = formatoLargo ? 4 : 3;
+    const iPractica = 3;
+    const b = formatoLargo ? 5 : 4;   // primera columna de horarios
+    const campos = formatoLargo
+        ? { aperturaLugar: b, apertura: b + 1, traslado: b + 2, base: b + 3, inicio: b + 4,
+            baseTermino: b + 5, terminoServicio: b + 6, entrega: b + 9, fin: b + 10, baseFin: b + 11 }
+        : { aperturaLugar: b, apertura: b + 1, traslado: b + 2, base: b + 3, inicio: b + 4,
+            baseTermino: b + 5, terminoServicio: -1, entrega: b + 6, fin: b + 7, baseFin: b + 8 };
+
+    const turnos = [];
+    const listas = {};
+    let seccion = null;
+    let previo = null;
+
+    for (let i = iCab + 1; i < filas.length; i++) {
+        const f = filas[i] || [];
+        const c0 = pautaNorm(celda(f, 0));
+        const restoVacio = f.slice(1).every(c => !String(c || '').trim());
+
+        // ¿Empieza un listado (DESCANSO, LICENCIA MEDICA, ...)?
+        const sec = (c0 && restoVacio) ? PAUTA_SECCIONES.find(s => s.re.test(c0)) : null;
+        if (sec) {
+            seccion = sec;
+            if (!listas[sec.clave]) listas[sec.clave] = { etiqueta: sec.etiqueta, nombres: [] };
+            previo = null;
+            continue;
+        }
+
+        const servicio   = celda(f, 1);
+        const maquinista = pautaLimpiarNombre(celda(f, 2));
+        const ayudante   = pautaLimpiarNombre(celda(f, iAyudante));
+        const tieneHoras = f.slice(b).some(c => /\d\s*:\s*\d/.test(String(c || '')));
+
+        // Dentro de un listado las filas solo traen nombres, repartidos en
+        // cualquier columna. Se corta en cuanto reaparece una fila con horas.
+        if (seccion && !tieneHoras && !/^\d+$/.test(c0)) {
+            f.forEach(function (cel) {
+                if (pautaEsNombre(cel)) {
+                    const n = pautaLimpiarNombre(cel);
+                    if (listas[seccion.clave].nombres.indexOf(n) < 0) listas[seccion.clave].nombres.push(n);
+                }
+            });
+            continue;
+        }
+        seccion = null;
+
+        // La fila PRACTICA no es un turno: cuelga un alumno del turno anterior.
+        if (/^PRACTICAS?$/.test(pautaNorm(servicio))) {
+            const alumno = pautaLimpiarNombre(celda(f, iPractica)) || pautaLimpiarNombre(celda(f, iAyudante));
+            if (previo && alumno && pautaEsNombre(alumno) && previo.practicas.indexOf(alumno) < 0) {
+                previo.practicas.push(alumno);
+            }
+            continue;
+        }
+
+        // Sin tripulación no hay a quién buscar (filas "Jornada" en blanco).
+        if (!maquinista && !ayudante) { previo = null; continue; }
+
+        // Un turno puede ocupar dos filas (dos tramos). La segunda no repite el
+        // número: se hereda solo si va con la misma pareja.
+        const mismaPareja = previo &&
+            pautaNorm(maquinista) === pautaNorm(previo.maquinista) &&
+            pautaNorm(ayudante) === pautaNorm(previo.ayudante);
+
+        const turno = {
+            turno: /^\d+$/.test(c0) ? c0 : (mismaPareja ? previo.turno : ''),
+            continuacion: !/^\d+$/.test(c0) && !!mismaPareja,
+            servicios: servicio,
+            maquinista: maquinista,
+            ayudante: ayudante,
+            practicas: [],
+            trenes: pautaTrenesDeServicio(servicio,
+                mismaPareja && previo.trenes.length ? previo.trenes[previo.trenes.length - 1] : ''),
+            descanso: /^DESCANSO$/.test(pautaNorm(servicio))
+        };
+        Object.keys(campos).forEach(function (k) {
+            turno[k] = campos[k] < 0 ? '' : celda(f, campos[k]);
+        });
+
+        turnos.push(turno);
+        previo = turno;
+    }
+
+    return {
+        fecha: hoja.fecha,
+        archivo: hoja.archivo || '',
+        origen: hoja.origen || 'repositorio',
+        dia: pautaGrupoDia(hoja.fecha),
+        titulo: pautaFechaLarga(hoja.fecha),
+        corta: pautaFechaCorta(hoja.fecha),
+        turnos: turnos,
+        listas: listas
+    };
+}
+
+/* ------------------------------------------------------------ inventario -- */
+
+function pautaReconstruir() {
+    const porFecha = new Map();
+    PAUTA_HOJAS_REPO.forEach(h => { if (h && h.fecha) porFecha.set(h.fecha, Object.assign({}, h, { origen: 'repositorio' })); });
+    // Lo subido a mano manda: es lo más reciente que vio la persona.
+    PAUTA_HOJAS_LOCAL.forEach(h => { if (h && h.fecha) porFecha.set(h.fecha, Object.assign({}, h, { origen: 'teléfono' })); });
+
+    PAUTAS = [...porFecha.values()]
+        .map(pautaInterpretarHoja)
+        .filter(Boolean)
+        .sort((a, b) => a.fecha.localeCompare(b.fecha));
+
+    pautaConstruirRoster();
+    pautaLlenarSelectorFechas();
+    pautaLlenarSelectorPlanificador();
+}
+
+function pautaConstruirRoster() {
+    const mapa = new Map();
+    const add = (n) => {
+        const k = pautaNorm(n);
+        if (k && k.length >= 4 && !mapa.has(k)) mapa.set(k, pautaLimpiarNombre(n));
+    };
+    PAUTAS.forEach(p => {
+        p.turnos.forEach(t => { add(t.maquinista); add(t.ayudante); t.practicas.forEach(add); });
+        Object.keys(p.listas).forEach(c => p.listas[c].nombres.forEach(add));
+    });
+    PAUTA_ROSTER = [...mapa.values()].sort((a, b) =>
+        pautaApellido(a).localeCompare(pautaApellido(b), 'es') || a.localeCompare(b, 'es'));
+}
+
+function pautaGuardarLocales() {
+    try {
+        localStorage.setItem(PAUTA_LLAVE_HOJAS, JSON.stringify(PAUTA_HOJAS_LOCAL.slice(-PAUTA_MAX_HOJAS)));
+    } catch (e) {
+        console.warn('No se pudo guardar la pauta en el teléfono:', e);
+    }
+}
+
+function pautaLeerLocales() {
+    try {
+        const crudo = localStorage.getItem(PAUTA_LLAVE_HOJAS);
+        PAUTA_HOJAS_LOCAL = crudo ? JSON.parse(crudo) : [];
+    } catch (e) { PAUTA_HOJAS_LOCAL = []; }
+    if (!Array.isArray(PAUTA_HOJAS_LOCAL)) PAUTA_HOJAS_LOCAL = [];
+}
+
+// Descarga las pautas publicadas en el repositorio. Sin conexión (o sin el
+// archivo todavía) la app sigue funcionando con lo que ya tenga guardado.
+async function pautaCargarRepositorio() {
+    try {
+        const r = await fetch(PAUTA_ARCHIVO_REPO, { cache: 'no-cache' });
+        if (!r.ok) return false;
+        const j = await r.json();
+        PAUTA_HOJAS_REPO = Array.isArray(j.hojas) ? j.hojas.filter(h => h && h.fecha && Array.isArray(h.filas)) : [];
+        return true;
+    } catch (e) {
+        return false;
+    }
+}
+
+/* --------------------------------------------------- lector de Excel web -- */
+
+// Lee un .xlsx directamente en el navegador: el archivo es un ZIP y el
+// navegador ya sabe descomprimir (DecompressionStream), así que no hace falta
+// ninguna librería externa ni conexión a internet.
+async function pautaInflar(bytes) {
+    if (typeof DecompressionStream === 'undefined') {
+        throw new Error('este navegador no puede abrir archivos Excel');
+    }
+    const flujo = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+    return new Uint8Array(await new Response(flujo).arrayBuffer());
+}
+
+async function pautaAbrirZip(buffer) {
+    const v = new DataView(buffer.buffer, buffer.byteOffset, buffer.byteLength);
+    const u32 = (p) => v.getUint32(p, true);
+    const u16 = (p) => v.getUint16(p, true);
+
+    // El índice del ZIP (directorio central) está al final: se busca hacia atrás.
+    let eocd = -1;
+    for (let p = buffer.length - 22; p >= 0 && p > buffer.length - 66000; p--) {
+        if (u32(p) === 0x06054b50) { eocd = p; break; }
+    }
+    if (eocd < 0) throw new Error('el archivo no parece un Excel válido (.xlsx)');
+
+    let p = u32(eocd + 16);
+    const total = u16(eocd + 10);
+    const salida = {};
+    const dec = new TextDecoder('utf-8');
+
+    for (let i = 0; i < total && p + 46 <= buffer.length; i++) {
+        if (u32(p) !== 0x02014b50) break;
+        const metodo     = u16(p + 10);
+        const compSize   = u32(p + 20);
+        const largoNom   = u16(p + 28);
+        const largoExtra = u16(p + 30);
+        const largoCom   = u16(p + 32);
+        const offLocal   = u32(p + 42);
+        const nombre     = dec.decode(buffer.subarray(p + 46, p + 46 + largoNom));
+
+        if (/^xl\/(worksheets\/sheet\d+\.xml|sharedStrings\.xml)$/.test(nombre)) {
+            const nomLocal   = u16(offLocal + 26);
+            const extraLocal = u16(offLocal + 28);
+            const ini = offLocal + 30 + nomLocal + extraLocal;
+            const crudo = buffer.subarray(ini, ini + compSize);
+            salida[nombre] = dec.decode(metodo === 0 ? crudo : await pautaInflar(crudo));
+        }
+        p += 46 + largoNom + largoExtra + largoCom;
+    }
+    return salida;
+}
+
+function pautaTextosCompartidos(xml) {
+    if (!xml) return [];
+    const doc = new DOMParser().parseFromString(xml, 'application/xml');
+    return [...doc.getElementsByTagName('si')].map(si =>
+        [...si.getElementsByTagName('t')].map(t => t.textContent).join('')
+    );
+}
+
+function pautaColumnaDeRef(ref) {
+    const letras = String(ref || '').replace(/[^A-Z]/g, '');
+    let n = 0;
+    for (let i = 0; i < letras.length; i++) n = n * 26 + (letras.charCodeAt(i) - 64);
+    return n - 1;
+}
+
+// Excel guarda las horas como fracción de día: 0,177083333 = 4:15.
+function pautaNumeroACelda(bruto) {
+    const n = parseFloat(bruto);
+    if (!isFinite(n)) return bruto;
+    if (n > 0 && n < 1 && String(bruto).length > 6) {
+        const minutos = Math.round(n * 1440);
+        return Math.floor(minutos / 60) + ':' + String(minutos % 60).padStart(2, '0');
+    }
+    return String(bruto);
+}
+
+function pautaFilasDeHojaXml(xml, compartidos) {
+    const doc = new DOMParser().parseFromString(xml, 'application/xml');
+    const filas = [];
+    [...doc.getElementsByTagName('row')].forEach(function (row) {
+        const celdas = [];
+        let siguiente = 0;
+        [...row.getElementsByTagName('c')].forEach(function (c) {
+            const ref = c.getAttribute('r');
+            const col = ref ? pautaColumnaDeRef(ref) : siguiente;
+            const tipo = c.getAttribute('t');
+            let valor = '';
+            if (tipo === 'inlineStr') {
+                valor = [...c.getElementsByTagName('t')].map(t => t.textContent).join('');
+            } else {
+                const vs = c.getElementsByTagName('v');
+                const bruto = vs.length ? vs[0].textContent : '';
+                if (tipo === 's') valor = compartidos[parseInt(bruto, 10)] || '';
+                else if (tipo === 'str' || tipo === 'e') valor = bruto;
+                else valor = pautaNumeroACelda(bruto);
+            }
+            while (celdas.length < col) celdas.push('');
+            celdas[col] = String(valor).replace(/\s+/g, ' ').trim();
+            siguiente = col + 1;
+        });
+        while (celdas.length && celdas[celdas.length - 1] === '') celdas.pop();
+        filas.push(celdas);
+    });
+    while (filas.length && !filas[filas.length - 1].some(Boolean)) filas.pop();
+    return filas;
+}
+
+const PAUTA_MESES = {
+    enero: 1, febrero: 2, marzo: 3, abril: 4, mayo: 5, junio: 6, julio: 7,
+    agosto: 8, septiembre: 9, setiembre: 9, octubre: 10, noviembre: 11, diciembre: 12
+};
+
+// La fecha sale del encabezado ("viernes, 28 de agosto de 2026"); si la
+// planilla no la trae, se intenta con el nombre del archivo.
+function pautaFechaDeFilas(filas, nombreArchivo) {
+    const candidatos = [];
+    (filas || []).slice(0, 4).forEach(f => (f || []).forEach(c => candidatos.push(String(c || ''))));
+    candidatos.push(String(nombreArchivo || ''));
+
+    for (const txt of candidatos) {
+        const t = txt.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+        const iso = t.match(/(20\d{2})-(\d{2})-(\d{2})/);
+        if (iso) return iso[0];
+        const m = t.match(/(\d{1,2})\s*(?:de\s*)?([a-z]+)\s*(?:de\s*)?(\d{4})?/);
+        if (m && PAUTA_MESES[m[2]]) {
+            const anio = m[3] ? parseInt(m[3], 10) : new Date().getFullYear();
+            const d = new Date(Date.UTC(anio, PAUTA_MESES[m[2]] - 1, parseInt(m[1], 10)));
+            if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10);
+        }
+    }
+    return '';
+}
+
+/* ------------------------------------------------------------ subir pauta -- */
+
+async function pautaSubirArchivos(input) {
+    const archivos = [...(input.files || [])];
+    input.value = '';
+    if (!archivos.length) return;
+
+    const nuevas = [];
+    const errores = [];
+
+    for (const file of archivos) {
+        try {
+            if (/\.json$/i.test(file.name)) {
+                const j = JSON.parse(await file.text());
+                const hojas = Array.isArray(j.hojas) ? j.hojas : (Array.isArray(j) ? j : []);
+                hojas.forEach(h => { if (h && h.fecha && Array.isArray(h.filas)) nuevas.push(h); });
+                continue;
+            }
+            const zip = await pautaAbrirZip(new Uint8Array(await file.arrayBuffer()));
+            const hoja = Object.keys(zip).filter(n => /^xl\/worksheets\/sheet\d+\.xml$/.test(n)).sort()[0];
+            if (!hoja) throw new Error('no se encontró la hoja de cálculo');
+            const filas = pautaFilasDeHojaXml(zip[hoja], pautaTextosCompartidos(zip['xl/sharedStrings.xml']));
+            const fecha = pautaFechaDeFilas(filas, file.name);
+            if (!fecha) throw new Error('no se pudo deducir la fecha de la pauta');
+            nuevas.push({ archivo: file.name, fecha: fecha, filas: filas });
+        } catch (e) {
+            errores.push(file.name + ': ' + (e.message || e));
+        }
+    }
+
+    nuevas.forEach(function (h) {
+        PAUTA_HOJAS_LOCAL = PAUTA_HOJAS_LOCAL.filter(x => x.fecha !== h.fecha);
+        PAUTA_HOJAS_LOCAL.push(h);
+    });
+    PAUTA_HOJAS_LOCAL.sort((a, b) => a.fecha.localeCompare(b.fecha));
+    pautaGuardarLocales();
+    pautaReconstruir();
+
+    if (nuevas.length) {
+        const sel = document.getElementById('pauta-fecha');
+        if (sel) sel.value = nuevas[nuevas.length - 1].fecha;
+    }
+    pautaRenderizar();
+
+    const caja = document.getElementById('pauta-resultados');
+    if (!caja) return;
+    let aviso = '';
+    if (nuevas.length) {
+        aviso += `<div class="pauta-aviso ok">✅ ${nuevas.length} ${nuevas.length === 1 ? 'pauta cargada' : 'pautas cargadas'}: ` +
+                 escHtml(nuevas.map(h => pautaFechaCorta(h.fecha)).join(' · ')) + `.</div>`;
+    }
+    if (errores.length) {
+        aviso += `<div class="pauta-aviso error">⚠️ No se pudo leer: ${escHtml(errores.join(' | '))}</div>`;
+    }
+    caja.insertAdjacentHTML('afterbegin', aviso);
+}
+
+// Genera el pautas.json que hay que dejar en la carpeta "pautas" del repositorio.
+function pautaExportarJSON() {
+    const porFecha = new Map();
+    PAUTA_HOJAS_REPO.forEach(h => porFecha.set(h.fecha, { archivo: h.archivo || '', fecha: h.fecha, filas: h.filas }));
+    PAUTA_HOJAS_LOCAL.forEach(h => porFecha.set(h.fecha, { archivo: h.archivo || '', fecha: h.fecha, filas: h.filas }));
+
+    const hojas = [...porFecha.values()].sort((a, b) => a.fecha.localeCompare(b.fecha));
+    if (!hojas.length) { alert('Todavía no hay ninguna pauta cargada.'); return; }
+
+    const blob = new Blob([JSON.stringify({ version: 1, generado: fechaChile(), hojas: hojas })],
+                          { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'pautas.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+
+/* --------------------------------------------------------- buscar persona -- */
+
+function pautaSubsecuencia(consulta, texto) {
+    let i = 0;
+    for (let j = 0; j < texto.length && i < consulta.length; j++) {
+        if (texto[j] === consulta[i]) i++;
+    }
+    return i === consulta.length;
+}
+
+// Ordena por apellido: escribir "HENRIQUEZ" tiene que ofrecer primero a los
+// Henríquez, no a cualquiera que lleve esas letras sueltas.
+function pautaSugerencias(consulta, limite) {
+    const q = pautaNorm(consulta).replace(/\./g, '').trim();
+    if (!q) return PAUTA_ROSTER.slice(0, limite || 8);
+
+    const res = [];
+    PAUTA_ROSTER.forEach(function (nombre) {
+        const completo = pautaNorm(nombre).replace(/\./g, '');
+        const ape = pautaApellido(nombre);
+        let p = 0;
+        if (ape === q) p = 1000;
+        else if (ape.indexOf(q) === 0) p = 900;
+        else if (ape.split(' ').some(w => w.indexOf(q) === 0)) p = 820;
+        else if (completo.indexOf(q) === 0) p = 760;
+        else if (ape.indexOf(q) >= 0) p = 640;
+        else if (completo.indexOf(q) >= 0) p = 560;
+        else if (q.length >= 4 && pautaSubsecuencia(q, ape)) p = 240;
+        if (p) res.push({ nombre: nombre, p: p });
+    });
+
+    return res
+        .sort((a, b) => b.p - a.p || pautaApellido(a.nombre).localeCompare(pautaApellido(b.nombre), 'es'))
+        .slice(0, limite || 8)
+        .map(r => r.nombre);
+}
+
+let pautaSugerenciaActiva = -1;
+
+function pautaAutocompletar() {
+    const input = document.getElementById('pauta-nombre');
+    const caja = document.getElementById('pauta-sugerencias');
+    if (!input || !caja) return;
+
+    const opciones = pautaSugerencias(input.value, 8);
+    pautaSugerenciaActiva = -1;
+
+    if (!opciones.length) {
+        caja.hidden = true;
+        caja.innerHTML = '';
+        return;
+    }
+    caja.innerHTML = opciones.map(function (n) {
+        const ini = pautaIniciales(n);
+        return `<button type="button" class="pauta-sug" role="option" onclick="pautaElegirNombre(&quot;${escAttr(n)}&quot;)">` +
+               `${escHtml(pautaApellido(n))}<small>${escHtml(n)}</small></button>`;
+    }).join('');
+    caja.hidden = false;
+}
+
+function pautaTeclaSugerencia(e) {
+    const caja = document.getElementById('pauta-sugerencias');
+    if (!caja || caja.hidden) {
+        if (e.key === 'Enter') { e.preventDefault(); pautaRenderizar(); }
+        return;
+    }
+    const botones = [...caja.querySelectorAll('.pauta-sug')];
+    if (!botones.length) return;
+
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        pautaSugerenciaActiva += (e.key === 'ArrowDown' ? 1 : -1);
+        if (pautaSugerenciaActiva < 0) pautaSugerenciaActiva = botones.length - 1;
+        if (pautaSugerenciaActiva >= botones.length) pautaSugerenciaActiva = 0;
+        botones.forEach((b, i) => b.classList.toggle('activa', i === pautaSugerenciaActiva));
+        botones[pautaSugerenciaActiva].scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'Enter') {
+        e.preventDefault();
+        botones[pautaSugerenciaActiva >= 0 ? pautaSugerenciaActiva : 0].click();
+    } else if (e.key === 'Escape') {
+        caja.hidden = true;
+    }
+}
+
+function pautaElegirNombre(nombre) {
+    const input = document.getElementById('pauta-nombre');
+    const caja = document.getElementById('pauta-sugerencias');
+    if (input) input.value = nombre;
+    if (caja) { caja.hidden = true; caja.innerHTML = ''; }
+    try { localStorage.setItem(PAUTA_LLAVE_NOMBRE, nombre); } catch (e) {}
+    pautaRenderizar();
+}
+
+// El nombre del roster que corresponde a lo escrito (o la mejor coincidencia).
+function pautaNombreResuelto() {
+    const input = document.getElementById('pauta-nombre');
+    const texto = input ? input.value : '';
+    if (!pautaNorm(texto)) return '';
+    const exacto = PAUTA_ROSTER.find(n => pautaNorm(n) === pautaNorm(texto));
+    if (exacto) return exacto;
+    const sug = pautaSugerencias(texto, 1);
+    return sug.length ? sug[0] : '';
+}
+
+function pautaTurnosDe(pauta, nombre) {
+    const k = pautaNorm(nombre);
+    const res = [];
+    pauta.turnos.forEach(function (t, idx) {
+        let rol = '';
+        if (pautaNorm(t.maquinista) === k) rol = 'Maquinista';
+        else if (pautaNorm(t.ayudante) === k) rol = 'Ayudante';
+        else if (t.practicas.some(p => pautaNorm(p) === k)) rol = 'Práctica';
+        if (rol) res.push({ turno: t, rol: rol, idx: idx });
+    });
+    return res;
+}
+
+function pautaSituacionDe(pauta, nombre) {
+    const k = pautaNorm(nombre);
+    for (const clave in pauta.listas) {
+        if (pauta.listas[clave].nombres.some(n => pautaNorm(n) === k)) return pauta.listas[clave].etiqueta;
+    }
+    return '';
+}
+
+// Con quién trabaja: el resto de la tripulación de ese mismo turno.
+function pautaParejaDe(turno, nombre) {
+    const k = pautaNorm(nombre);
+    const gente = [];
+    if (turno.maquinista && pautaNorm(turno.maquinista) !== k) gente.push({ nombre: turno.maquinista, rol: 'Maquinista' });
+    if (turno.ayudante && pautaNorm(turno.ayudante) !== k) gente.push({ nombre: turno.ayudante, rol: 'Ayudante' });
+    turno.practicas.forEach(p => { if (pautaNorm(p) !== k) gente.push({ nombre: p, rol: 'Práctica' }); });
+    return gente;
+}
+
+// Quién va en un servicio determinado (lo usa el planificador de viajes).
+function pautaTripulacionDeTren(pauta, numero) {
+    if (!pauta) return [];
+    const n = String(numero).trim();
+    return pauta.turnos.filter(t => t.trenes.indexOf(n) >= 0);
+}
+
+/* -------------------------------------------------------------- pantalla -- */
+
+function pautaLlenarSelectorFechas() {
+    const sel = document.getElementById('pauta-fecha');
+    if (!sel) return;
+    const previo = sel.value;
+    sel.innerHTML = PAUTAS.length
+        ? PAUTAS.map(p => `<option value="${escAttr(p.fecha)}">${escHtml(p.titulo)}</option>`).join('')
+        : `<option value="">— sin pautas cargadas —</option>`;
+
+    if (previo && PAUTAS.some(p => p.fecha === previo)) { sel.value = previo; return; }
+    const hoy = fechaArchivoChile();
+    const proxima = PAUTAS.find(p => p.fecha >= hoy) || PAUTAS[PAUTAS.length - 1];
+    if (proxima) sel.value = proxima.fecha;
+}
+
+function pautaSeleccionada() {
+    const sel = document.getElementById('pauta-fecha');
+    const fecha = sel ? sel.value : '';
+    return PAUTAS.find(p => p.fecha === fecha) || null;
+}
+
+function pautaHoraRango(t) {
+    const ini = t.apertura || t.inicio || '';
+    const fin = t.fin || t.terminoServicio || '';
+    if (ini && fin) return ini + ' → ' + fin;
+    return ini || fin || '';
+}
+
+function pautaTarjetaTurno(pauta, entrada, nombre) {
+    const t = entrada.turno;
+    const pareja = pautaParejaDe(t, nombre);
+    const rango = pautaHoraRango(t);
+    const iPauta = PAUTAS.indexOf(pauta);
+
+    const dato = (etiqueta, valor, sub) => valor
+        ? `<div class="pauta-dato"><span>${escHtml(etiqueta)}</span><strong>${escHtml(valor)}</strong>${sub ? `<small>${escHtml(sub)}</small>` : ''}</div>`
+        : '';
+
+    const trenes = t.trenes.map(function (n) {
+        const conocido = (baseDatosTrenes[pauta.dia] || {})[n];
+        return `<span class="pauta-tren${conocido ? '' : ' sin-horario'}" title="${conocido ? 'Con horarios en la memoria maestra' : 'Sin horarios guardados: la tarjeta queda en blanco'}">${escHtml(n)}</span>`;
+    }).join('');
+
+    return `
+        <div class="pauta-turno${t.trenes.length ? '' : ' pauta-sin-servicio'}">
+            <div class="pauta-turno-top">
+                <span class="pauta-n">${t.turno ? `Turno ${escHtml(t.turno)}${t.continuacion ? ' · 2º tramo' : ''}` : 'Servicio extra'}</span>
+                <span class="pauta-rol">${escHtml(entrada.rol)}</span>
+                ${rango ? `<span class="pauta-rango">${escHtml(rango)}</span>` : ''}
+            </div>
+
+            ${pareja.length
+                ? `<div class="pauta-pareja">👥 ${pareja.map(g => `<span><b>${escHtml(g.nombre)}</b> · ${escHtml(g.rol.toLowerCase())}</span>`).join('')}</div>`
+                : `<div class="pauta-pareja">👤 Sin pareja indicada en la pauta.</div>`}
+
+            <div class="pauta-servicios">${escHtml(t.servicios || '—')}</div>
+
+            <div class="pauta-datos">
+                ${dato('Presentación', t.apertura, t.aperturaLugar)}
+                ${dato('Inicio servicio', t.inicio, t.base)}
+                ${dato('Término', t.fin, t.baseFin)}
+                ${dato('Traslado', t.traslado, '')}
+            </div>
+
+            ${t.trenes.length ? `<div class="pauta-trenes">${trenes}</div>` : ''}
+            ${t.trenes.length
+                ? `<button type="button" class="pauta-cargar" onclick="pautaCargarTurno(${iPauta}, ${entrada.idx})">➕ Cargar estos ${t.trenes.length} servicios a la bitácora</button>`
+                : ''}
+        </div>`;
+}
+
+function pautaRenderizar() {
+    const caja = document.getElementById('pauta-resultados');
+    if (!caja) return;
+
+    if (!PAUTAS.length) {
+        caja.innerHTML = `<div class="plan-vacio">No se pudieron cargar las pautas.<br>
+            Revisa que tengas señal y vuelve a abrir la aplicación.</div>`;
+        return;
+    }
+
+    const pauta = pautaSeleccionada();
+    if (!pauta) { caja.innerHTML = `<div class="plan-vacio">Elige un día.</div>`; return; }
+
+    const nombre = pautaNombreResuelto();
+    if (!nombre) {
+        caja.innerHTML = `<div class="plan-vacio">Escribe tu apellido arriba y elige tu nombre de la lista.<br>
+            <small>Hay ${PAUTA_ROSTER.length} personas en las pautas cargadas.</small></div>`;
+        return;
+    }
+    try { localStorage.setItem(PAUTA_LLAVE_NOMBRE, nombre); } catch (e) {}
+
+    const entradas = pautaTurnosDe(pauta, nombre);
+    const situacion = pautaSituacionDe(pauta, nombre);
+
+    let html = `<p class="plan-hint"><strong>${escHtml(nombre)}</strong> · ${escHtml(pauta.titulo)}` +
+               `${pauta.origen === 'teléfono' ? ' · pauta cargada a mano' : ''}</p>`;
+
+    if (!entradas.length) {
+        html += situacion
+            ? `<div class="pauta-aviso info">🛌 Ese día figuras en <strong>${escHtml(situacion)}</strong>. No tienes turnos asignados.</div>`
+            : `<div class="plan-vacio">No apareces en la pauta de ese día.<br>Revisa el día elegido o la escritura del nombre.</div>`;
+        caja.innerHTML = html + pautaPieHTML(pauta);
+        return;
+    }
+
+    const totalTrenes = entradas.reduce((n, e) => n + e.turno.trenes.length, 0);
+    if (totalTrenes) {
+        html += `<button type="button" class="pauta-cargar todo" onclick="pautaCargarTodo(${PAUTAS.indexOf(pauta)})">` +
+                `➕ Cargar mis ${totalTrenes} servicios a la bitácora (minimizados)</button>`;
+    }
+    if (situacion) {
+        html += `<div class="pauta-aviso info">También apareces en el listado de <strong>${escHtml(situacion)}</strong>.</div>`;
+    }
+
+    html += entradas.map(e => pautaTarjetaTurno(pauta, e, nombre)).join('');
+    caja.innerHTML = html + pautaPieHTML(pauta);
+}
+
+function pautaPieHTML(pauta) {
+    return `<div class="pauta-pie">Pauta del ${escHtml(pauta.titulo)}${pauta.archivo ? ' · ' + escHtml(pauta.archivo) : ''} · ${pauta.turnos.length} turnos leídos.<br>
+        Al cargar los servicios se vuelve solo a la bitácora. Quedan minimizados y se siguen pudiendo escribir y corregir a mano.</div>`;
+}
+
+/* -------------------------------------------------- volcar a la bitácora -- */
+
+function pautaMarcarTarjeta(id, texto) {
+    const card = document.getElementById(`card-${id}`);
+    if (!card || !texto) return;
+    card.dataset.pauta = texto;
+    const header = card.querySelector('.train-header');
+    if (header && !header.querySelector('.pauta-chip')) {
+        header.insertAdjacentHTML('afterbegin', `<span class="pauta-chip">${escHtml(texto)}</span>`);
+    }
+}
+
+function pautaMinimizarTarjeta(id) {
+    const card = document.getElementById(`card-${id}`);
+    if (!card) return;
+    card.classList.add('minimized');
+    const btn = card.querySelector('.min-card');
+    if (btn) btn.innerText = '▶️ Mostrar';
+}
+
+// Crea una tarjeta por servicio, con los horarios de la memoria maestra cuando
+// existen. Si el servicio no está guardado, la tarjeta queda en blanco para
+// escribirla a mano (que es como se trabajaba antes).
+function pautaCrearTarjetaServicio(pauta, turno, rol, numero) {
+    serviceCount++;
+    const id = serviceCount;
+    crearEstructuraTarjeta(id);
+
+    document.getElementById(`dia-${id}`).value = pauta.dia;
+    document.getElementById(`tren-num-${id}`).value = numero;
+    document.getElementById(`maquinista-${id}`).value = turno.maquinista || '';
+    document.getElementById(`ayudante-${id}`).value = turno.ayudante || '';
+
+    const info = (baseDatosTrenes[pauta.dia] || {})[numero];
+    const ruta = info ? info.ruta : 'l2_ida';
+    document.getElementById(`route-${id}`).value = ruta;
+    updateTable(id, ruta);
+    if (info) {
+        info.horarios.forEach(function (hora, i) {
+            const input = document.getElementById(`time-row-${id}-${i}`);
+            if (input && hora !== null) input.value = hora;
+        });
+    }
+
+    actualizarCampoConductor(id);
+    actualizarAvisosDescenso(id);
+    pautaMarcarTarjeta(id, (turno.turno ? 'T' + turno.turno : 'Pauta') + ' · ' + rol);
+    pautaMinimizarTarjeta(id);
+    return !!info;
+}
+
+function pautaCargarTurno(iPauta, iTurno) {
+    const pauta = PAUTAS[iPauta];
+    if (!pauta) return;
+    const turno = pauta.turnos[iTurno];
+    if (!turno || !turno.trenes.length) return;
+
+    const entrada = pautaTurnosDe(pauta, pautaNombreResuelto()).find(e => e.idx === iTurno);
+    const rol = entrada ? entrada.rol : 'Maquinista';
+
+    const primerId = serviceCount + 1;
+    let sinHorario = 0;
+    turno.trenes.forEach(function (n) {
+        if (!pautaCrearTarjetaServicio(pauta, turno, rol, n)) sinHorario++;
+    });
+    guardarEstado();
+    pautaVolverALaBitacora(turno.trenes.length, sinHorario, primerId);
+}
+
+function pautaCargarTodo(iPauta) {
+    const pauta = PAUTAS[iPauta];
+    if (!pauta) return;
+    const entradas = pautaTurnosDe(pauta, pautaNombreResuelto());
+    if (!entradas.length) return;
+
+    const primerId = serviceCount + 1;
+    let total = 0, sinHorario = 0;
+    entradas.forEach(function (e) {
+        e.turno.trenes.forEach(function (n) {
+            total++;
+            if (!pautaCrearTarjetaServicio(pauta, e.turno, e.rol, n)) sinHorario++;
+        });
+    });
+    guardarEstado();
+    pautaVolverALaBitacora(total, sinHorario, primerId);
+}
+
+// Cargar los servicios devuelve a la bitácora: se cierra la ventana, la vista
+// baja hasta la primera tarjeta nueva y un aviso confirma lo que se cargó.
+function pautaVolverALaBitacora(total, sinHorario, primerId) {
+    cerrarPauta();
+
+    const card = document.getElementById(`card-${primerId}`);
+    if (card) {
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        for (let id = primerId; id <= serviceCount; id++) {
+            const nueva = document.getElementById(`card-${id}`);
+            if (nueva) {
+                nueva.classList.add('recien-cargada');
+                setTimeout(function () { nueva.classList.remove('recien-cargada'); }, 1800);
+            }
+        }
+    }
+
+    const detalle = sinHorario ? ` · ${sinHorario} sin horarios guardados` : '';
+    pautaToast(`✅ ${total} ${total === 1 ? 'servicio cargado' : 'servicios cargados'} y minimizados${detalle}`);
+}
+
+let pautaToastTimer = null;
+
+function pautaToast(texto) {
+    let aviso = document.getElementById('pauta-toast');
+    if (!aviso) {
+        aviso = document.createElement('div');
+        aviso.id = 'pauta-toast';
+        aviso.className = 'pauta-toast';
+        aviso.setAttribute('role', 'status');
+        document.body.appendChild(aviso);
+    }
+    aviso.textContent = texto;
+    void aviso.offsetWidth;   // fuerza el cálculo para que la transición se vea
+    aviso.classList.add('visible');
+    clearTimeout(pautaToastTimer);
+    pautaToastTimer = setTimeout(function () { aviso.classList.remove('visible'); }, 6000);
+}
+
+/* ---------------------------------------------------------- abrir/cerrar -- */
+
+function abrirPauta() {
+    const overlay = document.getElementById('pauta-overlay');
+    const input = document.getElementById('pauta-nombre');
+
+    if (input && !input.value) {
+        try { input.value = localStorage.getItem(PAUTA_LLAVE_NOMBRE) || ''; } catch (e) {}
+    }
+    pautaLlenarSelectorFechas();
+
+    overlay.hidden = false;
+    overlay.classList.add('abierto');
+    document.body.classList.add('plan-abierto');
+    pautaRenderizar();
+}
+
+function cerrarPauta() {
+    const overlay = document.getElementById('pauta-overlay');
+    const caja = document.getElementById('pauta-sugerencias');
+    if (caja) caja.hidden = true;
+    overlay.classList.remove('abierto');
+    overlay.hidden = true;
+    if (!document.getElementById('plan-overlay').classList.contains('abierto')) {
+        document.body.classList.remove('plan-abierto');
+    }
+}
+
+document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && document.getElementById('pauta-overlay').classList.contains('abierto')) cerrarPauta();
+});
+document.getElementById('pauta-overlay').addEventListener('click', function (e) {
+    if (e.target === this) cerrarPauta();
+});
+document.addEventListener('click', function (e) {
+    const caja = document.getElementById('pauta-sugerencias');
+    if (!caja || caja.hidden) return;
+    if (!e.target.closest('.pauta-auto')) caja.hidden = true;
+});
+
+/* ------------------------------ pareja dentro del planificador de viajes -- */
+
+function pautaLlenarSelectorPlanificador() {
+    const sel = document.getElementById('plan-pauta');
+    if (!sel) return;
+    const previo = sel.value;
+    sel.innerHTML = `<option value="">Sin pauta · solo horarios</option>` +
+        PAUTAS.map(p => `<option value="${escAttr(p.fecha)}">${escHtml(p.titulo)}</option>`).join('');
+    if (previo && PAUTAS.some(p => p.fecha === previo)) sel.value = previo;
+    else planSincronizarPauta();
+}
+
+// Al cambiar de día se elige sola la pauta más cercana de ese tipo de día.
+function planSincronizarPauta() {
+    const sel = document.getElementById('plan-pauta');
+    const diaEl = document.getElementById('plan-dia');
+    if (!sel || !diaEl) return;
+    const hoy = fechaArchivoChile();
+    const candidatas = PAUTAS.filter(p => p.dia === diaEl.value);
+    const elegida = candidatas.find(p => p.fecha >= hoy) || candidatas[candidatas.length - 1];
+    sel.value = elegida ? elegida.fecha : '';
+}
+
+// Al elegir una pauta el día se ajusta a ella (una pauta de sábado es sábado).
+function planUsarPauta() {
+    const sel = document.getElementById('plan-pauta');
+    const pauta = PAUTAS.find(p => p.fecha === (sel ? sel.value : ''));
+    if (pauta) {
+        const diaEl = document.getElementById('plan-dia');
+        if (diaEl) diaEl.value = pauta.dia;
+    }
+    ejecutarPlanificador();
+}
+
+function planPautaActiva() {
+    const sel = document.getElementById('plan-pauta');
+    if (!sel || !sel.value) return null;
+    return PAUTAS.find(p => p.fecha === sel.value) || null;
+}
+
+// Bloque "quién va en este servicio" para las tarjetas del planificador.
+function planParejaHTML(numero) {
+    const pauta = planPautaActiva();
+    if (!pauta) return '';
+    const turnos = pautaTripulacionDeTren(pauta, numero);
+    if (!turnos.length) return '';
+
+    return turnos.slice(0, 2).map(function (t) {
+        const gente = [];
+        if (t.maquinista) gente.push(`<b>${escHtml(t.maquinista)}</b><span class="plan-pareja-rol">&nbsp;maq.</span>`);
+        if (t.ayudante) gente.push(`<b>${escHtml(t.ayudante)}</b><span class="plan-pareja-rol">&nbsp;ayu.</span>`);
+        t.practicas.forEach(p => gente.push(`${escHtml(p)}<span class="plan-pareja-rol">&nbsp;práctica</span>`));
+        if (!gente.length) return '';
+        return `<div class="plan-pareja">👥 ${t.turno ? `Turno ${escHtml(t.turno)} · ` : ''}${gente.join(' / ')}</div>`;
+    }).join('');
+}
+
+/* -------------------------------------------------------------- arranque -- */
+
+window.addEventListener('load', function () {
+    pautaLeerLocales();
+    pautaReconstruir();
+    pautaCargarRepositorio().then(function (ok) {
+        if (!ok) return;
+        pautaReconstruir();
+        const overlay = document.getElementById('pauta-overlay');
+        if (overlay && overlay.classList.contains('abierto')) pautaRenderizar();
+        if (document.getElementById('plan-overlay').classList.contains('abierto')) ejecutarPlanificador();
+    });
 });
 </script>
 <!-- ===== PWA: registro del Service Worker (soporte offline) ===== -->

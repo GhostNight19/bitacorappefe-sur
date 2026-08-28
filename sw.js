@@ -1,16 +1,17 @@
 /* ============================================================
    Service Worker - Bitácora EFE Sur
-   Versión 6: actualiza el HTML desde internet cuando hay conexión
+   Versión 9: siempre busca la versión nueva del HTML y de las pautas
    y conserva una copia para poder seguir usando la app sin señal.
    ============================================================ */
 
-const CACHE = 'bitacora-efe-v6';
+const CACHE = 'bitacora-efe-v9';
 
 // Archivos que componen la aplicación. Todos existen en el repositorio.
 const ASSETS = [
   './index.html',
   './manifest.json',
-  './icon-512.png'
+  './icon-512.png',
+  './pautas/pautas.json'
 ];
 
 self.addEventListener('install', (event) => {
@@ -37,10 +38,27 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Las páginas se consultan primero en internet para recibir las mejoras nuevas.
-  if (request.mode === 'navigate') {
+  // Las pautas diarias cambian todos los días: primero internet, y la copia
+  // guardada solo si no hay señal.
+  if (requestUrl.pathname.endsWith('/pautas/pautas.json')) {
     event.respondWith(
       fetch(request)
+        .then((response) => {
+          const copy = response.clone();
+          caches.open(CACHE).then((cache) => cache.put(request, copy));
+          return response;
+        })
+        .catch(() => caches.match(request))
+    );
+    return;
+  }
+
+  // Las páginas se consultan primero en internet para recibir las mejoras nuevas.
+  // Se pide con cache: reload para saltarse el caché del navegador: si no, GitHub
+  // Pages puede seguir entregando la versión anterior hasta diez minutos.
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request.url, { cache: 'reload' })
         .then((response) => {
           const copy = response.clone();
           caches.open(CACHE).then((cache) => cache.put(request, copy));
