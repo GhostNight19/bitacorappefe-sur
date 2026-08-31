@@ -575,8 +575,8 @@
                 <div class="plan-campo">
                     <label for="plan-hora">Desde las</label>
                     <input type="text" id="plan-hora" class="campo-hora" inputmode="numeric"
-                           maxlength="5" placeholder="hh:mm" autocomplete="off"
-                           oninput="horaFiltrar(this, event)" onchange="horaCampo(this); ejecutarPlanificador();">
+                           placeholder="hh:mm" autocomplete="off"
+                           onfocus="horaFoco(this)" oninput="horaFiltrar(this, event)" onchange="horaCampo(this); ejecutarPlanificador();">
                 </div>
                 <button type="button" class="plan-buscar" onclick="ejecutarPlanificador()">🔍 Buscar</button>
             </div>
@@ -4001,7 +4001,16 @@ function horaNormalizar(valor) {
 // los dos puntos para seguir con los minutos. Al borrar no se vuelven a poner.
 function horaFiltrar(input, ev) {
     const borrando = !!ev && String(ev.inputType || '').indexOf('delete') === 0;
-    const d = String(input.value).replace(/\D/g, '').slice(0, 4);
+    const previos = String(input.dataset.horaPrev || '').replace(/\D/g, '').length;
+    const tecla = ev && typeof ev.data === 'string' ? ev.data : '';
+
+    let d = String(input.value).replace(/\D/g, '');
+
+    // Si la hora ya estaba completa y se escribe otro número, se empieza de
+    // nuevo con ese número. Así se corrige una hora sin borrarla antes, aunque
+    // el teléfono no haya alcanzado a seleccionar el texto.
+    if (!borrando && previos >= 4 && d.length > 4 && /^\d$/.test(tecla)) d = tecla;
+    else d = d.slice(0, 4);
 
     let salida;
     if (d.length > 2) salida = d.slice(0, 2) + ':' + d.slice(2);
@@ -4012,12 +4021,22 @@ function horaFiltrar(input, ev) {
         input.value = salida;
         try { input.setSelectionRange(salida.length, salida.length); } catch (e) {}
     }
+    input.dataset.horaPrev = salida;
+}
+
+// Al tocar el campo se selecciona la hora que ya está, para poder escribir la
+// nueva encima sin borrar dígito por dígito. El setTimeout es porque el
+// teléfono coloca el cursor después del foco y deshace la selección.
+function horaFoco(input) {
+    input.dataset.horaPrev = input.value;
+    setTimeout(function () { try { input.select(); } catch (e) {} }, 0);
 }
 
 // Al salir del campo se ordena: 530 se convierte en 05:30.
 function horaCampo(input) {
     if (!input) return '';
     input.value = horaNormalizar(input.value);
+    input.dataset.horaPrev = input.value;
     return input.value;
 }
 
@@ -5875,9 +5894,9 @@ function aliManejoHTML(d) {
             ${d.manejoExtra ? `
                 <div class="ali-editor-fila">
                     <label>Cuánto manejo extra
-                        <input type="text" class="campo-hora" inputmode="numeric" maxlength="5"
+                        <input type="text" class="campo-hora" inputmode="numeric"
                             placeholder="hh:mm" autocomplete="off" value="${escAttr(aliHM(d.manejo) ? aliHHMM(d.manejo) : '')}"
-                            oninput="horaFiltrar(this, event)"
+                            onfocus="horaFoco(this)" oninput="horaFiltrar(this, event)"
                             onchange="aliCampo('${escAttr(d.fecha)}','manejoHoras',horaNormalizar(this.value))"></label>
                 </div>
                 <label class="ali-largo${d.manejoMotivo ? '' : ' requerido'}">Por qué (obligatorio)
@@ -5941,15 +5960,15 @@ function aliTarjetaDia(d) {
             ${abierto ? `
             <div class="ali-editor">
                 <div class="ali-editor-fila">
-                    <label>Ingreso<input type="text" class="campo-hora" inputmode="numeric" maxlength="5"
+                    <label>Ingreso<input type="text" class="campo-hora" inputmode="numeric"
                         placeholder="hh:mm" autocomplete="off"
                         value="${escAttr(d.real ? aliHHMM(d.real.ini) : (d.refIni || ''))}"
-                        oninput="horaFiltrar(this, event)"
+                        onfocus="horaFoco(this)" oninput="horaFiltrar(this, event)"
                         onchange="aliCampo('${escAttr(d.fecha)}','ingreso',horaNormalizar(this.value))"></label>
-                    <label>Término<input type="text" class="campo-hora" inputmode="numeric" maxlength="5"
+                    <label>Término<input type="text" class="campo-hora" inputmode="numeric"
                         placeholder="hh:mm" autocomplete="off"
                         value="${escAttr(d.real ? aliHHMM(d.real.fin) : (d.refFin || ''))}"
-                        oninput="horaFiltrar(this, event)"
+                        onfocus="horaFoco(this)" oninput="horaFiltrar(this, event)"
                         onchange="aliCampo('${escAttr(d.fecha)}','termino',horaNormalizar(this.value))"></label>
 
                 </div>
