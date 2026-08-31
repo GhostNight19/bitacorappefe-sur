@@ -39,6 +39,13 @@ MESES = {
     "noviembre": 11, "diciembre": 12,
 }
 
+# Correcciones al grafico publicado. Se aplican despues de leer el Excel, asi
+# que no hay que tocar el archivo original y no se pierden al regenerar.
+# Cada linea: (fecha, persona, valor). Valor "" = no trabaja ese dia.
+CORRECCIONES = [
+    ("2026-09-06", "H. Riquelme", ""),   # no trabaja el domingo; ese dia va solo C. Daza
+]
+
 
 def sin_acentos(texto):
     return "".join(
@@ -67,6 +74,42 @@ def celda_a_texto(valor):
     if isinstance(valor, float) and valor.is_integer():
         return str(int(valor))
     return str(valor).replace("\n", " ").strip()
+
+
+def clave_nombre(texto):
+    """'H. RIQUELME', 'H.Riquelme' y 'H Riquelme' son la misma persona."""
+    return re.sub(r"[^A-Z0-9]", "", sin_acentos(texto).upper())
+
+
+def aplicar_correcciones(filas):
+    """Cada bloque de parejas trae su propia fila de nombres y sus propios dias."""
+    hechas, sin_ubicar = [], []
+
+    for fecha, persona, valor in CORRECCIONES:
+        objetivo = clave_nombre(persona)
+        columna = None
+        aplicada = False
+
+        for fila in filas:
+            claves = [clave_nombre(c) for c in fila]
+            if objetivo in claves:          # fila de nombres: fija la columna
+                columna = claves.index(objetivo)
+                continue
+            if columna is None:
+                continue
+            if fila and str(fila[0]).startswith(fecha):
+                while len(fila) <= columna:
+                    fila.append("")
+                antes = fila[columna]
+                fila[columna] = valor
+                hechas.append("%s  %s: %r -> %r" % (fecha, persona, antes, valor))
+                aplicada = True
+                break
+
+        if not aplicada:
+            sin_ubicar.append("%s  %s" % (fecha, persona))
+
+    return hechas, sin_ubicar
 
 
 def leer_hoja(ws):
@@ -136,6 +179,12 @@ def main():
         if not mes:
             print("  ! %s: no se pudo deducir el mes; se omite." % ruta.name)
             continue
+
+        hechas, sin_ubicar = aplicar_correcciones(hojas["GRAFICO"])
+        for linea in hechas:
+            print("    ~ correccion: %s" % linea)
+        for linea in sin_ubicar:
+            print("    ! correccion sin aplicar (nombre o fecha no encontrados): %s" % linea)
 
         graficos.append({"archivo": ruta.name, "mes": mes, "hoja": principal, "hojas": hojas})
         print("  + %s  ->  %s  (%s)" % (

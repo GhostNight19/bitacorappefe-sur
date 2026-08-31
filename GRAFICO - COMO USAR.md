@@ -97,3 +97,26 @@ turnos de la tabla de FERIADO, se resuelve solo.
 - En el gráfico los nombres van como `J. Mella` y en las pautas como
   `J. MELLA`. El buscador ignora mayúsculas, tildes y puntos, así que el mismo
   apellido sirve en los dos botones.
+
+---
+
+## Corregir un día sin tocar el Excel
+
+Cuando el gráfico publicado trae un error, la corrección se anota en
+`convertir_grafico.py`, en la lista `CORRECCIONES` que está arriba del todo:
+
+```python
+CORRECCIONES = [
+    ("2026-09-06", "H. Riquelme", ""),   # no trabaja el domingo; ese dia va solo C. Daza
+]
+```
+
+Cada línea es `(fecha, persona, valor)`. El valor `""` significa **no trabaja
+ese día** (queda como descanso); si en cambio hay que cambiarle el turno, se
+pone el número: `("2026-09-06", "H. Riquelme", "78")`.
+
+Después se ejecuta `python convertir_grafico.py` y se sube
+`grafico/grafico.json`. El Excel original **no se modifica**, y como la
+corrección vive en el script, no se pierde al volver a generar el JSON. Si el
+nombre o la fecha no aparecen en el gráfico, el script lo avisa en pantalla en
+vez de aplicarla en silencio.

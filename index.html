@@ -432,7 +432,6 @@
         .ali-tot.destacado { background: #fff3e6; border-color: #e8bf8e; }
         .ali-tot.destacado strong { color: #7c3a00; }
         .ali-tot.aparte { background: #fff; border-style: dashed; }
-        .ali-nota { margin: 0 0 14px; color: #6a7891; font-size: 0.78rem; font-weight: 700; }
 
         .ali-dia { margin-bottom: 7px; background: #fff; border: 1px solid #dde5ef; border-radius: 10px; overflow: hidden; }
         .ali-dia.abierto { border-color: #7c3a00; box-shadow: 0 3px 12px rgba(124,58,0,0.14); }
@@ -486,6 +485,8 @@
         .ali-sn.activo { background: #6a7891; border-color: #6a7891; color: #fff; }
         .ali-sn.activo.si { background: #0a7d5a; border-color: #0a7d5a; }
         .ali-cambio { margin-top: 9px; padding: 8px 11px; border-radius: 9px; background: #e7f0ff; border: 1px solid #adc8f0; color: #14459c; font-size: 0.8rem; font-weight: 750; line-height: 1.45; }
+        .ali-igual { width: 100%; margin-top: 4px; min-height: 44px; padding: 0 12px; border: 2px solid #9ec8b4; border-radius: 9px; background: #eef8f3; color: #0a5c42; font: inherit; font-weight: 850; font-size: 0.85rem; cursor: pointer; }
+        .ali-igual:active { background: #ddf0e7; }
         .ali-borrar { margin-top: 10px; min-height: 40px; padding: 0 14px; border: 2px solid #eab0b5; border-radius: 8px; background: #fff; color: #8d1d26; font-weight: 800; font-size: 0.82rem; cursor: pointer; }
 
         @media (max-width: 720px) {
@@ -745,7 +746,7 @@
             </div>
 
             <div class="ali-acciones">
-                <button type="button" class="ali-accion prellenar" onclick="aliPrellenarMes()">✨ Prellenar del gráfico</button>
+                <button type="button" class="ali-accion prellenar" onclick="aliPrellenarMes()">✨ Prellenar hasta hoy</button>
                 <button type="button" class="ali-accion pdf" onclick="aliDescargarPDF()">📄 Descargar PDF</button>
             </div>
         </div>
@@ -2999,13 +3000,30 @@ function pautaTrenesDeServicio(texto, prefijoPrevio) {
 
     const trenes = [];
     let ultimoCompleto = /^\d{5}$/.test(String(prefijoPrevio || '')) ? String(prefijoPrevio) : '';
-    limpio.split(/[^\d]+/).filter(Boolean).forEach(function (tok) {
+
+    function agregar(tok) {
         let num = '';
         if (tok.length === 5) { num = tok; ultimoCompleto = tok; }
         else if (tok.length >= 2 && tok.length <= 4 && ultimoCompleto) {
             num = ultimoCompleto.slice(0, 5 - tok.length) + tok;
         }
         if (num && trenes.indexOf(num) < 0) trenes.push(num);
+    }
+
+    limpio.split(/[^\d]+/).filter(Boolean).forEach(function (tok) {
+        // A veces se pierde el guion y quedan dos servicios pegados:
+        // "111-20292" llega como "11120292". Se separan solo si el final es un
+        // servicio completo de la misma familia que el anterior (20xxx).
+        if (tok.length > 5 && tok.length <= 10 && ultimoCompleto) {
+            const cabeza = tok.slice(0, tok.length - 5);
+            const cola = tok.slice(-5);
+            if (cabeza.length >= 2 && cola.slice(0, 2) === ultimoCompleto.slice(0, 2)) {
+                agregar(cabeza);
+                agregar(cola);
+                return;
+            }
+        }
+        agregar(tok);
     });
     return trenes;
 }
@@ -3693,8 +3711,7 @@ function pautaRenderizar() {
 }
 
 function pautaPieHTML(pauta) {
-    return `<div class="pauta-pie">Pauta del ${escHtml(pauta.titulo)}${pauta.archivo ? ' · ' + escHtml(pauta.archivo) : ''} · ${pauta.turnos.length} turnos leídos.<br>
-        Al cargar los servicios se vuelve solo a la bitácora. Quedan minimizados y se siguen pudiendo escribir y corregir a mano.</div>`;
+    return `<div class="pauta-pie">Pauta del ${escHtml(pauta.titulo)}${pauta.archivo ? ' · ' + escHtml(pauta.archivo) : ''} · ${pauta.turnos.length} turnos leídos.</div>`;
 }
 
 /* -------------------------------------------------- volcar a la bitácora -- */
@@ -4603,11 +4620,7 @@ function prevRenderizar() {
     html += `<div class="plan-seccion-titulo">Todas las vigentes · L2 Concepción–Coronel (${resto2.length})</div>`;
     html += resto2.length ? resto2.map(prevTarjeta).join('') : `<div class="plan-vacio">Ninguna.</div>`;
 
-    html += `<div class="pauta-pie">Se muestran solo las prevenciones dentro de su horario y fecha,
-        y las de la vía por la que se circula (vía 1 o 2 según el sentido; la 4 entre El Arenal y Mercado).
-        El aviso bajo el reloj entrega la más grave dentro de ${PREV_AVISO_M} m en el sentido de marcha.
-        Las de patio, desvío, enlace o variante se listan, pero no desplazan a una restricción de vía.<br>
-        Esto es una ayuda: el boletín de vía sigue siendo el documento válido.</div>`;
+    html += `<div class="pauta-pie">Esto es una ayuda: el boletín de vía sigue siendo el documento válido.</div>`;
 
     caja.innerHTML = html;
 }
@@ -5229,12 +5242,9 @@ function grafRenderizar() {
         ${cuenta.PRACTICA ? `<span class="practica"><strong>${cuenta.PRACTICA}</strong> práctica</span>` : ''}
     </div>`;
 
-    html += `<p class="plan-hint">Toca el número del turno para ver su horario.</p>`;
     html += g.dias.map(d => grafFilaDiaHTML(g, d, nombre)).join('');
     html += `<div class="pauta-pie">Gráfico de ${escHtml(grafMesTxt(g.mes))}${g.archivo ? ' · ' + escHtml(g.archivo) : ''}
-        · ${g.dias.length} días.<br>
-        Los turnos combinados (un mismo número en dos filas del catálogo) se muestran con la apertura
-        más temprana, el cierre más tardío y los dos tramos completos.</div>`;
+        · ${g.dias.length} días.</div>`;
 
     caja.innerHTML = html;
 }
@@ -5837,7 +5847,13 @@ function aliPrellenarMes() {
     const datos = aliMes(nombre, mes);
     let n = 0;
 
+    // Solo hasta hoy: un día que todavía no llega no puede darse por trabajado.
+    const hoy = new Date();
+    const tope = hoy.getFullYear() + '-' + String(hoy.getMonth() + 1).padStart(2, '0') +
+                 '-' + String(hoy.getDate()).padStart(2, '0');
+
     calc.dias.forEach(function (d) {
+        if (d.fecha > tope) return;
         if (!d.sinRegistro) return;
         if (!d.refIni || !d.refFin) return;
         datos[d.fecha] = Object.assign({}, datos[d.fecha], {
@@ -5848,7 +5864,23 @@ function aliPrellenarMes() {
     });
     aliGuardarTodo();
     aliRenderizar();
-    pautaToast(n ? `✅ ${n} días prellenados con el turno programado` : 'No quedaban días en blanco por prellenar');
+    pautaToast(n ? `✅ ${n} ${n === 1 ? 'día prellenado' : 'días prellenados'} con el turno programado`
+                 : 'No hay días pasados en blanco por prellenar');
+}
+
+// Un toque para el día que salió tal cual estaba programado.
+function aliUsarProgramado(fecha) {
+    const nombre = aliNombre(), mes = aliMesSel();
+    if (!nombre || !mes) return;
+    const d = aliCalcularMes(nombre, mes).dias.find(x => x.fecha === fecha);
+    if (!d || !d.refIni || !d.refFin) return;
+
+    const datos = aliMes(nombre, mes);
+    datos[fecha] = Object.assign({}, datos[fecha], {
+        ingreso: d.refIni, termino: d.refFin, servicio: d.servicio, turno: d.turno
+    });
+    aliGuardarTodo();
+    aliRenderizar();
 }
 
 function aliBorrarDia(fecha) {
@@ -5877,8 +5909,7 @@ function aliManejoHTML(d) {
             ${est.sinItinerario.length ? `<br><small>Sin itinerario guardado: ${escHtml(est.sinItinerario.join(', '))} — el total puede quedar corto.</small>` : ''}
         </div>`;
     } else if (est) {
-        referencia = `<div class="ali-manejo-ref">🚆 No hay itinerarios guardados para los servicios de este turno,
-            así que no se puede estimar el manejo.</div>`;
+        referencia = `<div class="ali-manejo-ref">🚆 Sin itinerario guardado: no se puede estimar el manejo.</div>`;
     }
 
     return `
@@ -5961,17 +5992,19 @@ function aliTarjetaDia(d) {
             <div class="ali-editor">
                 <div class="ali-editor-fila">
                     <label>Ingreso<input type="text" class="campo-hora" inputmode="numeric"
-                        placeholder="hh:mm" autocomplete="off"
-                        value="${escAttr(d.real ? aliHHMM(d.real.ini) : (d.refIni || ''))}"
+                        placeholder="${escAttr(d.refIni || 'hh:mm')}" autocomplete="off"
+                        value="${escAttr(d.sinRegistro ? '' : aliHHMM(d.real.ini))}"
                         onfocus="horaFoco(this)" oninput="horaFiltrar(this, event)"
                         onchange="aliCampo('${escAttr(d.fecha)}','ingreso',horaNormalizar(this.value))"></label>
                     <label>Término<input type="text" class="campo-hora" inputmode="numeric"
-                        placeholder="hh:mm" autocomplete="off"
-                        value="${escAttr(d.real ? aliHHMM(d.real.fin) : (d.refFin || ''))}"
+                        placeholder="${escAttr(d.refFin || 'hh:mm')}" autocomplete="off"
+                        value="${escAttr(d.sinRegistro ? '' : aliHHMM(d.real.fin))}"
                         onfocus="horaFoco(this)" oninput="horaFiltrar(this, event)"
                         onchange="aliCampo('${escAttr(d.fecha)}','termino',horaNormalizar(this.value))"></label>
-
                 </div>
+                ${d.sinRegistro && d.refIni && d.refFin ? `
+                <button type="button" class="ali-igual" onclick="aliUsarProgramado('${escAttr(d.fecha)}')">
+                    ✓ Trabajé ${escHtml(d.refIni)}–${escHtml(d.refFin)}, sin cambios</button>` : ''}
                 <label class="ali-largo">Servicio
                     <input type="text" value="${escAttr(d.servicio)}"
                         onchange="aliCampo('${escAttr(d.fecha)}','servicio',this.value)"></label>
@@ -5980,8 +6013,8 @@ function aliTarjetaDia(d) {
                     <input type="text" placeholder="Ej: EXCEDE POR ATRASO" value="${escAttr(d.obs)}"
                         onchange="aliCampo('${escAttr(d.fecha)}','obs',this.value)"></label>
                 ${d.requiereJustificacion && !d.justificado
-                    ? `<div class="ali-obliga">⚠ Cerraste ${escHtml(aliHM(d.cierreTardio))} más tarde que tu turno
-                        (${escHtml(d.refJustFin || d.refFin)}). Escribe por qué: sin justificación el día sale marcado en el PDF.</div>`
+                    ? `<div class="ali-obliga">⚠ Cerraste ${escHtml(aliHM(d.cierreTardio))} más tarde
+                        que tu turno (${escHtml(d.refJustFin || d.refFin)}).</div>`
                     : ''}
                 <label class="ali-check">
                     <input type="checkbox" ${d.esFeriado ? 'checked' : ''}
@@ -5994,18 +6027,16 @@ function aliTarjetaDia(d) {
                         onchange="aliCampo('${escAttr(d.fecha)}','voluntario',this.checked)">
                     Cambio voluntario con un compañero (no genera sobretiempo)
                 </label>
-                <div class="ali-cambio">La pauta del día te puso el <strong>turno ${escHtml(d.turnoPauta)}</strong>
-                    y el gráfico decía <strong>turno ${escHtml(d.turnoGrafico)}</strong>
-                    (${escHtml(d.prog ? d.prog.apertura + '–' + d.prog.cierre : '—')}).
-                    ${d.voluntario
-                        ? 'Marcado como voluntario: se compara contra el turno nuevo.'
-                        : 'Se compara contra el turno del gráfico, que era el que te correspondía.'}</div>` : ''}
+                <div class="ali-cambio">Pauta: <strong>turno ${escHtml(d.turnoPauta)}</strong> ·
+                    gráfico: <strong>turno ${escHtml(d.turnoGrafico)}</strong>
+                    (${escHtml(d.prog ? d.prog.apertura + '–' + d.prog.cierre : '—')}).</div>` : ''}
                 ${d.refIni ? `<div class="ali-ref">Programado: ${escHtml(d.refIni)} – ${escHtml(d.refFin)}
                     <small>según ${escHtml(d.fuente)}</small></div>` : ''}
                 ${d.reposoReal !== undefined ? `<div class="ali-ref">Reposo desde el cierre anterior:
                     ${escHtml(aliHM(d.reposoReal))} · mínimo ${escHtml(aliHM(d.reposoMinimo))}</div>` : ''}
                 ${d.avisos.map(a => `<div class="pauta-aviso info">${escHtml(a)}</div>`).join('')}
-                <button type="button" class="ali-borrar" onclick="aliBorrarDia('${escAttr(d.fecha)}')">Borrar este día</button>
+                ${d.sinRegistro ? '' : `<button type="button" class="ali-borrar"
+                    onclick="aliBorrarDia('${escAttr(d.fecha)}')">Borrar este día</button>`}
             </div>` : ''}
         </div>`;
 }
@@ -6039,31 +6070,24 @@ function aliRenderizar() {
         <div class="ali-tot aparte"><span>Menos reposo</span><strong>${escHtml(aliHM(t.menosReposo) || '0:00')}</strong></div>
         <div class="ali-tot aparte"><span>Nocturnas</span><strong>${escHtml(aliHM(t.nocturnas) || '0:00')}</strong></div>
         <div class="ali-tot aparte"><span>Manejo</span><strong>${escHtml(aliHM(t.manejo) || '0:00')}</strong></div>
-    </div>
-    <p class="ali-nota">Los mismos minutos no se cuentan dos veces: si la jornada pasó de 7:30,
-        el sobretiempo se paga como exceso y «Hrs Turno» queda en cero.<br>
-        Menos reposo, nocturnas y manejo van aparte: no suman al total de horas extra.</p>`;
+    </div>`;
 
     const cambios = calc.dias.filter(d => d.cambioDeTurno);
     if (cambios.length) {
         html += `<div class="pauta-aviso info">🔄 ${cambios.length}
             ${cambios.length === 1 ? 'día con turno distinto al graficado' : 'días con turno distinto al graficado'}:
             ${cambios.map(d => new Date(d.fecha + 'T12:00:00').getUTCDate() + ' (' +
-                escHtml(d.turnoGrafico) + '→' + escHtml(d.turnoPauta) + ')').join(', ')}.
-            Se comparan contra el turno del gráfico, salvo los marcados como cambio voluntario.</div>`;
+                escHtml(d.turnoGrafico) + '→' + escHtml(d.turnoPauta) + ')').join(', ')}.</div>`;
     }
 
     const faltan = calc.dias.filter(d => d.requiereJustificacion && !d.justificado);
     if (faltan.length) {
         html += `<div class="pauta-aviso error">⚠️ ${faltan.length}
             ${faltan.length === 1 ? 'día con cierre tardío sin justificar' : 'días con cierre tardío sin justificar'}:
-            ${escHtml(faltan.map(d => new Date(d.fecha + 'T12:00:00').getUTCDate()).join(', '))}.
-            Todo cierre fuera del horario programado necesita una explicación, y esa explicación va en el PDF.</div>`;
+            ${escHtml(faltan.map(d => new Date(d.fecha + 'T12:00:00').getUTCDate()).join(', '))}.</div>`;
     }
 
     html += calc.dias.map(aliTarjetaDia).join('');
-    html += `<div class="pauta-pie">Lo que escribes queda guardado en este teléfono, día a día.
-        Se pierde si borras los datos del sitio o desinstalas la app: descarga el PDF de respaldo.</div>`;
 
     caja.innerHTML = html;
 }
