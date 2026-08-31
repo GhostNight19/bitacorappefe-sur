@@ -36,12 +36,17 @@
         .clock-date { color: #ffffff; font-weight: 750; text-transform: capitalize; }
         .clock-zone { color: #a9c7e7; font-size: 0.75rem; }
         
-        .main-controls { display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-        .btn { border: none; padding: 12px 18px; border-radius: 8px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.2s; }
+        .main-controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(196px, 1fr)); gap: 10px; margin-bottom: 20px; }
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; width: 100%; min-height: 50px; padding: 10px 14px; border: 2px solid transparent; border-radius: 11px; font: inherit; font-size: 0.95rem; font-weight: 800; line-height: 1.2; text-align: center; cursor: pointer; box-shadow: 0 2px 6px rgba(23,32,51,0.13); transition: filter 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease; }
+        .btn:hover { filter: brightness(1.08); box-shadow: 0 6px 16px rgba(23,32,51,0.19); }
+        .btn:active { transform: translateY(1px); box-shadow: 0 2px 6px rgba(23,32,51,0.13); }
+        /* Las dos utilidades van en tono menor: no compiten con los módulos. */
+        .btn.secundario { background: #fff; box-shadow: 0 1px 3px rgba(23,32,51,0.08); }
+        .btn.secundario:hover { filter: none; background: #f6f9fd; }
         .btn:active { transform: scale(0.98); }
-        .add-btn { background-color: #28a745; color: white; }
+        .add-btn { background-color: var(--verde); color: #fff; }
         .save-full-btn { background-color: #fd7e14; color: white; }
-        .delete-all-btn { background-color: #dc3545; color: white; }
+        .delete-all-btn { border-color: #e2b4b8; color: #a01c27; }
         .save-btn { background-color: #0056b3; color: white; }
         .whatsapp-btn { background-color: #25D366; color: white; }
         .search-btn { background-color: #17a2b8; color: white; padding: 6px 10px; font-size: 0.85em; border-radius: 4px; border:none; cursor:pointer;}
@@ -68,6 +73,7 @@
         .status-none { color: inherit; }
         .status-ontime { color: inherit; }
         .status-late { color: inherit; }
+        .conductor-corto[hidden] { display: none; }
         .conductor-corto { flex: 1 1 100%; display: flex; align-items: center; gap: 7px; padding-top: 8px; border-top: 1px dashed #cbd5e1; }
         .conductor-corto[hidden] { display: none !important; }
         .conductor-corto label { color: #3f4b5c; font-size: 0.9rem; font-weight: 800; white-space: nowrap; }
@@ -91,7 +97,7 @@
         .table-responsive { overflow-x: auto; }
 
         /* ===== Botón descargar bitácora (PDF) ===== */
-        .pdf-btn { background-color: #6f42c1; color: white; }
+        .pdf-btn { border-color: #cbd7e6; color: #37455e; }
 
         /* ===== ATRASO: se marca al instante; el motivo se edita solo si hace falta ===== */
         .atraso-wrap { display: none; }
@@ -176,8 +182,8 @@
             .clock-meta { grid-column: 2; grid-row: 1; min-width: 0; }
             .clock-date { font-size: 0.78rem; }
             .clock-zone { display: none; }
-            .main-controls { width: 100%; gap: 7px; }
-            .btn { min-height: 44px; }
+            .main-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+            .btn { min-height: 58px; padding: 8px 10px; font-size: 0.9rem; }
             .whatsapp-container { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 7px; padding: 8px; }
             .whatsapp-container select { width: 100%; min-width: 0; }
             .whatsapp-container .whatsapp-btn { min-width: 0; padding-inline: 13px; }
@@ -274,6 +280,213 @@
             .pauta-sec, .pauta-archivo { width: 100%; }
             .pauta-rango { margin-left: 0; width: 100%; }
         }
+
+        /* ===== PREVENCIONES · BOLETÍN DE VÍA ===== */
+        .prev-btn { background-color: #b4232f; color: #fff; }
+
+        /* Franja de aviso, justo bajo el reloj */
+        .prev-aviso { position: sticky; top: var(--prev-top, 104px); z-index: 890; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: center; max-width: 980px; margin: 0 auto 12px; padding: 11px 14px; border-radius: 12px; border-left: 7px solid #6a7891; background: #eef2f7; color: #172033; box-shadow: 0 4px 14px rgba(23,32,51,0.12); }
+        .prev-aviso.nivel-1 { border-left-color: #b4232f; background: #fdecec; color: #6e1219; }
+        .prev-aviso.nivel-2 { border-left-color: #d97706; background: #fff5e6; color: #7c4708; }
+        .prev-aviso.nivel-3 { border-left-color: #0b5ed7; background: #eaf2ff; color: #123c86; }
+        .prev-aviso.nivel-4 { border-left-color: #6a7891; background: #f2f5f9; color: #3a475e; }
+        .prev-aviso[hidden] { display: none; }
+        .prev-aviso.dentro { animation: prev-latido 1.4s ease-in-out infinite; }
+        .prev-aviso.pasada { opacity: 0.82; border-left-style: dashed; }
+        .prev-aviso.pasada .prev-aviso-dist { font-size: 1.25rem; }
+        .prev-aviso-izq { text-align: center; min-width: 86px; }
+        .prev-aviso-dist { display: block; font-size: 1.55rem; font-weight: 900; line-height: 1.05; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+        .prev-aviso-nivel { display: block; margin-top: 2px; font-size: 0.66rem; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.75; }
+        .prev-aviso-der { min-width: 0; }
+        .prev-aviso-restr { font-size: 1.08rem; font-weight: 900; line-height: 1.25; }
+        .prev-aviso-via { margin-left: 7px; padding: 2px 7px; border-radius: 999px; background: rgba(0,0,0,0.09); font-size: 0.7rem; font-weight: 850; vertical-align: middle; }
+        .prev-aviso-km { margin-top: 3px; font-size: 0.8rem; font-weight: 700; opacity: 0.85; overflow-wrap: anywhere; }
+        .prev-aviso-viejo { margin-top: 5px; padding: 3px 8px; border-radius: 7px; background: rgba(180,35,47,0.14); color: #7d1620; font-size: 0.74rem; font-weight: 900; display: inline-block; }
+
+        @media (prefers-reduced-motion: no-preference) {
+            @keyframes prev-latido { 0%, 100% { box-shadow: 0 4px 14px rgba(23,32,51,0.12); } 50% { box-shadow: 0 0 0 5px rgba(180,35,47,0.22); } }
+        }
+
+        /* Panel */
+        .prev-form { grid-template-columns: 1fr; }
+        .prev-form .plan-fila { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
+        .prev-estado { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding: 10px 12px; border-radius: 10px; background: #f4f7fc; border: 1px solid #e3eaf4; color: #37455e; font-size: 0.85rem; font-weight: 700; }
+        .prev-chip { padding: 3px 10px; border-radius: 999px; font-size: 0.74rem; font-weight: 900; letter-spacing: 0.03em; }
+        .prev-chip.ok { background: #e7f7ee; color: #0a5b36; }
+        .prev-chip.off { background: #eef2f7; color: #55637a; }
+        .prev-chip.manual { background: #efe7fd; color: #4c1d95; }
+        .prev-acciones { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 9px; }
+        .prev-accion { min-height: 46px; padding: 0 14px; border: 0; border-radius: 9px; font-weight: 850; font-size: 0.9rem; cursor: pointer; }
+        .prev-accion.iniciar { background: var(--verde); color: #fff; }
+        .prev-accion.detener { background: #b4232f; color: #fff; }
+        .prev-accion.prueba { background: #fff; color: #2b3d5c; border: 2px solid #cbd7e6; }
+        .prev-accion.prueba.encendida { background: #efe7fd; border-color: #6f42c1; color: #4c1d95; }
+
+        .prev-item { margin-bottom: 10px; padding: 11px 13px; background: #fff; border: 1px solid #dde5ef; border-left: 5px solid #6a7891; border-radius: 10px; box-shadow: 0 2px 8px rgba(23,32,51,0.06); }
+        .prev-item.nivel-1 { border-left-color: #b4232f; }
+        .prev-item.nivel-2 { border-left-color: #d97706; }
+        .prev-item.nivel-3 { border-left-color: #0b5ed7; }
+        .prev-item.dentro { background: #fffaf3; }
+        .prev-item-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .prev-restr { font-size: 1.02rem; font-weight: 900; color: #0f1c33; }
+        .prev-via { padding: 3px 9px; border-radius: 999px; background: #eef2f7; color: #46536a; font-size: 0.74rem; font-weight: 850; }
+        .prev-via.prev-via-v1 { background: #e7f0ff; color: #14459c; }
+        .prev-via.prev-via-v2 { background: #fdeceF; color: #8d1d3f; }
+        .prev-via.prev-via-ambas { background: #e7f7ee; color: #0a5b36; }
+        .prev-via.prev-via-v4 { background: #efe7fd; color: #4c1d95; }
+        .prev-dist { margin-left: auto; padding: 3px 10px; border-radius: 999px; background: #0f1c33; color: #fff; font-size: 0.78rem; font-weight: 900; font-variant-numeric: tabular-nums; white-space: nowrap; }
+        .prev-item-km { margin-top: 5px; color: #55637a; font-size: 0.79rem; font-weight: 750; overflow-wrap: anywhere; }
+        .prev-item-desc { margin-top: 6px; color: #37455e; font-size: 0.83rem; font-weight: 650; line-height: 1.42; overflow-wrap: anywhere; }
+        .prev-item-extra { margin-top: 5px; color: #7c4708; font-size: 0.76rem; font-weight: 800; }
+        .prev-sinubic { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px; background: #f2f5f9; color: #6a7891; font-size: 0.7rem; font-weight: 800; }
+
+        @media (max-width: 720px) {
+            .prev-aviso { margin-bottom: 9px; padding: 10px 12px; gap: 10px; border-radius: 11px; }
+            .prev-aviso-izq { min-width: 72px; }
+            .prev-aviso-dist { font-size: 1.32rem; }
+            .prev-aviso-restr { font-size: 1rem; }
+            .prev-acciones { grid-template-columns: 1fr; }
+        }
+
+        /* ===== MI GRÁFICO ===== */
+        .graf-btn { background-color: #0f766e; color: #fff; }
+        .graf-form { grid-template-columns: 1fr; }
+        .graf-form .plan-fila { grid-template-columns: minmax(0,1fr) auto; }
+        .graf-auto { position: relative; }
+        .graf-auto input { width: 100%; min-height: 46px; padding: 9px 10px; border: 2px solid #cbd7e6; border-radius: 9px; background: #f8fbff; color: #172033; font: inherit; font-weight: 800; text-transform: uppercase; }
+        .graf-auto input:focus { border-color: #0a7d5a; outline: none; }
+        .graf-auto .pauta-sugerencias { position: absolute; z-index: 30; left: 0; right: 0; top: calc(100% + 4px); }
+
+        .graf-resumen { display: flex; flex-wrap: wrap; gap: 7px; margin: 0 0 14px; }
+        .graf-resumen span { padding: 5px 11px; border-radius: 999px; background: #eef2f7; color: #37455e; font-size: 0.82rem; font-weight: 750; }
+        .graf-resumen span strong { color: #0f1c33; font-weight: 900; }
+        .graf-resumen .vac { background: #e7f0ff; color: #14459c; }
+        .graf-resumen .cum { background: #fdf0d5; color: #8a5200; }
+        .graf-resumen .lm { background: #fdecec; color: #8d1d26; }
+        .graf-resumen .rec { background: #e7f7ee; color: #0a5b36; }
+        .graf-resumen .practica { background: #efe7fd; color: #4c1d95; }
+
+        .graf-dia { margin-bottom: 7px; background: #fff; border: 1px solid #dde5ef; border-radius: 10px; overflow: hidden; }
+        .graf-dia.abierto { border-color: #0a7d5a; box-shadow: 0 3px 12px rgba(10,125,90,0.14); }
+        .graf-dia-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; width: 100%; padding: 9px 11px; border: 0; background: none; font: inherit; text-align: left; cursor: pointer; }
+        .graf-dia.es-descanso .graf-dia-top { cursor: default; }
+        button.graf-dia-top:hover { background: #f4f9f7; }
+        .graf-flecha { margin-left: 6px; color: #9aa7bb; font-size: 0.7rem; }
+        .graf-num { display: inline-flex; align-items: center; justify-content: center; min-width: 52px; min-height: 44px; padding: 0 10px; border: 2px solid #cbd7e6; border-radius: 10px; background: #f4f7fc; color: #0f1c33; font: inherit; font-size: 1.1rem; font-weight: 900; font-variant-numeric: tabular-nums; }
+        .graf-num.turno { border-color: #0a7d5a; background: #e7f7ee; color: #075437; }
+        button.graf-dia-top:hover .graf-num.turno, .graf-num.abierto { background: #0a7d5a; border-color: #0a7d5a; color: #fff; }
+        .graf-num.descanso { border-style: dashed; color: #9aa7bb; background: #f6f9fd; }
+        .graf-num.vac { border-color: #2672bd; background: #e7f0ff; color: #14459c; font-size: 0.9rem; }
+        .graf-num.cum { border-color: #d99a1e; background: #fdf0d5; color: #8a5200; font-size: 0.9rem; }
+        .graf-num.lm { border-color: #c9636d; background: #fdecec; color: #8d1d26; font-size: 0.9rem; }
+        .graf-num.rec { border-color: #4aae86; background: #e7f7ee; color: #0a5b36; font-size: 0.9rem; }
+        .graf-num.practica { border-color: #8b6ad4; background: #efe7fd; color: #4c1d95; font-size: 0.9rem; }
+        .graf-dia-fecha { flex: 1; min-width: 0; font-weight: 850; color: #1d2b45; font-size: 0.93rem; line-height: 1.2; }
+        .graf-dia-fecha small { display: block; color: #7c8aa3; font-size: 0.72rem; font-weight: 700; text-transform: capitalize; }
+        .graf-marca { margin-left: auto; padding: 3px 10px; border-radius: 999px; background: #eef2f7; color: #46536a; font-size: 0.76rem; font-weight: 850; }
+        .graf-marca.vac { background: #e7f0ff; color: #14459c; }
+        .graf-marca.cum { background: #fdf0d5; color: #8a5200; }
+        .graf-marca.lm { background: #fdecec; color: #8d1d26; }
+        .graf-marca.rec { background: #e7f7ee; color: #0a5b36; }
+        .graf-marca.practica { background: #efe7fd; color: #4c1d95; }
+        .graf-detalle-chip { padding: 3px 9px; border-radius: 999px; background: #f2f5f9; color: #55637a; font-size: 0.74rem; font-weight: 800; }
+
+        .graf-detalle { margin: 0 11px 11px; padding-top: 10px; border-top: 1px dashed #cbd7e6; }
+        .graf-detalle-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 9px; }
+        .graf-chip { padding: 4px 10px; border-radius: 999px; background: #e7f7ee; color: #075437; font-size: 0.76rem; font-weight: 900; }
+        .graf-chip.combinado { background: #fff2dd; color: #8a5200; }
+        .graf-rango { margin-left: auto; font-variant-numeric: tabular-nums; font-size: 1.08rem; font-weight: 900; color: #0f1c33; white-space: nowrap; }
+        .graf-dur { padding: 3px 10px; border-radius: 999px; background: #eef2f7; color: #46536a; font-size: 0.78rem; font-weight: 800; }
+        .graf-tramo { padding: 9px 0; }
+        .graf-tramo + .graf-tramo { border-top: 1px dashed #e3eaf4; }
+        .graf-tramo-n { margin-bottom: 5px; color: #8a5200; font-size: 0.74rem; font-weight: 900; letter-spacing: 0.04em; text-transform: uppercase; }
+        .graf-servicios { color: #37455e; font-size: 0.88rem; font-weight: 750; line-height: 1.4; overflow-wrap: anywhere; }
+        .graf-obs { margin-top: 7px; padding: 6px 10px; border-radius: 8px; background: #fff7e8; color: #8a5200; font-size: 0.79rem; font-weight: 750; }
+
+        @media (max-width: 720px) {
+            .graf-form .plan-fila { grid-template-columns: 1fr; }
+            .graf-rango { margin-left: 0; }
+            .graf-marca { margin-left: 0; }
+        }
+
+        /* ===== MI ALISTACIÓN ===== */
+        .ali-btn { background-color: #7c3a00; color: #fff; }
+        .ali-form { grid-template-columns: 1fr; }
+        .ali-auto { position: relative; }
+        .ali-auto input { width: 100%; min-height: 46px; padding: 9px 10px; border: 2px solid #cbd7e6; border-radius: 9px; background: #f8fbff; color: #172033; font: inherit; font-weight: 800; text-transform: uppercase; }
+        .ali-auto .pauta-sugerencias { position: absolute; z-index: 30; left: 0; right: 0; top: calc(100% + 4px); }
+        .ali-acciones { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 9px; }
+        .ali-accion { min-height: 46px; padding: 0 14px; border: 0; border-radius: 9px; font-weight: 850; font-size: 0.88rem; cursor: pointer; }
+        .ali-accion.prellenar { background: #0b5ed7; color: #fff; }
+        .ali-accion.pdf { background: #7c3a00; color: #fff; }
+
+        .ali-totales { display: grid; grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); gap: 8px; margin-bottom: 6px; }
+        .ali-tot { padding: 8px 10px; border-radius: 10px; background: #f6f9fd; border: 1px solid #e3eaf4; }
+        .ali-tot span { display: block; color: #6a7891; font-size: 0.67rem; font-weight: 900; letter-spacing: 0.04em; text-transform: uppercase; }
+        .ali-tot strong { font-size: 1.08rem; color: #0f1c33; font-variant-numeric: tabular-nums; }
+        .ali-tot.destacado { background: #fff3e6; border-color: #e8bf8e; }
+        .ali-tot.destacado strong { color: #7c3a00; }
+        .ali-tot.aparte { background: #fff; border-style: dashed; }
+        .ali-nota { margin: 0 0 14px; color: #6a7891; font-size: 0.78rem; font-weight: 700; }
+
+        .ali-dia { margin-bottom: 7px; background: #fff; border: 1px solid #dde5ef; border-radius: 10px; overflow: hidden; }
+        .ali-dia.abierto { border-color: #7c3a00; box-shadow: 0 3px 12px rgba(124,58,0,0.14); }
+        .ali-dia.vacio { background: #fbfcfe; }
+        .ali-dia-top { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 11px; border: 0; background: none; text-align: left; font: inherit; cursor: pointer; }
+        .ali-n { min-width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; background: #eef2f7; color: #2b3d5c; font-weight: 900; font-size: 0.9rem; flex: none; }
+        .ali-dia-info { min-width: 0; flex: 1; }
+        .ali-serv { display: block; color: #1d2b45; font-weight: 800; font-size: 0.87rem; line-height: 1.3; overflow-wrap: anywhere; }
+        .ali-graf { display: block; margin-top: 2px; color: #0a5b36; font-weight: 800; font-size: 0.7rem; }
+        .ali-horas { flex: none; text-align: right; color: #37455e; font-size: 0.76rem; font-weight: 750; font-variant-numeric: tabular-nums; white-space: nowrap; }
+        .ali-horas strong { display: block; font-size: 1rem; color: #0f1c33; }
+        .ali-horas.vacio { color: #9aa7bb; font-style: italic; }
+
+        .ali-chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 11px 9px; }
+        .ali-chip { padding: 3px 9px; border-radius: 999px; background: #eef2f7; color: #46536a; font-size: 0.73rem; font-weight: 750; }
+        .ali-chip strong { font-variant-numeric: tabular-nums; }
+        .ali-chip.extra { background: #fff3e6; color: #7c3a00; }
+        .ali-chip.turno { background: #e7f0ff; color: #14459c; }
+        .ali-chip.feriado { background: #efe7fd; color: #4c1d95; }
+        .ali-chip.reposo { background: #fdecec; color: #8d1d26; }
+        .ali-chip.noct { background: #e8eefc; color: #29386b; }
+        .ali-chip.manejo { background: #e7f7ee; color: #0a5b36; }
+        .ali-chip.desc { background: #fdf0d5; color: #8a5200; }
+        .ali-chip.absorbido { background: #f2f5f9; color: #7c8aa3; font-style: italic; }
+        .ali-chip.tarde { background: #fff3e6; color: #7c3a00; }
+        .ali-chip.cambio { background: #e7f0ff; color: #14459c; }
+        .ali-chip.justificado { background: #e7f7ee; color: #0a5b36; }
+        .ali-chip.falta { background: #b4232f; color: #fff; }
+        .ali-dia.sin-justificar { border-color: #b4232f; }
+        .ali-dia.sin-justificar .ali-n { background: #fdecec; color: #8d1d26; }
+        .ali-obliga { margin-top: 9px; padding: 8px 11px; border-radius: 9px; background: #fdecec; border: 1px solid #eab0b5; color: #8d1d26; font-size: 0.82rem; font-weight: 800; line-height: 1.4; }
+        .ali-editor label.requerido { color: #8d1d26; }
+        .ali-editor label.requerido input { border-color: #eab0b5; background: #fffafa; }
+
+        .ali-editor { padding: 11px; border-top: 1px dashed #cbd7e6; background: #fbfcfe; }
+        .ali-editor-fila { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 9px; }
+        .ali-editor label { display: block; color: #46536a; font-size: 0.7rem; font-weight: 900; letter-spacing: 0.03em; text-transform: uppercase; }
+        .ali-editor input[type=text], .ali-editor input[type=number] { width: 100%; min-height: 44px; margin-top: 3px; padding: 8px 9px; border: 2px solid #cbd7e6; border-radius: 8px; background: #fff; color: #172033; font: inherit; font-weight: 750; text-transform: none; }
+        .campo-hora { font-variant-numeric: tabular-nums; letter-spacing: 0.06em; text-align: center; }
+        .ali-largo { margin-top: 9px; }
+        .ali-check { display: flex; align-items: center; gap: 8px; margin-top: 10px; text-transform: none; font-size: 0.85rem; font-weight: 800; color: #2b3d5c; }
+        .ali-check input { width: 20px; height: 20px; }
+        .ali-ref { margin-top: 9px; padding: 6px 10px; border-radius: 8px; background: #eef2f7; color: #46536a; font-size: 0.78rem; font-weight: 750; }
+        .ali-ref small { color: #7c8aa3; font-weight: 700; }
+        .ali-manejo { margin-top: 11px; padding: 10px 11px; border-radius: 10px; background: #f2fbf6; border: 1px solid #b6e0ca; }
+        .ali-manejo-ref { color: #075437; font-size: 0.79rem; font-weight: 750; line-height: 1.5; }
+        .ali-manejo-ref small { color: #3f7a60; font-weight: 700; }
+        .ali-manejo-preg { margin-top: 9px; color: #0a5b36; font-size: 0.86rem; font-weight: 900; }
+        .ali-manejo-si-no { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 7px; max-width: 240px; }
+        .ali-sn { min-height: 44px; border: 2px solid #b6e0ca; border-radius: 9px; background: #fff; color: #37455e; font: inherit; font-weight: 850; cursor: pointer; }
+        .ali-sn.activo { background: #6a7891; border-color: #6a7891; color: #fff; }
+        .ali-sn.activo.si { background: #0a7d5a; border-color: #0a7d5a; }
+        .ali-cambio { margin-top: 9px; padding: 8px 11px; border-radius: 9px; background: #e7f0ff; border: 1px solid #adc8f0; color: #14459c; font-size: 0.8rem; font-weight: 750; line-height: 1.45; }
+        .ali-borrar { margin-top: 10px; min-height: 40px; padding: 0 14px; border: 2px solid #eab0b5; border-radius: 8px; background: #fff; color: #8d1d26; font-weight: 800; font-size: 0.82rem; cursor: pointer; }
+
+        @media (max-width: 720px) {
+            .ali-acciones { grid-template-columns: 1fr; }
+            .ali-totales { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
     </style>
 </head>
 <body>
@@ -295,14 +508,20 @@
         </div>
     </section>
 
+    <!-- Prevención más próxima: aparece sola cuando queda algo dentro de 500 m -->
+    <div id="prev-aviso" class="prev-aviso" role="status" aria-live="polite" hidden></div>
+
     <div class="main-controls">
         <button class="btn add-btn" onclick="addService()">+ Nuevo Servicio</button>
         <button class="btn plan-btn" onclick="abrirPlanificador()">🧭 Planificar Viaje</button>
-        <button class="btn pauta-btn" onclick="abrirPauta()">👤 Mis Turnos</button>
-        <button class="btn delete-all-btn" onclick="borrarTodo()">🗑️ Borrar Todo</button>
-        <button class="btn pdf-btn" onclick="descargarBitacoraPDF()">📄 Descargar Bitácora</button>
+        <button class="btn pauta-btn" onclick="abrirPauta()">📋 Pauta Diaria</button>
+        <button class="btn prev-btn" onclick="abrirPrevenciones()">⚠️ Prevenciones</button>
+        <button class="btn graf-btn" onclick="abrirGrafico()">📅 Mi Gráfico</button>
+        <button class="btn ali-btn" onclick="abrirAlistacion()">🕒 Mi Alistación</button>
+        <button class="btn secundario delete-all-btn" onclick="borrarTodo()">🗑️ Borrar Todo</button>
+        <button class="btn secundario pdf-btn" onclick="descargarBitacoraPDF()">📄 Descargar Bitácora</button>
 
-    <div class="whatsapp-container">
+    <div class="whatsapp-container" style="grid-column: 1 / -1;">
             <select id="whatsapp-number">
 <option value="56975583841">Wilfredo Hervera (+56975583841)</option>
                 <option value="56956586882">Carlos Alarcón (+56956586882)</option>
@@ -349,7 +568,9 @@
                 </div>
                 <div class="plan-campo">
                     <label for="plan-hora">Desde las</label>
-                    <input type="time" id="plan-hora" step="60">
+                    <input type="text" id="plan-hora" class="campo-hora" inputmode="numeric"
+                           maxlength="5" placeholder="hh:mm" autocomplete="off"
+                           oninput="horaFiltrar(this)" onchange="horaCampo(this); ejecutarPlanificador();">
                 </div>
                 <button type="button" class="plan-buscar" onclick="ejecutarPlanificador()">🔍 Buscar</button>
             </div>
@@ -366,15 +587,15 @@
     </div>
 </div>
 
-<!-- ===== Mis Turnos: lectura de la pauta diaria por nombre ===== -->
+<!-- ===== Pauta Diaria: los turnos del día por nombre ===== -->
 <div id="pauta-overlay" class="plan-overlay" role="dialog" aria-modal="true" aria-labelledby="pauta-titulo" hidden>
     <div class="plan-panel" role="document">
         <div class="plan-head">
             <div>
-                <h3 id="pauta-titulo">👤 Mis Turnos</h3>
+                <h3 id="pauta-titulo">📋 Pauta Diaria</h3>
                 <small>Pauta diaria · tripulaciones y servicios</small>
             </div>
-            <button type="button" class="plan-cerrar" onclick="cerrarPauta()" aria-label="Cerrar mis turnos">✕</button>
+            <button type="button" class="plan-cerrar" onclick="cerrarPauta()" aria-label="Cerrar pauta diaria">✕</button>
         </div>
 
         <div class="plan-form pauta-form">
@@ -403,6 +624,127 @@
         </div>
 
         <div class="plan-cuerpo" id="pauta-resultados" aria-live="polite"></div>
+    </div>
+</div>
+
+<!-- ===== Prevenciones: boletín de vía + ubicación por GPS ===== -->
+<div id="prev-overlay" class="plan-overlay" role="dialog" aria-modal="true" aria-labelledby="prev-titulo" hidden>
+    <div class="plan-panel" role="document">
+        <div class="plan-head">
+            <div>
+                <h3 id="prev-titulo">⚠️ Prevenciones</h3>
+                <small>Boletín de vía C · aviso por ubicación</small>
+            </div>
+            <button type="button" class="plan-cerrar" onclick="cerrarPrevenciones()" aria-label="Cerrar prevenciones">✕</button>
+        </div>
+
+        <div class="plan-form prev-form">
+            <div id="prev-cabecera"></div>
+
+            <div class="prev-acciones">
+                <button type="button" class="prev-accion iniciar" onclick="prevIniciarGPS()">📍 Seguir mi ubicación</button>
+                <button type="button" class="prev-accion detener" onclick="prevDetenerGPS()">⏹ Detener</button>
+                <button type="button" class="prev-accion prueba" id="prev-btn-prueba" onclick="prevModoPrueba()">🧪 Modo prueba</button>
+            </div>
+
+            <div class="plan-fila">
+                <div class="plan-campo">
+                    <label for="prev-linea">Línea (prueba)</label>
+                    <select id="prev-linea" onchange="prevPruebaCambio()">
+                        <option value="L2">L2 · Concepción–Coronel</option>
+                        <option value="L1">L1 · Hualqui–Talcahuano</option>
+                    </select>
+                </div>
+                <div class="plan-campo">
+                    <label for="prev-pk">PK</label>
+                    <input type="number" id="prev-pk" step="0.05" value="0" oninput="prevPruebaCambio()">
+                </div>
+                <div class="plan-campo">
+                    <label for="prev-sentido">Sentido</label>
+                    <select id="prev-sentido" onchange="prevPruebaCambio()">
+                        <option value="1">PK creciente (L2: vía 1)</option>
+                        <option value="-1">PK decreciente (L2: vía 2)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="plan-cuerpo" id="prev-resultados" aria-live="polite"></div>
+    </div>
+</div>
+
+<!-- ===== Mi Gráfico: turnos del mes por persona ===== -->
+<div id="graf-overlay" class="plan-overlay" role="dialog" aria-modal="true" aria-labelledby="graf-titulo" hidden>
+    <div class="plan-panel" role="document">
+        <div class="plan-head">
+            <div>
+                <h3 id="graf-titulo">📅 Mi Gráfico</h3>
+                <small>Turnos del mes y su horario</small>
+            </div>
+            <button type="button" class="plan-cerrar" onclick="cerrarGrafico()" aria-label="Cerrar mi gráfico">✕</button>
+        </div>
+
+        <div class="plan-form graf-form">
+            <div class="plan-campo">
+                <label for="graf-nombre">Escribe tu apellido</label>
+                <div class="graf-auto">
+                    <input type="text" id="graf-nombre" autocomplete="off" autocapitalize="characters" spellcheck="false"
+                           placeholder="Escribe tu apellido"
+                           oninput="grafAutocompletar()" onfocus="grafAutocompletar()" onkeydown="grafTeclaSugerencia(event)">
+                    <div id="graf-sugerencias" class="pauta-sugerencias" role="listbox" hidden></div>
+                </div>
+            </div>
+
+            <div class="plan-fila">
+                <div class="plan-campo">
+                    <label for="graf-mes">Mes</label>
+                    <select id="graf-mes" onchange="grafRenderizar()"></select>
+                </div>
+                <button type="button" class="plan-buscar" onclick="grafRenderizar()">🔍 Ver gráfico</button>
+            </div>
+        </div>
+
+        <div class="plan-cuerpo" id="graf-resultados" aria-live="polite"></div>
+    </div>
+</div>
+
+<!-- ===== Mi Alistación: horas trabajadas día a día ===== -->
+<div id="ali-overlay" class="plan-overlay" role="dialog" aria-modal="true" aria-labelledby="ali-titulo" hidden>
+    <div class="plan-panel" role="document">
+        <div class="plan-head">
+            <div>
+                <h3 id="ali-titulo">🕒 Mi Alistación</h3>
+                <small>Horas trabajadas y horas extra del mes</small>
+            </div>
+            <button type="button" class="plan-cerrar" onclick="cerrarAlistacion()" aria-label="Cerrar mi alistación">✕</button>
+        </div>
+
+        <div class="plan-form ali-form">
+            <div class="plan-campo">
+                <label for="ali-nombre">Escribe tu apellido</label>
+                <div class="ali-auto">
+                    <input type="text" id="ali-nombre" autocomplete="off" autocapitalize="characters" spellcheck="false"
+                           placeholder="Escribe tu apellido"
+                           oninput="aliAutocompletar()" onfocus="aliAutocompletar()">
+                    <div id="ali-sugerencias" class="pauta-sugerencias" role="listbox" hidden></div>
+                </div>
+            </div>
+
+            <div class="plan-fila">
+                <div class="plan-campo">
+                    <label for="ali-mes">Mes</label>
+                    <select id="ali-mes" onchange="aliRenderizar()"></select>
+                </div>
+                <button type="button" class="plan-buscar" onclick="aliRenderizar()">🔍 Ver</button>
+            </div>
+
+            <div class="ali-acciones">
+                <button type="button" class="ali-accion prellenar" onclick="aliPrellenarMes()">✨ Prellenar del gráfico</button>
+                <button type="button" class="ali-accion pdf" onclick="aliDescargarPDF()">📄 Descargar PDF</button>
+            </div>
+        </div>
+
+        <div class="plan-cuerpo" id="ali-resultados" aria-live="polite"></div>
     </div>
 </div>
 
@@ -2490,6 +2832,7 @@ function planVerAnteriores() {
 }
 
 function ejecutarPlanificador() {
+    horaCampo(document.getElementById('plan-hora'));
     planEstado = {
         origen: document.getElementById('plan-origen').value,
         destino: document.getElementById('plan-destino').value,
@@ -3091,12 +3434,15 @@ function pautaSubsecuencia(consulta, texto) {
 
 // Ordena por apellido: escribir "HENRIQUEZ" tiene que ofrecer primero a los
 // Henríquez, no a cualquiera que lleve esas letras sueltas.
-function pautaSugerencias(consulta, limite) {
+// `roster` permite reutilizar el mismo buscador con la lista del gráfico,
+// que trae los nombres escritos de otra forma que las pautas.
+function pautaSugerencias(consulta, limite, roster) {
+    const lista = roster || PAUTA_ROSTER;
     const q = pautaNorm(consulta).replace(/\./g, '').trim();
-    if (!q) return PAUTA_ROSTER.slice(0, limite || 8);
+    if (!q) return lista.slice(0, limite || 8);
 
     const res = [];
-    PAUTA_ROSTER.forEach(function (nombre) {
+    lista.forEach(function (nombre) {
         const completo = pautaNorm(nombre).replace(/\./g, '');
         const ape = pautaApellido(nombre);
         let p = 0;
@@ -3510,6 +3856,2278 @@ document.addEventListener('click', function (e) {
     const caja = document.getElementById('pauta-sugerencias');
     if (!caja || caja.hidden) return;
     if (!e.target.closest('.pauta-auto')) caja.hidden = true;
+});
+
+/* Trazado ferroviario muestreado (km, lat, lon), tomado de SyncroRed.
+   L1 = San Rosendo -> Talcahuano (PK 0 en San Rosendo).
+   L2 = Concepcion -> Coronel (PK 0 en Concepcion, Coronel en el 27,43). */
+const PREV_TRAZADO = {"L1":[[0.0,-37.264921,-72.720859],[0.5,-37.264666,-72.726462],[1.0,-37.261279,-72.73011],[1.5,-37.258187,-72.734142],[2.0,-37.254448,-72.737227],[2.5,-37.250044,-72.73664],[3.0,-37.245654,-72.735539],[3.5,-37.241162,-72.735317],[4.0,-37.236947,-72.737077],[4.5,-37.233662,-72.740925],[5.0,-37.230311,-72.744651],[5.5,-37.226527,-72.747678],[6.0,-37.222329,-72.74967],[6.5,-37.218735,-72.752972],[7.0,-37.216631,-72.75793],[7.5,-37.213104,-72.761278],[8.0,-37.209121,-72.763817],[8.5,-37.205434,-72.767046],[9.0,-37.202336,-72.771131],[9.5,-37.199329,-72.775325],[10.0,-37.198066,-72.78069],[10.5,-37.199719,-72.78558],[11.0,-37.200636,-72.79076],[11.5,-37.202965,-72.795561],[12.0,-37.205895,-72.799676],[12.5,-37.205713,-72.805209],[13.0,-37.202285,-72.808695],[13.5,-37.198582,-72.811897],[14.0,-37.194831,-72.815009],[14.5,-37.193338,-72.819943],[15.0,-37.194306,-72.825045],[15.5,-37.195757,-72.830097],[16.0,-37.196356,-72.835575],[16.5,-37.196747,-72.841167],[17.0,-37.1953,-72.84642],[17.5,-37.193034,-72.851295],[18.0,-37.190567,-72.85601],[18.5,-37.188405,-72.860949],[19.0,-37.184736,-72.864164],[19.5,-37.181364,-72.867819],[20.0,-37.178457,-72.872052],[20.5,-37.175576,-72.876319],[21.0,-37.174015,-72.881524],[21.5,-37.173239,-72.887016],[22.0,-37.17178,-72.892241],[22.5,-37.169358,-72.896898],[23.0,-37.166877,-72.901198],[23.5,-37.165271,-72.906411],[24.0,-37.162716,-72.910986],[24.5,-37.161125,-72.916092],[25.0,-37.15687,-72.916749],[25.5,-37.152495,-72.917758],[26.0,-37.148918,-72.921113],[26.5,-37.146163,-72.925483],[27.0,-37.143766,-72.930173],[27.5,-37.139697,-72.932519],[28.0,-37.135514,-72.934587],[28.5,-37.131329,-72.936651],[29.0,-37.127145,-72.938716],[29.5,-37.12296,-72.940781],[30.0,-37.118778,-72.942853],[30.5,-37.114598,-72.94493],[31.0,-37.11045,-72.947098],[31.5,-37.10681,-72.950353],[32.0,-37.102436,-72.951647],[32.5,-37.098045,-72.95286],[33.0,-37.093654,-72.954074],[33.5,-37.089262,-72.955287],[34.0,-37.084871,-72.9565],[34.5,-37.08048,-72.957712],[35.0,-37.076167,-72.959252],[35.5,-37.072109,-72.96168],[36.0,-37.067829,-72.963283],[36.5,-37.063335,-72.963327],[37.0,-37.058838,-72.963271],[37.5,-37.054342,-72.963263],[38.0,-37.04989,-72.962716],[38.5,-37.04564,-72.964137],[39.0,-37.041539,-72.966446],[39.5,-37.037088,-72.967021],[40.0,-37.032679,-72.967622],[40.5,-37.028984,-72.970692],[41.0,-37.024781,-72.972398],[41.5,-37.020304,-72.972895],[42.0,-37.015866,-72.973738],[42.5,-37.011458,-72.972642],[43.0,-37.007153,-72.971338],[43.5,-37.004271,-72.967059],[44.0,-37.00096,-72.963447],[44.5,-36.998655,-72.958613],[45.0,-36.996085,-72.954005],[45.5,-36.992875,-72.95009],[46.0,-36.989516,-72.946385],[46.5,-36.987203,-72.941678],[47.0,-36.983005,-72.940222],[47.5,-36.978665,-72.941698],[48.0,-36.974215,-72.942367],[48.5,-36.970014,-72.944188],[49.0,-36.967794,-72.949018],[49.5,-36.964855,-72.953148],[50.0,-36.965949,-72.958208],[50.5,-36.967669,-72.963337],[51.0,-36.968682,-72.968753],[51.5,-36.970124,-72.974058],[52.0,-36.970196,-72.979677],[52.5,-36.969542,-72.985232],[53.0,-36.968503,-72.990695],[53.5,-36.967116,-72.996028],[54.0,-36.965655,-73.001338],[54.5,-36.964436,-73.006731],[55.0,-36.960525,-73.008486],[55.5,-36.956361,-73.010382],[56.0,-36.952721,-73.013385],[56.5,-36.948354,-73.012139],[57.0,-36.94402,-73.010641],[57.5,-36.939656,-73.010837],[58.0,-36.935434,-73.012774],[58.5,-36.931651,-73.015737],[59.0,-36.928094,-73.019178],[59.5,-36.924534,-73.022615],[60.0,-36.920618,-73.025371],[60.5,-36.916658,-73.028035],[61.0,-36.912679,-73.030654],[61.5,-36.908349,-73.03149],[62.0,-36.903869,-73.031005],[62.5,-36.899466,-73.031977],[63.0,-36.895191,-73.03365],[63.5,-36.891233,-73.036083],[64.0,-36.886913,-73.037371],[64.5,-36.882464,-73.038006],[65.0,-36.877983,-73.038457],[65.5,-36.87413,-73.04125],[66.0,-36.86987,-73.042409],[66.5,-36.865485,-73.043613],[67.0,-36.861627,-73.04645],[67.5,-36.858075,-73.049794],[68.0,-36.853635,-73.050439],[68.5,-36.849275,-73.051814],[69.0,-36.844916,-73.053189],[69.5,-36.840614,-73.054786],[70.0,-36.836308,-73.056356],[70.5,-36.83254,-73.059237],[71.0,-36.828645,-73.061992],[71.5,-36.824423,-73.0636],[72.0,-36.820332,-73.065898],[72.5,-36.81589,-73.06645],[73.0,-36.811456,-73.066884],[73.5,-36.808351,-73.070856],[74.0,-36.805568,-73.075267],[74.5,-36.802016,-73.07858],[75.0,-36.797971,-73.081031],[75.5,-36.793925,-73.083482],[76.0,-36.789742,-73.085452],[76.5,-36.78525,-73.08556],[77.0,-36.780753,-73.085539],[77.5,-36.776257,-73.08551],[78.0,-36.77176,-73.085482],[78.5,-36.767291,-73.08591],[79.0,-36.763111,-73.087947],[79.5,-36.759022,-73.090282],[80.0,-36.754933,-73.092617],[80.5,-36.750844,-73.094951],[81.0,-36.746755,-73.097286],[81.5,-36.742708,-73.099725],[82.0,-36.739097,-73.10306],[82.5,-36.735578,-73.106552],[83.0,-36.732045,-73.110023],[83.5,-36.728508,-73.113463],[84.0,-36.725094,-73.11711],[84.5,-36.720804,-73.118491],[85.0,-36.716321,-73.118488],[85.5,-36.712377,-73.115826]],"L2":[[0.0,-36.824786,-73.06365],[0.5,-36.829032,-73.061722],[1.0,-36.830856,-73.0658],[1.5,-36.832141,-73.071214],[2.0,-36.833426,-73.076628],[2.5,-36.834711,-73.082042],[3.0,-36.835996,-73.087456],[3.5,-36.837281,-73.09287],[4.0,-36.83842,-73.098305],[4.5,-36.838122,-73.103942],[5.0,-36.837824,-73.10958],[5.5,-36.837526,-73.115217],[6.0,-36.838966,-73.120108],[6.5,-36.841972,-73.124327],[7.0,-36.844977,-73.128546],[7.5,-36.848609,-73.131389],[8.0,-36.853045,-73.132465],[8.5,-36.857483,-73.133529],[9.0,-36.861924,-73.134585],[9.5,-36.866365,-73.135641],[10.0,-36.870802,-73.136711],[10.5,-36.875239,-73.137786],[11.0,-36.879675,-73.138862],[11.5,-36.884113,-73.139936],[12.0,-36.888553,-73.141005],[12.5,-36.892994,-73.142074],[13.0,-36.897434,-73.143143],[13.5,-36.901873,-73.144212],[14.0,-36.906311,-73.145282],[14.5,-36.910749,-73.146351],[15.0,-36.915188,-73.14742],[15.5,-36.919626,-73.148489],[16.0,-36.924064,-73.149559],[16.5,-36.928502,-73.150628],[17.0,-36.932941,-73.151697],[17.5,-36.937379,-73.152767],[18.0,-36.941817,-73.153836],[18.5,-36.946255,-73.154905],[19.0,-36.950694,-73.155974],[19.5,-36.955134,-73.157033],[20.0,-36.959578,-73.158066],[20.5,-36.964022,-73.1591],[21.0,-36.968466,-73.160133],[21.5,-36.97291,-73.161166],[22.0,-36.977354,-73.162199],[22.5,-36.981825,-73.162929],[23.0,-36.986342,-73.163113],[23.5,-36.990859,-73.163089],[24.0,-36.995377,-73.16291],[24.5,-36.999854,-73.162385],[25.0,-37.004222,-73.160936],[25.5,-37.00859,-73.159487],[26.0,-37.012946,-73.157996],[26.5,-37.017004,-73.155498],[27.0,-37.021061,-73.153],[27.43,-37.024551,-73.150851]]};
+const PREV_ESTACIONES = {"L1":[["San Rosendo",-37.263557,-72.727845],["Buenuraqui",-37.202907,-72.770344],["Gomero",-37.196404,-72.835418],["Talcamavida",-37.165018,-72.906828],["Los Acacios",-37.155883,-72.916824],["Valle Chanco",-37.137311,-72.933732],["Unihue",-37.119256,-72.942669],["San Miguel",-37.078782,-72.958202],["Quilacoya",-37.054493,-72.963406],["Hualqui",-36.980477,-72.941045],["Omer Huet",-36.966332,-72.99848],["La Leonera",-36.951096,-73.013076],["Manquimavida",-36.938442,-73.011356],["Pedro Medina",-36.925686,-73.021468],["Chiguayante",-36.915296,-73.02889],["Concepcion",-36.830032,-73.061144],["Lorenzo Arenas",-36.808188,-73.071128],["UTFSM",-36.783753,-73.085601],["Los Condores",-36.756576,-73.091729],["Hospital las Higueras",-36.739494,-73.102709],["El Arenal",-36.725385,-73.116805],["Mercado",-36.711932,-73.115553]],"L2":[["Concepcion",-36.829805,-73.061371],["Juan Pablo II",-36.838448,-73.097786],["Diagonal Biobio",-36.837385,-73.117889],["Alborada",-36.846666,-73.130917],["Costa Mar",-36.854774,-73.132885],["El Parque",-36.867803,-73.135984],["Lomas Coloradas",-36.882727,-73.139602],["Silva Henriquez",-36.898491,-73.143398],["Hito Galvarino",-36.953863,-73.156738],["Los Canelos",-36.980216,-73.162864],["Huinca",-36.988284,-73.163192],["Cristo Redentor",-36.998666,-73.162779],["Laguna Quinenco",-37.012783,-73.158096],["Coronel",-37.024551,-73.150851]]};
+
+/* =========================================================================
+   PREVENCIONES · BOLETÍN DE VÍA C
+   Lee el boletín del día y contesta una sola pregunta mientras se conduce:
+   "¿qué prevención viene ahora y a cuántos metros?".
+
+   Cómo se ubica el tren: el GPS entrega lat/lon, y esa coordenada se proyecta
+   sobre el trazado (una polilínea con su kilometraje) para obtener el PK. Con
+   dos posiciones seguidas se sabe si el PK sube o baja, y de ahí la vía:
+   en L2, PK subiendo = Concepción→Coronel = VÍA 1; PK bajando = VÍA 2.
+
+   Qué se muestra: solo lo vigente a esta hora, solo lo que aplica a la vía por
+   la que se circula, y de todo eso lo más grave que quede dentro de 500 m.
+   ========================================================================= */
+
+const PREV_ARCHIVO   = 'prevenciones/boletin.json';
+const PREV_AVISO_M   = 500;    // metros de anticipación del aviso
+const PREV_PASADA_M  = 300;    // cuánto sigue a la vista después de salir de la zona
+const PREV_VIA_MAX_M = 400;    // más lejos que esto de la vía, el GPS no sirve
+const PREV_LISTA_KM  = 15;     // cuántos km hacia adelante lista el panel
+const PREV_EMPALME_L1 = 71.0;  // PK de L1 donde nace el ramal a Coronel (Concepción)
+const PREV_ARENAL_PK  = 84.0;  // desde aquí a Mercado se circula por la vía 4
+const PREV_TRAMO_MAX = 15;     // un tramo más largo que esto no es un punto que avisar
+// El boletín CTC cubre Hualqui–Talcahuano en L1. Un PK bajo el 40 en esa
+// sección no es de L1: es de otro eje (Industrias Derivadas, variantes), que
+// comparte la numeración pero no la geografía.
+const PREV_RANGO = { L1: [40, 86], L2: [0, 28.5] };
+
+let PREV_BOLETINES = [];
+let PREV_GPS = {
+    watchId: null, lat: null, lon: null, precision: null,
+    linea: '', pk: null, distVia: null, sentido: 0, ts: 0, error: ''
+};
+let PREV_HISTORIA = [];        // últimos PK, para deducir el sentido
+let PREV_MANUAL = { activo: false, linea: 'L2', pk: 0, sentido: 1 };
+let PREV_ULTIMO_AVISO = '';
+
+/* ------------------------------------------------- escribir una hora ------- */
+
+// Teclear la hora en vez de girar un reloj. Se aceptan 530, 5:30, 0530 y 1645;
+// todo termina guardado como HH:MM.
+function horaNormalizar(valor) {
+    const d = String(valor == null ? '' : valor).replace(/\D/g, '');
+    if (!d) return '';
+    let h, m;
+    if (d.length <= 2) { h = parseInt(d, 10); m = 0; }
+    else { h = parseInt(d.slice(0, d.length - 2), 10); m = parseInt(d.slice(-2), 10); }
+    if (!isFinite(h)) return '';
+    // El grafico y la alistacion escriben los cierres pasada medianoche como
+    // 24:15 o 25:35. Se entienden como del dia siguiente.
+    if (h >= 24 && h <= 29) h -= 24;
+    if (h > 23) h = 23;
+    if (m > 59) m = 59;
+    return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+}
+
+// Mientras se escribe solo se dejan pasar números y los dos puntos.
+function horaFiltrar(input) {
+    const limpio = String(input.value).replace(/[^\d:]/g, '').slice(0, 5);
+    if (limpio !== input.value) input.value = limpio;
+}
+
+// Al salir del campo se ordena: 530 se convierte en 05:30.
+function horaCampo(input) {
+    if (!input) return '';
+    input.value = horaNormalizar(input.value);
+    return input.value;
+}
+
+/* ------------------------------------------------------------------ texto -- */
+
+function prevNorm(txt) {
+    return String(txt == null ? '' : txt)
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .toUpperCase().replace(/\s+/g, ' ').trim();
+}
+
+// "46 P. 10" -> 46.10 (km + poste/100) ; "3,3" -> 3.3 ; "59" -> 59
+// El poste va en centésimas de kilómetro: es la misma convención del boletín,
+// donde "27 P. 41" cae justo en Coronel (PK 27,43).
+function prevKm(txt) {
+    const s = String(txt == null ? '' : txt).trim();
+    if (!s) return null;
+    const poste = s.match(/^(\d+)\s*P\.?\s*(\d+)/i);
+    if (poste) return parseInt(poste[1], 10) + parseInt(poste[2], 10) / 100;
+    const dec = s.match(/^(\d+(?:[.,]\d+)?)/);
+    return dec ? parseFloat(dec[1].replace(',', '.')) : null;
+}
+
+function prevHoraMin(txt) {
+    const m = String(txt || '').match(/(\d{1,2})[:.](\d{2})/);
+    return m ? parseInt(m[1], 10) * 60 + parseInt(m[2], 10) : null;
+}
+
+function prevFechaISO(txt) {
+    const m = String(txt || '').match(/(20\d{2})-(\d{2})-(\d{2})/);
+    return m ? m[0] : '';
+}
+
+/* ------------------------------------------------------------ clasificar -- */
+
+// Vía por la que aplica la prevención.
+//   V1 / V2  : vía de circulación según el sentido de marcha
+//   V4       : vía única El Arenal–Mercado, y la vía 4 de acceso al ramal en
+//              Concepción; en ambos casos se circula por ella en los dos sentidos
+//   AMBAS    : ambas vías, todas, principal, y lo que es del tramo (puente, cruce)
+//   OTRA     : patio, desviador, enlace, variante, vías de servicio
+function prevVia(txt) {
+    const t = prevNorm(txt);
+    if (/^VIA\s*1$/.test(t)) return 'V1';
+    if (/^VIA\s*2$/.test(t)) return 'V2';
+    if (/^VIA\s*4$/.test(t)) return 'V4';
+    if (/^(AMBAS VIAS|TODAS|PRINCIPAL|PUENTE|CRUCE)$/.test(t)) return 'AMBAS';
+    return 'OTRA';
+}
+
+// Gravedad: 1 crítica (<=15 km/h) · 2 alta (<=30) · 3 media · 4 solo toque pito.
+function prevGravedad(restriccion) {
+    const t = prevNorm(restriccion);
+    const vel = (t.match(/(\d+)\s*KM\/H/g) || []).map(x => parseInt(x, 10));
+    if (vel.length) {
+        const v = Math.min.apply(null, vel);
+        return { nivel: v <= 15 ? 1 : v <= 30 ? 2 : 3, velocidad: v };
+    }
+    if (/SIN TRAFICO|PROHIBICION|NO DESPACHAR|BAJADA DE PANTOGRAFO/.test(t)) {
+        return { nivel: 3, velocidad: null };
+    }
+    return { nivel: 4, velocidad: null };   // toque pito y avisos sin velocidad
+}
+
+const PREV_NIVEL_TXT = { 1: 'Crítica', 2: 'Alta', 3: 'Media', 4: 'Aviso' };
+
+/* ------------------------------------------------------------ interpretar -- */
+
+// Un boletín trae dos secciones. La de Hualqui–Talcahuano usa el kilometraje de
+// L1; la de Concepción–Coronel usa el de L2, salvo los primeros registros, que
+// arrancan con el PK 69/70/71 del eje compartido en Concepción y terminan con
+// el PK propio del ramal. Esos quedan como dos tramos.
+function prevInterpretarBoletin(hoja) {
+    const filas = (hoja && hoja.filas) || [];
+    const celda = (f, i) => String((f && f[i]) || '').trim();
+    const prevenciones = [];
+    let linea = '';
+
+    filas.forEach(function (f) {
+        const texto = prevNorm((f || []).join(' '));
+        if (texto.indexOf('NOTIFICACION DE FAENAS') >= 0) {
+            if (texto.indexOf('TALCAHUANO') >= 0) linea = 'L1';
+            else if (texto.indexOf('CORONEL') >= 0) linea = 'L2';
+            return;
+        }
+        if (!linea || !/^\d+$/.test(celda(f, 0))) return;
+
+        const kmA = prevKm(celda(f, 4));
+        const kmB = prevKm(celda(f, 5));
+        if (kmA === null && kmB === null) return;
+
+        const grav = prevGravedad(celda(f, 6));
+        const p = {
+            n: celda(f, 0),
+            linea: linea,
+            bloque: [celda(f, 1), celda(f, 2)].filter(Boolean).join(' – '),
+            viaTexto: celda(f, 3),
+            via: prevVia(celda(f, 3)),
+            kmTexto: celda(f, 4) + (celda(f, 5) ? ' a ' + celda(f, 5) : ''),
+            restriccion: celda(f, 6),
+            descripcion: celda(f, 7),
+            horaIni: celda(f, 8).slice(0, 5),
+            horaFin: celda(f, 9).slice(0, 5),
+            minIni: prevHoraMin(celda(f, 8)),
+            minFin: prevHoraMin(celda(f, 9)),
+            fechaIni: prevFechaISO(celda(f, 10)),
+            fechaFin: prevFechaISO(celda(f, 11)),
+            coordinado: celda(f, 12),
+            nivel: grav.nivel,
+            velocidad: grav.velocidad,
+            tramos: []
+        };
+
+        // ¿Cada extremo a qué eje pertenece? En la sección de Coronel, un PK
+        // sobre 40 solo puede ser del eje de Concepción (L1).
+        const eje = (km) => (linea === 'L2' && km !== null && km > 40) ? 'L1' : linea;
+        const ejeA = eje(kmA), ejeB = eje(kmB);
+
+        if (kmA !== null && kmB !== null && ejeA !== ejeB) {
+            // Sale de Concepción por el eje L1 y entra al ramal por el de L2.
+            p.tramos.push({ linea: ejeA, desde: kmA, hasta: PREV_EMPALME_L1 });
+            p.tramos.push({ linea: ejeB, desde: 0, hasta: kmB });
+            p.mixto = true;
+        } else {
+            const a = kmA === null ? kmB : kmA;
+            const b = kmB === null ? kmA : kmB;
+            p.tramos.push({ linea: ejeA || linea, desde: Math.min(a, b), hasta: Math.max(a, b) });
+        }
+
+        // Un tramo sirve para avisar por GPS solo si cae de verdad en el sector
+        // de esa línea. Las variantes y el ramal de Industrias Derivadas llevan
+        // su propio kilometraje: se listan, pero no se ubican en el mapa.
+        const ajeno = /VARIANTE/.test(prevNorm(p.viaTexto)) ||
+                      /INDUSTRIAS DERIVADAS/.test(prevNorm(p.bloque));
+        p.tramos.forEach(function (t) {
+            const r = PREV_RANGO[t.linea];
+            t.geo = !ajeno && !!r &&
+                    t.desde >= r[0] && t.hasta <= r[1] &&
+                    (t.hasta - t.desde) <= PREV_TRAMO_MAX;
+        });
+        p.geo = p.tramos.some(t => t.geo);
+        p.ajeno = ajeno;
+
+        prevenciones.push(p);
+    });
+
+    return {
+        fecha: hoja.fecha,
+        folio: hoja.folio || '',
+        archivo: hoja.archivo || '',
+        prevenciones: prevenciones
+    };
+}
+
+/* --------------------------------------------------------------- vigencia -- */
+
+// Hora y fecha de Chile continental, reutilizando el reloj de la bitácora.
+function prevAhoraChile() {
+    const partes = Object.fromEntries(
+        formatoHoraChile.formatToParts(new Date())
+            .filter(p => p.type !== 'literal').map(p => [p.type, p.value])
+    );
+    return {
+        minutos: parseInt(partes.hour, 10) * 60 + parseInt(partes.minute, 10),
+        fecha: fechaArchivoChile(),
+        texto: partes.hour + ':' + partes.minute
+    };
+}
+
+function prevVigente(p, ahora) {
+    if (p.fechaIni && ahora.fecha < p.fechaIni) return false;
+    if (p.fechaFin && ahora.fecha > p.fechaFin) return false;
+    if (p.minIni === null || p.minFin === null) return true;
+    const m = ahora.minutos;
+    if (p.minFin >= p.minIni) return m >= p.minIni && m <= p.minFin;
+    return m >= p.minIni || m <= p.minFin;   // ventana que cruza medianoche
+}
+
+// La vía se deduce del sentido de marcha, y es la misma idea en las dos líneas:
+//   L1  Hualqui -> El Arenal .... PK creciente  -> vía 1
+//       El Arenal -> Hualqui .... PK decreciente -> vía 2
+//       El Arenal -> Mercado .... vía 4 (única, en los dos sentidos)
+//   L2  Concepción -> Coronel ... PK creciente  -> vía 1
+//       Coronel -> Concepción ... PK decreciente -> vía 2
+// Sin sentido definido (tren detenido, primera posición) no se filtra nada.
+function prevViaAplica(p, linea, sentido) {
+    if (p.via === 'AMBAS' || p.via === 'OTRA' || p.via === 'V4') return true;
+    if (!sentido) return true;
+    return (sentido > 0 && p.via === 'V1') || (sentido < 0 && p.via === 'V2');
+}
+
+// Por qué vía se está circulando, para mostrarlo en el panel.
+function prevViaDeMarcha(linea, pk, sentido) {
+    if (linea === 'L1' && pk >= PREV_ARENAL_PK) return '4';
+    if (!sentido) return '';
+    return sentido > 0 ? '1' : '2';
+}
+
+/* -------------------------------------------------------- posición · GPS -- */
+
+// Proyecta la coordenada sobre cada segmento del trazado y devuelve el PK del
+// punto más cercano, junto con lo lejos que se está de la vía.
+function prevProyectar(linea, lat, lon) {
+    const pts = PREV_TRAZADO[linea];
+    if (!pts) return null;
+    const mLat = 111320, mLon = 111320 * Math.cos(lat * Math.PI / 180);
+    let mejor = null;
+
+    for (let i = 0; i < pts.length - 1; i++) {
+        const x0 = (pts[i][2] - lon) * mLon,     y0 = (pts[i][1] - lat) * mLat;
+        const x1 = (pts[i + 1][2] - lon) * mLon, y1 = (pts[i + 1][1] - lat) * mLat;
+        const dx = x1 - x0, dy = y1 - y0;
+        const largo = dx * dx + dy * dy;
+        let t = largo ? -(x0 * dx + y0 * dy) / largo : 0;
+        t = Math.max(0, Math.min(1, t));
+        const d = Math.hypot(x0 + t * dx, y0 + t * dy);
+        if (!mejor || d < mejor.dist) {
+            mejor = { dist: d, pk: pts[i][0] + t * (pts[i + 1][0] - pts[i][0]) };
+        }
+    }
+    return mejor;
+}
+
+// Concepción es el punto donde L1 y L2 se tocan: ahí las dos proyecciones dan
+// casi lo mismo. Se mantiene la línea en la que ya se venía salvo que la otra
+// quede claramente más cerca.
+function prevUbicar(lat, lon) {
+    const a = prevProyectar('L1', lat, lon);
+    const b = prevProyectar('L2', lat, lon);
+    if (!a && !b) return null;
+    let elegida = (!b || (a && a.dist <= b.dist)) ? 'L1' : 'L2';
+    const otra = elegida === 'L1' ? b : a;
+    const esta = elegida === 'L1' ? a : b;
+    if (PREV_GPS.linea && PREV_GPS.linea !== elegida && otra && esta &&
+        (esta.dist + 100) > otra.dist) {
+        elegida = PREV_GPS.linea;
+    }
+    const r = elegida === 'L1' ? a : b;
+    return { linea: elegida, pk: r.pk, dist: r.dist };
+}
+
+function prevRegistrarPosicion(linea, pk, ts) {
+    PREV_HISTORIA.push({ linea: linea, pk: pk, ts: ts });
+    if (PREV_HISTORIA.length > 6) PREV_HISTORIA.shift();
+
+    const mismos = PREV_HISTORIA.filter(h => h.linea === linea);
+    if (mismos.length < 2) return PREV_GPS.sentido;
+    const d = mismos[mismos.length - 1].pk - mismos[0].pk;
+    if (Math.abs(d) < 0.05) return PREV_GPS.sentido;   // detenido: se conserva
+    return d > 0 ? 1 : -1;
+}
+
+function prevIniciarGPS() {
+    if (!navigator.geolocation) {
+        PREV_GPS.error = 'Este equipo no entrega ubicación.';
+        prevRenderizar();
+        return;
+    }
+    if (PREV_GPS.watchId !== null) return;
+
+    PREV_MANUAL.activo = false;
+    PREV_GPS.error = '';
+    PREV_GPS.watchId = navigator.geolocation.watchPosition(
+        function (pos) {
+            const lat = pos.coords.latitude, lon = pos.coords.longitude;
+            const u = prevUbicar(lat, lon);
+            PREV_GPS.lat = lat; PREV_GPS.lon = lon;
+            PREV_GPS.precision = pos.coords.accuracy;
+            PREV_GPS.ts = Date.now();
+            PREV_GPS.error = '';
+            if (u) {
+                PREV_GPS.sentido = prevRegistrarPosicion(u.linea, u.pk, PREV_GPS.ts);
+                PREV_GPS.linea = u.linea;
+                PREV_GPS.pk = u.pk;
+                PREV_GPS.distVia = u.dist;
+            }
+            prevActualizar();
+        },
+        function (err) {
+            PREV_GPS.error = err.code === 1
+                ? 'Falta permiso de ubicación. Actívalo para el sitio y vuelve a intentar.'
+                : 'No se pudo obtener la ubicación (' + (err.message || err.code) + ').';
+            prevRenderizar();
+        },
+        { enableHighAccuracy: true, maximumAge: 2000, timeout: 15000 }
+    );
+    prevRenderizar();
+}
+
+function prevDetenerGPS() {
+    if (PREV_GPS.watchId !== null) navigator.geolocation.clearWatch(PREV_GPS.watchId);
+    PREV_GPS.watchId = null;
+    PREV_HISTORIA = [];
+    prevActualizar();
+}
+
+function prevPosicionActual() {
+    if (PREV_MANUAL.activo) {
+        return { linea: PREV_MANUAL.linea, pk: PREV_MANUAL.pk,
+                 sentido: PREV_MANUAL.sentido, dist: 0, manual: true };
+    }
+    if (PREV_GPS.pk === null) return null;
+    return { linea: PREV_GPS.linea, pk: PREV_GPS.pk,
+             sentido: PREV_GPS.sentido, dist: PREV_GPS.distVia, manual: false };
+}
+
+/* ------------------------------------------------------------ proximidad -- */
+
+// Dónde queda el tramo respecto del tren, según el sentido de marcha:
+//   'antes'  : todavía no se llega, faltan N metros
+//   'dentro' : se está circulando dentro de la zona
+//   'pasada' : ya se salió, hace N metros
+// Devuelve null si el tramo no es de esta línea o no se puede ubicar.
+function prevDistanciaA(p, pos) {
+    const sentido = pos.sentido || 1;
+    let mejor = null;
+
+    p.tramos.forEach(function (t) {
+        if (!t.geo || t.linea !== pos.linea) return;
+
+        let estado, km;
+        if (pos.pk >= t.desde && pos.pk <= t.hasta) {
+            estado = 'dentro'; km = 0;
+        } else if (sentido > 0) {
+            estado = pos.pk < t.desde ? 'antes' : 'pasada';
+            km = estado === 'antes' ? t.desde - pos.pk : pos.pk - t.hasta;
+        } else {
+            estado = pos.pk > t.hasta ? 'antes' : 'pasada';
+            km = estado === 'antes' ? pos.pk - t.hasta : t.desde - pos.pk;
+        }
+
+        const cand = { metros: Math.round(km * 1000), estado: estado };
+        if (!mejor || PREV_ORDEN_ESTADO[cand.estado] < PREV_ORDEN_ESTADO[mejor.estado] ||
+            (cand.estado === mejor.estado && cand.metros < mejor.metros)) {
+            mejor = cand;
+        }
+    });
+    return mejor;
+}
+
+const PREV_ORDEN_ESTADO = { dentro: 0, antes: 1, pasada: 2 };
+
+// Las de patio, desvío o enlace no compiten de igual a igual con las de vía:
+// entran a la lista, pero un paso a paso de patio no debe tapar un 30 km/h.
+function prevRango(p) { return p.nivel + (p.via === 'OTRA' ? 1 : 0); }
+
+// Lo que el tren tiene por delante (o encima). Las ya pasadas no entran acá:
+// el listado del panel es "lo que viene".
+function prevCandidatas(pos, ahora, alcanceKm) {
+    const bol = prevBoletinActivo();
+    if (!bol || !pos) return [];
+    const lim = (alcanceKm || PREV_LISTA_KM) * 1000;
+
+    return bol.prevenciones
+        .filter(p => prevVigente(p, ahora))
+        .filter(p => prevViaAplica(p, pos.linea, pos.sentido))
+        .map(function (p) {
+            const d = prevDistanciaA(p, pos);
+            return d ? Object.assign({ metros: d.metros, estado: d.estado }, p) : null;
+        })
+        .filter(p => p && p.estado !== 'pasada' && p.metros <= lim)
+        .sort((a, b) => a.metros - b.metros);
+}
+
+// Las que se acaban de dejar atrás, mientras no se alejen más de 300 m.
+function prevReciénPasadas(pos, ahora) {
+    const bol = prevBoletinActivo();
+    if (!bol || !pos) return [];
+
+    return bol.prevenciones
+        .filter(p => prevVigente(p, ahora))
+        .filter(p => prevViaAplica(p, pos.linea, pos.sentido))
+        .map(function (p) {
+            const d = prevDistanciaA(p, pos);
+            return d ? Object.assign({ metros: d.metros, estado: d.estado }, p) : null;
+        })
+        .filter(p => p && p.estado === 'pasada' && p.metros <= PREV_PASADA_M);
+}
+
+// La que se muestra bajo el reloj: lo más grave que se tenga encima o dentro de
+// 500 m. Si no hay nada por delante, se deja a la vista la que se acaba de
+// pasar, hasta alejarse 300 m de ella.
+function prevMasImportanteCerca(pos, ahora) {
+    const adelante = prevCandidatas(pos, ahora, PREV_AVISO_M / 1000)
+        .sort((a, b) => prevRango(a) - prevRango(b) || a.metros - b.metros);
+    if (adelante.length) return adelante[0];
+
+    return prevReciénPasadas(pos, ahora)
+        .sort((a, b) => prevRango(a) - prevRango(b) || a.metros - b.metros)[0] || null;
+}
+
+/* ---------------------------------------------------------------- pantalla -- */
+
+function prevBoletinActivo() {
+    if (!PREV_BOLETINES.length) return null;
+    const hoy = fechaArchivoChile();
+    return PREV_BOLETINES.find(b => b.fecha === hoy) || PREV_BOLETINES[PREV_BOLETINES.length - 1];
+}
+
+// Si no hay boletín de hoy se usa el último que haya, pero eso tiene que
+// quedar a la vista: un boletín de ayer puede traer faenas que ya terminaron
+// y no traer las de hoy.
+function prevBoletinEsDeHoy() {
+    const bol = prevBoletinActivo();
+    return !!bol && bol.fecha === fechaArchivoChile();
+}
+
+function prevFechaBonita(iso) {
+    const d = new Date(iso + 'T12:00:00');
+    const txt = new Intl.DateTimeFormat('es-CL', { weekday: 'long', day: 'numeric', month: 'long' }).format(d);
+    return txt.charAt(0).toUpperCase() + txt.slice(1);
+}
+
+function prevMetrosTxt(m, estado) {
+    if (estado === 'dentro' || m === 0) return 'EN ZONA';
+    const txt = m < 1000 ? Math.round(m / 10) * 10 + ' m' : (m / 1000).toFixed(1) + ' km';
+    return estado === 'pasada' ? '◀ ' + txt : txt;
+}
+
+function prevRestriccionCorta(p) {
+    if (p.velocidad !== null) return p.velocidad + ' km/h';
+    const t = prevNorm(p.restriccion);
+    if (/TOQUE PITO/.test(t)) return 'Toque pito';
+    return p.restriccion.split(/[,\n]/)[0].trim() || 'Restricción';
+}
+
+// La franja bajo el reloj: solo aparece cuando hay algo dentro de 500 m.
+function prevActualizar() {
+    const franja = document.getElementById('prev-aviso');
+    if (!franja) return;
+
+    const pos = prevPosicionActual();
+    const ahora = prevAhoraChile();
+    const p = pos ? prevMasImportanteCerca(pos, ahora) : null;
+
+    if (!p) {
+        franja.hidden = true;
+        franja.innerHTML = '';
+        PREV_ULTIMO_AVISO = '';
+    } else {
+        const clave = p.n + '|' + p.estado;
+        franja.className = 'prev-aviso nivel-' + p.nivel +
+            (p.estado === 'dentro' ? ' dentro' : p.estado === 'pasada' ? ' pasada' : '');
+        franja.innerHTML =
+            `<div class="prev-aviso-izq">
+                <span class="prev-aviso-dist">${escHtml(prevMetrosTxt(p.metros, p.estado))}</span>
+                <span class="prev-aviso-nivel">${escHtml(p.estado === 'pasada' ? 'Pasada' : PREV_NIVEL_TXT[p.nivel])}</span>
+             </div>
+             <div class="prev-aviso-der">
+                <div class="prev-aviso-restr">${escHtml(prevRestriccionCorta(p))}
+                    <span class="prev-aviso-via">${escHtml(p.viaTexto || '')}</span></div>
+                <div class="prev-aviso-km">PK ${escHtml(p.kmTexto)} · ${escHtml(p.bloque)}</div>
+                ${prevBoletinEsDeHoy() ? '' :
+                    `<div class="prev-aviso-viejo">⚠ Boletín del ${escHtml(prevFechaBonita(prevBoletinActivo().fecha))}, no es el de hoy</div>`}
+             </div>`;
+        franja.hidden = false;
+        prevAjustarTope();
+        // Solo vibra al entrar una prevención nueva, no al salir de una.
+        if (clave !== PREV_ULTIMO_AVISO) {
+            if (p.estado !== 'pasada') prevVibrar(p.nivel);
+            PREV_ULTIMO_AVISO = clave;
+        }
+    }
+
+    if (document.getElementById('prev-overlay').classList.contains('abierto')) prevRenderizar();
+}
+
+// La franja queda pegada justo debajo del reloj, que también es pegajoso.
+// El alto del reloj cambia entre celular y computador, así que se mide.
+function prevAjustarTope() {
+    const reloj = document.querySelector('.clock-dock');
+    if (!reloj) return;
+    const cs = getComputedStyle(reloj);
+    const arriba = parseFloat(cs.top) || 0;
+    document.documentElement.style.setProperty(
+        '--prev-top', Math.round(arriba + reloj.offsetHeight + 6) + 'px');
+}
+
+window.addEventListener('resize', prevAjustarTope);
+window.addEventListener('orientationchange', prevAjustarTope);
+
+function prevVibrar(nivel) {
+    if (!navigator.vibrate) return;
+    try { navigator.vibrate(nivel <= 2 ? [180, 90, 180] : 120); } catch (e) {}
+}
+
+function prevTarjeta(p) {
+    const dist = p.metros === undefined ? '' :
+        `<span class="prev-dist">${escHtml(prevMetrosTxt(p.metros, p.estado))}</span>`;
+    return `
+        <div class="prev-item nivel-${p.nivel}${p.estado === 'dentro' ? ' dentro' : ''}">
+            <div class="prev-item-top">
+                <span class="prev-restr">${escHtml(prevRestriccionCorta(p))}</span>
+                <span class="prev-via prev-via-${p.via.toLowerCase()}">${escHtml(p.viaTexto || '—')}</span>
+                ${dist}
+            </div>
+            <div class="prev-item-km">PK ${escHtml(p.kmTexto)} · ${escHtml(p.bloque)}
+                · ${escHtml(p.horaIni)}–${escHtml(p.horaFin)}
+                ${p.geo ? '' : '<span class="prev-sinubic">sin ubicación en el trazado</span>'}</div>
+            ${p.descripcion ? `<div class="prev-item-desc">${escHtml(p.descripcion)}</div>` : ''}
+            ${p.restriccion && p.velocidad !== null && /TOQUE PITO/.test(prevNorm(p.restriccion))
+                ? `<div class="prev-item-extra">+ toque pito</div>` : ''}
+        </div>`;
+}
+
+function prevRenderizar() {
+    const caja = document.getElementById('prev-resultados');
+    const cab = document.getElementById('prev-cabecera');
+    if (!caja) return;
+
+    const bol = prevBoletinActivo();
+    if (!bol) {
+        if (cab) cab.innerHTML = '';
+        caja.innerHTML = `<div class="plan-vacio">No se pudo cargar el boletín.<br>
+            Revisa que tengas señal y vuelve a abrir la aplicación.</div>`;
+        return;
+    }
+
+    const pos = prevPosicionActual();
+    const ahora = prevAhoraChile();
+    const vigentes = bol.prevenciones.filter(p => prevVigente(p, ahora));
+
+    if (cab) {
+        const estado = PREV_MANUAL.activo
+            ? `<span class="prev-chip manual">Modo prueba</span>`
+            : PREV_GPS.watchId !== null
+                ? `<span class="prev-chip ok">GPS activo</span>`
+                : `<span class="prev-chip off">GPS apagado</span>`;
+        const ubic = pos
+            ? `${pos.linea} · PK ${pos.pk.toFixed(2)} · ${pos.sentido > 0 ? 'PK creciente' : pos.sentido < 0 ? 'PK decreciente' : 'sentido por definir'}
+               ${prevViaDeMarcha(pos.linea, pos.pk, pos.sentido)
+                    ? ' · <strong>VÍA ' + prevViaDeMarcha(pos.linea, pos.pk, pos.sentido) + '</strong>' : ''}
+               ${!pos.manual && pos.dist !== null ? ' · a ' + Math.round(pos.dist) + ' m de la vía' : ''}`
+            : 'Sin posición todavía';
+        cab.innerHTML = `<div class="prev-estado">${estado}<span>${ubic}</span></div>` +
+            (PREV_GPS.error ? `<div class="pauta-aviso error">${escHtml(PREV_GPS.error)}</div>` : '') +
+            (pos && !pos.manual && pos.dist > PREV_VIA_MAX_M
+                ? `<div class="pauta-aviso info">Estás a ${Math.round(pos.dist)} m de la vía: la ubicación no es confiable para avisar.</div>`
+                : '');
+    }
+
+    let html = prevBoletinEsDeHoy() ? '' :
+        `<div class="pauta-aviso error">⚠️ El boletín cargado es del
+         <strong>${escHtml(prevFechaBonita(bol.fecha))}</strong>, y hoy es
+         ${escHtml(prevFechaBonita(ahora.fecha))}. Puede tener faenas que ya terminaron y
+         no traer las de hoy. Sube el boletín del día al repositorio.</div>`;
+
+    html += `<p class="plan-hint">Boletín folio <strong>${escHtml(bol.folio)}</strong> ·
+        ${escHtml(bol.fecha)} · ${bol.prevenciones.length} prevenciones,
+        <strong>${vigentes.length} vigentes</strong> a las ${escHtml(ahora.texto)}</p>`;
+
+    if (pos) {
+        const cerca = prevCandidatas(pos, ahora, PREV_LISTA_KM);
+        html += `<div class="plan-seccion-titulo">Lo que viene (${PREV_LISTA_KM} km)</div>`;
+        html += cerca.length
+            ? cerca.map(prevTarjeta).join('')
+            : `<div class="plan-vacio">No hay prevenciones vigentes en los próximos ${PREV_LISTA_KM} km.</div>`;
+    }
+
+    const resto = vigentes.filter(p => p.linea === 'L1');
+    const resto2 = vigentes.filter(p => p.linea === 'L2');
+    html += `<div class="plan-seccion-titulo">Todas las vigentes · L1 Hualqui–Talcahuano (${resto.length})</div>`;
+    html += resto.length ? resto.map(prevTarjeta).join('') : `<div class="plan-vacio">Ninguna.</div>`;
+    html += `<div class="plan-seccion-titulo">Todas las vigentes · L2 Concepción–Coronel (${resto2.length})</div>`;
+    html += resto2.length ? resto2.map(prevTarjeta).join('') : `<div class="plan-vacio">Ninguna.</div>`;
+
+    html += `<div class="pauta-pie">Se muestran solo las prevenciones dentro de su horario y fecha,
+        y las de la vía por la que se circula (vía 1 o 2 según el sentido; la 4 entre El Arenal y Mercado).
+        El aviso bajo el reloj entrega la más grave dentro de ${PREV_AVISO_M} m en el sentido de marcha.
+        Las de patio, desvío, enlace o variante se listan, pero no desplazan a una restricción de vía.<br>
+        Esto es una ayuda: el boletín de vía sigue siendo el documento válido.</div>`;
+
+    caja.innerHTML = html;
+}
+
+/* ------------------------------------------------------------- modo prueba -- */
+
+function prevModoPrueba() {
+    PREV_MANUAL.activo = !PREV_MANUAL.activo;
+    if (PREV_MANUAL.activo) prevDetenerGPS();
+    prevActualizar();
+    prevRenderizar();
+}
+
+function prevPruebaCambio() {
+    const l = document.getElementById('prev-linea');
+    const k = document.getElementById('prev-pk');
+    const s = document.getElementById('prev-sentido');
+    if (l) PREV_MANUAL.linea = l.value;
+    if (k) PREV_MANUAL.pk = parseFloat(k.value) || 0;
+    if (s) PREV_MANUAL.sentido = parseInt(s.value, 10) || 1;
+    PREV_MANUAL.activo = true;
+    prevActualizar();
+    prevRenderizar();
+}
+
+/* ------------------------------------------------------------ abrir/cerrar -- */
+
+function abrirPrevenciones() {
+    const overlay = document.getElementById('prev-overlay');
+    overlay.hidden = false;
+    overlay.classList.add('abierto');
+    document.body.classList.add('plan-abierto');
+    prevRenderizar();
+}
+
+function cerrarPrevenciones() {
+    const overlay = document.getElementById('prev-overlay');
+    overlay.classList.remove('abierto');
+    overlay.hidden = true;
+    if (!document.getElementById('plan-overlay').classList.contains('abierto') &&
+        !document.getElementById('pauta-overlay').classList.contains('abierto')) {
+        document.body.classList.remove('plan-abierto');
+    }
+}
+
+document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && document.getElementById('prev-overlay').classList.contains('abierto')) {
+        cerrarPrevenciones();
+    }
+});
+document.getElementById('prev-overlay').addEventListener('click', function (e) {
+    if (e.target === this) cerrarPrevenciones();
+});
+
+/* ---------------------------------------------------------------- arranque -- */
+
+async function prevCargarBoletin() {
+    try {
+        const r = await fetch(PREV_ARCHIVO, { cache: 'no-cache' });
+        if (!r.ok) return false;
+        const j = await r.json();
+        const hojas = Array.isArray(j.boletines) ? j.boletines : [];
+        PREV_BOLETINES = hojas
+            .filter(h => h && h.fecha && Array.isArray(h.filas))
+            .map(prevInterpretarBoletin)
+            .sort((a, b) => a.fecha.localeCompare(b.fecha));
+        return true;
+    } catch (e) {
+        return false;
+    }
+}
+
+
+/* =========================================================================
+   MI GRÁFICO
+   El gráfico del mes dice qué turno le toca a cada persona cada día; las hojas
+   "Lunes - Viernes" y "S-D-F" dicen a qué hora es cada turno. Aquí se juntan
+   las dos cosas: buscas tu apellido y ves tu mes, y al tocar el número del
+   turno se abre su horario.
+
+   Turnos combinados: un mismo número puede venir en dos filas del catálogo
+   (el 68 del sábado, por ejemplo). En ese caso la apertura es la más temprana
+   y el cierre el más tardío, y se muestran los dos tramos.
+   ========================================================================= */
+
+const GRAF_ARCHIVO = 'grafico/grafico.json';
+const GRAF_LLAVE_NOMBRE = 'graficoEfeSurNombre';
+
+let GRAFICOS = [];      // [{mes, archivo, personas, dias, catalogos}]
+let GRAF_ROSTER = [];
+let GRAF_ABIERTO = '';  // fecha del día cuyo horario está desplegado
+
+/* ------------------------------------------------------------ el gráfico -- */
+
+// Lee lo que dice una celda del gráfico. Puede ser un número de turno, un
+// estado (VAC, CUM, LM, REC...), las dos cosas —"(41) VAC" es el turno que le
+// habría tocado estando de vacaciones— o venir vacía, que es descanso.
+function grafLeerValor(txt) {
+    const s = String(txt == null ? '' : txt).trim();
+    if (!s) return { tipo: 'DESCANSO', texto: '' };
+
+    let m = s.match(/^\(\s*(\d+)\s*\)\s*(.+)$/);          // (41) VAC
+    if (m) return { tipo: grafTipoEstado(m[2]), turno: m[1], etiqueta: m[2].trim(), texto: s };
+
+    m = s.match(/^(\d+)\s*\.?\s*\((.+)\)\s*$/);           // 83 (859-46)
+    if (m) return { tipo: 'TURNO', turno: m[1], detalle: m[2].trim(), texto: s };
+
+    m = s.match(/^(\d+)\s*\.?$/);                         // 29   ·   59.
+    if (m) return { tipo: 'TURNO', turno: m[1], texto: s };
+
+    return { tipo: grafTipoEstado(s), etiqueta: s, texto: s };
+}
+
+function grafTipoEstado(txt) {
+    const t = pautaNorm(txt);
+    if (t === 'VAC' || t.indexOf('VACACION') === 0) return 'VAC';
+    if (t === 'CUM' || t.indexOf('CUMPLE') === 0) return 'CUM';
+    if (t === 'LM' || t.indexOf('LICENCIA') >= 0) return 'LM';
+    if (t.indexOf('REC') === 0) return 'REC';
+    if (t.indexOf('PRACTICA') === 0) return 'PRACTICA';
+    return 'OTRO';
+}
+
+const GRAF_ESTADOS = {
+    TURNO:    { texto: 'Turno',          clase: 'turno' },
+    DESCANSO: { texto: 'Descanso',       clase: 'descanso' },
+    VAC:      { texto: 'Vacaciones',     clase: 'vac' },
+    CUM:      { texto: 'Cumpleaños',     clase: 'cum' },
+    LM:       { texto: 'Licencia médica',clase: 'lm' },
+    REC:      { texto: 'Recibidor',      clase: 'rec' },
+    PRACTICA: { texto: 'Práctica',       clase: 'practica' },
+    OTRO:     { texto: '',               clase: 'otro' }
+};
+
+/* --------------------------------------------------------- los catálogos -- */
+
+// Las hojas de horarios no traen las mismas columnas (la de fin de semana no
+// tiene "Término operación"), así que se ubican por el nombre del encabezado.
+function grafColumnas(cabecera) {
+    const m = {};
+    (cabecera || []).forEach(function (c, i) {
+        const t = pautaNorm(c);
+        if (t.indexOf('TURNO') === 0) m.turno = i;
+        else if (t.indexOf('SERVICIO') === 0) m.servicios = i;
+        else if (t === 'APERTURA') m.aperturaLugar = i;
+        else if (t === 'HORA') m.hora = i;
+        else if (t === 'TRASLADO') m.traslado = i;
+        else if (t.indexOf('BASE INICIO') === 0) m.baseInicio = i;
+        else if (t.indexOf('INICIO SERVICIO') === 0) m.inicio = i;
+        else if (t.indexOf('BASE TERMINO') === 0) m.baseTermino = i;
+        else if (t.indexOf('TERMINO OPERACION') === 0) m.terminoOp = i;
+        else if (t.indexOf('TRASLADO VUELTA') === 0) m.trasladoVuelta = i;
+        else if (t.indexOf('TERMINO FINAL') === 0) m.terminoFinal = i;
+        else if (t === 'CIERRE') m.cierreLugar = i;
+        else if (t.indexOf('OBSERVACION') === 0) m.obs = i;
+    });
+    return m;
+}
+
+function grafFilaTurno(f, cols) {
+    const v = (k) => cols[k] === undefined ? '' : String(f[cols[k]] || '').trim();
+    return {
+        turno: v('turno'),
+        servicios: v('servicios'),
+        aperturaLugar: v('aperturaLugar'),
+        apertura: v('hora').slice(0, 5),
+        traslado: v('traslado').slice(0, 5),
+        baseInicio: v('baseInicio'),
+        inicio: v('inicio').slice(0, 5),
+        baseTermino: v('baseTermino'),
+        terminoOp: v('terminoOp').slice(0, 5),
+        trasladoVuelta: v('trasladoVuelta').slice(0, 5),
+        cierre: v('terminoFinal').slice(0, 5),
+        cierreLugar: v('cierreLugar'),
+        obs: v('obs')
+    };
+}
+
+// Devuelve { LV:{...}, SAB:{...}, DOM:{...}, FER:{...} }, cada uno como
+// { "<turno o nombre>": [fila, ...] }. La lista permite los turnos combinados.
+function grafLeerCatalogos(hojas) {
+    const cat = { LV: {}, SAB: {}, DOM: {}, FER: {} };
+
+    const cargar = function (filas, seccionPorDefecto) {
+        let seccion = seccionPorDefecto;
+        let cols = null;
+        let ultimo = null;
+
+        (filas || []).forEach(function (f) {
+            const c0 = pautaNorm((f || [])[0]);
+            if (c0.indexOf('SABADO') === 0)  { seccion = 'SAB'; cols = null; return; }
+            if (c0.indexOf('DOMINGO') === 0) { seccion = 'DOM'; cols = null; return; }
+            if (c0.indexOf('FERIADO') === 0) { seccion = 'FER'; cols = null; return; }
+            if (c0.indexOf('TURNO') === 0)   { cols = grafColumnas(f); return; }
+            if (!cols || !seccion) return;
+
+            const fila = grafFilaTurno(f, cols);
+            if (!fila.servicios && !fila.apertura) return;
+
+            // Con número, la clave es el número. Sin número, la fila puede ser
+            // la continuación de un turno combinado o una entrada con nombre
+            // propio (REC VALLE, REC CC, PRÁCTICA SIMULADOR). Estas últimas se
+            // guardan también bajo el nombre del servicio, que es como las
+            // nombra el gráfico.
+            const claves = [];
+            if (/^\d+$/.test(fila.turno)) {
+                claves.push(fila.turno);
+            } else {
+                if (fila.turno) claves.push(pautaNorm(fila.turno));
+                const porServicio = pautaNorm(fila.servicios);
+                if (porServicio && /^[A-ZÑ]/.test(porServicio)) claves.push(porServicio);
+                if (!claves.length && ultimo) claves.push(ultimo);   // continuación
+            }
+            if (!claves.length) return;
+
+            claves.forEach(function (clave) {
+                if (!cat[seccion][clave]) cat[seccion][clave] = [];
+                if (cat[seccion][clave].indexOf(fila) < 0) cat[seccion][clave].push(fila);
+            });
+            ultimo = claves[0];
+        });
+    };
+
+    cargar(hojas.LV, 'LV');
+    cargar(hojas.SDF, null);
+    return cat;
+}
+
+// Qué catálogo corresponde a ese día. El 18 de septiembre es viernes pero se
+// trabaja con turnos de feriado, así que si el número no está en el catálogo
+// del día se busca en los otros antes de rendirse.
+function grafCatalogoDe(g, diaNombre, clave) {
+    const d = pautaNorm(diaNombre);
+    const orden = d.indexOf('SAB') === 0 ? ['SAB', 'FER', 'DOM', 'LV']
+                : d.indexOf('DOM') === 0 ? ['DOM', 'FER', 'SAB', 'LV']
+                : ['LV', 'FER', 'DOM', 'SAB'];
+    for (let i = 0; i < orden.length; i++) {
+        const c = orden[i];
+        if (g.catalogos[c] && g.catalogos[c][clave]) {
+            return { catalogo: c, tramos: g.catalogos[c][clave] };
+        }
+    }
+    return null;
+}
+
+const GRAF_CATALOGO_TXT = { LV: 'Lunes a viernes', SAB: 'Sábado', DOM: 'Domingo', FER: 'Feriado' };
+
+/* ------------------------------------------------------------- horarios --- */
+
+function grafMin(hhmm) {
+    const m = String(hhmm || '').match(/^(\d{1,2}):(\d{2})/);
+    return m ? parseInt(m[1], 10) * 60 + parseInt(m[2], 10) : null;
+}
+
+function grafDuracionTxt(minutos) {
+    if (minutos === null || minutos < 0) return '';
+    return Math.floor(minutos / 60) + ':' + String(minutos % 60).padStart(2, '0') + ' h';
+}
+
+// Apertura más temprana y cierre más tardío del conjunto de tramos. Un cierre
+// anterior a la apertura es del día siguiente, y se cuenta como tal.
+function grafResumen(tramos) {
+    let ini = null, fin = null;
+    tramos.forEach(function (t) {
+        const a = grafMin(t.apertura);
+        let c = grafMin(t.cierre);
+        if (a === null) return;
+        if (c !== null && c < a) c += 1440;
+        if (ini === null || a < ini) ini = a;
+        if (c !== null && (fin === null || c > fin)) fin = c;
+    });
+    if (ini === null) return null;
+    const hhmm = (m) => String(Math.floor((m % 1440) / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
+    return {
+        apertura: hhmm(ini),
+        cierre: fin === null ? '' : hhmm(fin),
+        duracion: fin === null ? null : fin - ini,
+        combinado: tramos.length > 1
+    };
+}
+
+/* ----------------------------------------------------------- interpretar -- */
+
+function grafInterpretar(entrada) {
+    const hojas = entrada.hojas || {};
+    const filas = hojas.GRAFICO || [];
+    const celda = (f, i) => String((f && f[i]) || '').trim();
+
+    const personas = {};    // nombreNormalizado -> { nombre, pareja, rol, columna }
+    const dias = [];        // [{ fecha, dia, valores: { nombreNorm: texto } }]
+
+    let columnas = null;    // columna -> nombreNorm de esa vuelta de bloque
+
+    filas.forEach(function (f) {
+        const c0 = celda(f, 0);
+
+        // Encabezado del bloque. Casi todos dicen "PAREJAS 1–12" y llevan el
+        // número de la pareja de dos en dos; el último dice "PAREJA 49 ·
+        // PRÁCTICAS" y usa etiquetas en vez de números.
+        if (/^PAREJAS?\b/.test(pautaNorm(c0))) {
+            columnas = { parejas: {} };
+            for (let i = 2; i < f.length; i++) {
+                if (celda(f, i)) columnas.parejas[i] = celda(f, i);
+            }
+            return;
+        }
+
+        // Fila de nombres: cada columna es una persona.
+        if (columnas && !columnas.gente && c0 && !/^\d{4}-\d{2}-\d{2}/.test(c0)) {
+            columnas.gente = {};
+            let parejaActual = '';
+            for (let i = 2; i < f.length; i++) {
+                if (columnas.parejas[i]) parejaActual = columnas.parejas[i];
+                const nombre = celda(f, i);
+                if (!nombre) continue;
+                const k = pautaNorm(nombre);
+                columnas.gente[i] = k;
+                if (!personas[k]) {
+                    const numerica = /^\d+$/.test(parejaActual);
+                    personas[k] = {
+                        nombre: nombre,
+                        pareja: parejaActual,
+                        grupoNumerico: numerica,
+                        // El rol se deduce de la posición solo en las parejas de
+                        // conducción; en el grupo de prácticas no aplica.
+                        rol: numerica ? (columnas.parejas[i] ? 'Maquinista' : 'Ayudante') : ''
+                    };
+                }
+            }
+            return;
+        }
+
+        // Fila de día.
+        if (columnas && columnas.gente && /^\d{4}-\d{2}-\d{2}/.test(c0)) {
+            const fecha = c0.slice(0, 10);
+            let dia = dias.find(d => d.fecha === fecha);
+            if (!dia) { dia = { fecha: fecha, dia: celda(f, 1), valores: {} }; dias.push(dia); }
+            Object.keys(columnas.gente).forEach(function (i) {
+                dia.valores[columnas.gente[i]] = celda(f, parseInt(i, 10));
+            });
+        }
+    });
+
+    dias.sort((a, b) => a.fecha.localeCompare(b.fecha));
+
+    // Con quién forma pareja cada uno (el otro de su mismo número de pareja).
+    const porPareja = {};
+    Object.keys(personas).forEach(function (k) {
+        const p = personas[k];
+        if (!p.pareja) return;
+        (porPareja[p.pareja] = porPareja[p.pareja] || []).push(k);
+    });
+    Object.keys(personas).forEach(function (k) {
+        const grupo = porPareja[personas[k].pareja] || [];
+        const compa = grupo.filter(x => x !== k);
+        personas[k].companero = (personas[k].grupoNumerico && grupo.length === 2)
+            ? personas[compa[0]].nombre : '';
+    });
+
+    return {
+        mes: entrada.mes,
+        archivo: entrada.archivo || '',
+        personas: personas,
+        dias: dias,
+        catalogos: grafLeerCatalogos(hojas)
+    };
+}
+
+/* ------------------------------------------------------------- inventario -- */
+
+function grafConstruirRoster() {
+    const mapa = new Map();
+    GRAFICOS.forEach(g => Object.keys(g.personas).forEach(function (k) {
+        if (!mapa.has(k)) mapa.set(k, g.personas[k].nombre);
+    }));
+    GRAF_ROSTER = [...mapa.values()].sort((a, b) =>
+        pautaApellido(a).localeCompare(pautaApellido(b), 'es') || a.localeCompare(b, 'es'));
+}
+
+async function grafCargar() {
+    try {
+        const r = await fetch(GRAF_ARCHIVO, { cache: 'no-cache' });
+        if (!r.ok) return false;
+        const j = await r.json();
+        GRAFICOS = (Array.isArray(j.graficos) ? j.graficos : [])
+            .filter(g => g && g.mes && g.hojas)
+            .map(grafInterpretar)
+            .sort((a, b) => a.mes.localeCompare(b.mes));
+        grafConstruirRoster();
+        grafLlenarSelectorMes();
+        return true;
+    } catch (e) {
+        return false;
+    }
+}
+
+/* --------------------------------------------------------------- buscar --- */
+
+let grafSugerenciaActiva = -1;
+
+function grafAutocompletar() {
+    const input = document.getElementById('graf-nombre');
+    const caja = document.getElementById('graf-sugerencias');
+    if (!input || !caja) return;
+
+    const opciones = pautaSugerencias(input.value, 8, GRAF_ROSTER);
+    grafSugerenciaActiva = -1;
+
+    if (!opciones.length) { caja.hidden = true; caja.innerHTML = ''; return; }
+    caja.innerHTML = opciones.map(function (n) {
+        return `<button type="button" class="pauta-sug" role="option" onclick="grafElegirNombre(&quot;${escAttr(n)}&quot;)">` +
+               `${escHtml(pautaApellido(n))}<small>${escHtml(n)}</small></button>`;
+    }).join('');
+    caja.hidden = false;
+}
+
+function grafTeclaSugerencia(e) {
+    const caja = document.getElementById('graf-sugerencias');
+    if (!caja || caja.hidden) {
+        if (e.key === 'Enter') { e.preventDefault(); grafRenderizar(); }
+        return;
+    }
+    const botones = [...caja.querySelectorAll('.pauta-sug')];
+    if (!botones.length) return;
+
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        grafSugerenciaActiva += (e.key === 'ArrowDown' ? 1 : -1);
+        if (grafSugerenciaActiva < 0) grafSugerenciaActiva = botones.length - 1;
+        if (grafSugerenciaActiva >= botones.length) grafSugerenciaActiva = 0;
+        botones.forEach((b, i) => b.classList.toggle('activa', i === grafSugerenciaActiva));
+        botones[grafSugerenciaActiva].scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'Enter') {
+        e.preventDefault();
+        botones[grafSugerenciaActiva >= 0 ? grafSugerenciaActiva : 0].click();
+    } else if (e.key === 'Escape') {
+        caja.hidden = true;
+    }
+}
+
+function grafElegirNombre(nombre) {
+    const input = document.getElementById('graf-nombre');
+    const caja = document.getElementById('graf-sugerencias');
+    if (input) input.value = nombre;
+    if (caja) { caja.hidden = true; caja.innerHTML = ''; }
+    try { localStorage.setItem(GRAF_LLAVE_NOMBRE, nombre); } catch (e) {}
+    GRAF_ABIERTO = '';
+    grafRenderizar();
+}
+
+function grafNombreResuelto() {
+    const input = document.getElementById('graf-nombre');
+    const texto = input ? input.value : '';
+    if (!pautaNorm(texto)) return '';
+    const exacto = GRAF_ROSTER.find(n => pautaNorm(n) === pautaNorm(texto));
+    if (exacto) return exacto;
+    const sug = pautaSugerencias(texto, 1, GRAF_ROSTER);
+    return sug.length ? sug[0] : '';
+}
+
+/* -------------------------------------------------------------- pantalla -- */
+
+function grafLlenarSelectorMes() {
+    const sel = document.getElementById('graf-mes');
+    if (!sel) return;
+    const previo = sel.value;
+    sel.innerHTML = GRAFICOS.length
+        ? GRAFICOS.map(g => `<option value="${escAttr(g.mes)}">${escHtml(grafMesTxt(g.mes))}</option>`).join('')
+        : `<option value="">— sin gráfico cargado —</option>`;
+    if (previo && GRAFICOS.some(g => g.mes === previo)) { sel.value = previo; return; }
+    const hoy = fechaArchivoChile().slice(0, 7);
+    const actual = GRAFICOS.find(g => g.mes >= hoy) || GRAFICOS[GRAFICOS.length - 1];
+    if (actual) sel.value = actual.mes;
+}
+
+function grafMesTxt(mes) {
+    const d = new Date(mes + '-01T12:00:00');
+    const txt = new Intl.DateTimeFormat('es-CL', { month: 'long', year: 'numeric' }).format(d);
+    return txt.charAt(0).toUpperCase() + txt.slice(1);
+}
+
+function grafSeleccionado() {
+    const sel = document.getElementById('graf-mes');
+    return GRAFICOS.find(g => g.mes === (sel ? sel.value : '')) || null;
+}
+
+function grafDiaTxt(fecha) {
+    const d = new Date(fecha + 'T12:00:00');
+    const txt = new Intl.DateTimeFormat('es-CL', { weekday: 'short', day: '2-digit', month: 'short' }).format(d);
+    return txt.charAt(0).toUpperCase() + txt.slice(1);
+}
+
+function grafTramoHTML(t, i, total) {
+    const dato = (etiqueta, valor, sub) => valor
+        ? `<div class="pauta-dato"><span>${escHtml(etiqueta)}</span><strong>${escHtml(valor)}</strong>${sub ? `<small>${escHtml(sub)}</small>` : ''}</div>`
+        : '';
+    return `
+        <div class="graf-tramo">
+            ${total > 1 ? `<div class="graf-tramo-n">Tramo ${i + 1} de ${total}</div>` : ''}
+            <div class="graf-servicios">${escHtml(t.servicios || '—')}</div>
+            <div class="pauta-datos">
+                ${dato('Apertura', t.apertura, t.aperturaLugar)}
+                ${dato('Traslado', t.traslado, t.baseInicio)}
+                ${dato('Inicio servicio', t.inicio, t.baseInicio)}
+                ${dato('Término oper.', t.terminoOp, t.baseTermino)}
+                ${dato('Traslado vuelta', t.trasladoVuelta, '')}
+                ${dato('Cierre', t.cierre, t.cierreLugar)}
+            </div>
+            ${t.obs ? `<div class="graf-obs">${escHtml(t.obs)}</div>` : ''}
+        </div>`;
+}
+
+function grafDetalleHTML(g, dia, valor) {
+    const clave = valor.turno || pautaNorm(valor.etiqueta || '');
+    const cat = clave ? grafCatalogoDe(g, dia.dia, clave) : null;
+
+    if (!cat) {
+        return `<div class="graf-detalle"><div class="pauta-aviso info">
+            Este día no tiene un horario en el catálogo de turnos${clave ? ' para «' + escHtml(valor.texto) + '»' : ''}.
+            </div></div>`;
+    }
+
+    const r = grafResumen(cat.tramos);
+    return `
+        <div class="graf-detalle">
+            <div class="graf-detalle-top">
+                <span class="graf-chip">${escHtml(GRAF_CATALOGO_TXT[cat.catalogo] || cat.catalogo)}</span>
+                ${r && r.combinado ? `<span class="graf-chip combinado">Turno combinado · ${cat.tramos.length} tramos</span>` : ''}
+                ${r ? `<span class="graf-rango">${escHtml(r.apertura)} → ${escHtml(r.cierre)}</span>` : ''}
+                ${r && r.duracion !== null ? `<span class="graf-dur">${escHtml(grafDuracionTxt(r.duracion))}</span>` : ''}
+            </div>
+            ${valor.detalle ? `<div class="graf-obs">Gráfico: ${escHtml(valor.texto)}</div>` : ''}
+            ${cat.tramos.map((t, i) => grafTramoHTML(t, i, cat.tramos.length)).join('')}
+        </div>`;
+}
+
+function grafFilaDiaHTML(g, dia, nombre) {
+    const valor = grafLeerValor(dia.valores[pautaNorm(nombre)]);
+    const est = GRAF_ESTADOS[valor.tipo] || GRAF_ESTADOS.OTRO;
+    const abierto = GRAF_ABIERTO === dia.fecha;
+
+    // El número es solo la etiqueta: lo que se toca es la tarjeta completa.
+    const esDescanso = valor.tipo === 'DESCANSO';
+    const numero = esDescanso
+        ? `<span class="graf-num descanso">—</span>`
+        : `<span class="graf-num ${escAttr(est.clase)}${abierto ? ' abierto' : ''}">${
+            escHtml(valor.turno || (valor.etiqueta || '?').slice(0, 3))}</span>`;
+
+    const etiquetaExtra = valor.turno && valor.tipo !== 'TURNO'
+        ? `<span class="graf-marca ${escAttr(est.clase)}">${escHtml(est.texto)}</span>`
+        : (valor.tipo !== 'TURNO' && valor.tipo !== 'DESCANSO'
+            ? `<span class="graf-marca ${escAttr(est.clase)}">${escHtml(valor.etiqueta || est.texto)}</span>`
+            : '');
+
+    const cuerpo = `
+        ${numero}
+        <span class="graf-dia-fecha">${escHtml(grafDiaTxt(dia.fecha))}
+            <small>${escHtml(dia.dia || '')}</small></span>
+        ${etiquetaExtra}
+        ${valor.detalle ? `<span class="graf-detalle-chip">${escHtml(valor.detalle)}</span>` : ''}
+        ${esDescanso ? '' : `<span class="graf-flecha">${abierto ? '▲' : '▼'}</span>`}`;
+
+    return `
+        <div class="graf-dia${abierto ? ' abierto' : ''}${esDescanso ? ' es-descanso' : ''}">
+            ${esDescanso
+                ? `<div class="graf-dia-top">${cuerpo}</div>`
+                : `<button type="button" class="graf-dia-top" onclick="grafToggleDia('${escAttr(dia.fecha)}')">${cuerpo}</button>`}
+            ${abierto && !esDescanso ? grafDetalleHTML(g, dia, valor) : ''}
+        </div>`;
+}
+
+function grafToggleDia(fecha) {
+    GRAF_ABIERTO = (GRAF_ABIERTO === fecha) ? '' : fecha;
+    grafRenderizar();
+}
+
+function grafRenderizar() {
+    const caja = document.getElementById('graf-resultados');
+    if (!caja) return;
+
+    if (!GRAFICOS.length) {
+        caja.innerHTML = `<div class="plan-vacio">No se pudo cargar el gráfico.<br>
+            Revisa que tengas señal y vuelve a abrir la aplicación.</div>`;
+        return;
+    }
+
+    const g = grafSeleccionado();
+    if (!g) { caja.innerHTML = `<div class="plan-vacio">Elige un mes.</div>`; return; }
+
+    const nombre = grafNombreResuelto();
+    if (!nombre) {
+        caja.innerHTML = `<div class="plan-vacio">Escribe tu apellido arriba y elige tu nombre de la lista.<br>
+            <small>Hay ${GRAF_ROSTER.length} personas en el gráfico.</small></div>`;
+        return;
+    }
+    try { localStorage.setItem(GRAF_LLAVE_NOMBRE, nombre); } catch (e) {}
+
+    const persona = g.personas[pautaNorm(nombre)];
+    const cuenta = { TURNO: 0, DESCANSO: 0, VAC: 0, CUM: 0, LM: 0, REC: 0, PRACTICA: 0, OTRO: 0 };
+    g.dias.forEach(function (d) {
+        cuenta[grafLeerValor(d.valores[pautaNorm(nombre)]).tipo]++;
+    });
+
+    let html = `<p class="plan-hint"><strong>${escHtml(nombre)}</strong>
+        ${persona && persona.pareja
+            ? ' · ' + (persona.grupoNumerico ? 'pareja ' : '') + escHtml(persona.pareja) : ''}
+        ${persona && persona.rol ? ' · ' + escHtml(persona.rol) : ''}
+        ${persona && persona.companero ? ' · con ' + escHtml(persona.companero) : ''}</p>`;
+
+    html += `<div class="graf-resumen">
+        <span><strong>${cuenta.TURNO}</strong> turnos</span>
+        <span><strong>${cuenta.DESCANSO}</strong> descansos</span>
+        ${cuenta.VAC ? `<span class="vac"><strong>${cuenta.VAC}</strong> vacaciones</span>` : ''}
+        ${cuenta.CUM ? `<span class="cum"><strong>${cuenta.CUM}</strong> cumpleaños</span>` : ''}
+        ${cuenta.LM ? `<span class="lm"><strong>${cuenta.LM}</strong> licencia</span>` : ''}
+        ${cuenta.REC ? `<span class="rec"><strong>${cuenta.REC}</strong> recibidor</span>` : ''}
+        ${cuenta.PRACTICA ? `<span class="practica"><strong>${cuenta.PRACTICA}</strong> práctica</span>` : ''}
+    </div>`;
+
+    html += `<p class="plan-hint">Toca el número del turno para ver su horario.</p>`;
+    html += g.dias.map(d => grafFilaDiaHTML(g, d, nombre)).join('');
+    html += `<div class="pauta-pie">Gráfico de ${escHtml(grafMesTxt(g.mes))}${g.archivo ? ' · ' + escHtml(g.archivo) : ''}
+        · ${g.dias.length} días.<br>
+        Los turnos combinados (un mismo número en dos filas del catálogo) se muestran con la apertura
+        más temprana, el cierre más tardío y los dos tramos completos.</div>`;
+
+    caja.innerHTML = html;
+}
+
+/* ----------------------------------------------------------- abrir/cerrar -- */
+
+function abrirGrafico() {
+    const overlay = document.getElementById('graf-overlay');
+    const input = document.getElementById('graf-nombre');
+    if (input && !input.value) {
+        try {
+            input.value = localStorage.getItem(GRAF_LLAVE_NOMBRE) ||
+                          localStorage.getItem(PAUTA_LLAVE_NOMBRE) || '';
+        } catch (e) {}
+    }
+    grafLlenarSelectorMes();
+    overlay.hidden = false;
+    overlay.classList.add('abierto');
+    document.body.classList.add('plan-abierto');
+    grafRenderizar();
+}
+
+function cerrarGrafico() {
+    const overlay = document.getElementById('graf-overlay');
+    const caja = document.getElementById('graf-sugerencias');
+    if (caja) caja.hidden = true;
+    overlay.classList.remove('abierto');
+    overlay.hidden = true;
+    if (!document.getElementById('plan-overlay').classList.contains('abierto') &&
+        !document.getElementById('pauta-overlay').classList.contains('abierto') &&
+        !document.getElementById('prev-overlay').classList.contains('abierto')) {
+        document.body.classList.remove('plan-abierto');
+    }
+}
+
+document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && document.getElementById('graf-overlay').classList.contains('abierto')) {
+        cerrarGrafico();
+    }
+});
+document.getElementById('graf-overlay').addEventListener('click', function (e) {
+    if (e.target === this) cerrarGrafico();
+});
+document.addEventListener('click', function (e) {
+    const caja = document.getElementById('graf-sugerencias');
+    if (!caja || caja.hidden) return;
+    if (!e.target.closest('.graf-auto')) caja.hidden = true;
+});
+
+
+/* =========================================================================
+   MI ALISTACIÓN
+   Registro diario de horas trabajadas y su comparación con el turno que manda
+   el gráfico. Todo se calcula en minutos enteros.
+
+       Jornada real     = cierre real − apertura real
+       Horas extra      = feriado trabajado
+                        + exceso sobre 7:30
+                        + tiempo fuera del turno (solo si no hubo exceso)
+                        + descanso semanal afectado
+
+   Los mismos minutos no se pagan dos veces. En un día normal, si la jornada ya
+   pasó de 7:30, ese exceso es la medida del sobretiempo y "Hrs Turno" queda en
+   cero: cerrar 1:20 tarde en una jornada de 8:50 son 1:20, no 2:40.
+
+   Cuando la pauta del día pone un turno distinto al graficado, el tiempo que
+   cae fuera del turno que correspondía sí es un concepto aparte, y solo se le
+   descuenta lo que el exceso ya pagó.
+
+   Nocturnas, menor reposo y manejo se calculan aparte y NO entran en el total
+   de horas extra: son conceptos contractuales distintos.
+
+   Lo que se escribe queda guardado en este teléfono (localStorage), día a día,
+   y al final del mes se descarga en PDF.
+   ========================================================================= */
+
+const ALI_LLAVE          = 'alistacionEfeSur';
+const PERSONAL_ARCHIVO   = 'personal/personal.json';
+
+/* ------------------------------------------------------------ dotación ---- */
+
+// Quién es maquinista y quién ayudante. Solo Concepción: Temuco y Puerto Montt
+// no entran al archivo. Sirve para no preguntarle por horas de manejo a quien
+// no maneja.
+let PERSONAL = {};        // clave sin puntos ni espacios -> persona
+let PERSONAL_ALIAS = {};  // inicial + apellido -> persona
+
+function personalClave(nombre) {
+    return pautaNorm(nombre).replace(/[^A-Z0-9Ñ]/g, '');
+}
+
+// "Alexis Fuentes" y "A.FUENTES" son la misma persona: inicial + apellido.
+function personalAlias(nombre) {
+    const partes = pautaNorm(nombre).replace(/\./g, ' ').replace(/\s+/g, ' ').trim().split(' ');
+    if (partes.length < 2) return '';
+    return partes[0].charAt(0) + partes[partes.length - 1];
+}
+
+function personalDe(nombre) {
+    if (!nombre) return null;
+    return PERSONAL[personalClave(nombre)] || PERSONAL_ALIAS[personalAlias(nombre)] || null;
+}
+
+function personalEsMaquinista(nombre) {
+    const p = personalDe(nombre);
+    if (p) return p.rol === 'MAQUINISTA';
+    // Sin dotación, se cae al rol que da el gráfico por la posición en la pareja.
+    const g = GRAFICOS[0];
+    const gp = g && g.personas[pautaNorm(nombre)];
+    return !!gp && gp.rol === 'Maquinista';
+}
+
+async function personalCargar() {
+    try {
+        const r = await fetch(PERSONAL_ARCHIVO, { cache: 'no-cache' });
+        if (!r.ok) return false;
+        const j = await r.json();
+        PERSONAL = {}; PERSONAL_ALIAS = {};
+        (j.personas || []).forEach(function (persona) {
+            PERSONAL[persona.clave] = persona;
+            const alias = personalAlias(persona.abreviacion);
+            if (!alias) return;
+            // Un alias ambiguo no sirve para decidir: se descarta.
+            PERSONAL_ALIAS[alias] = (alias in PERSONAL_ALIAS) ? null : persona;
+        });
+        Object.keys(PERSONAL_ALIAS).forEach(k => { if (!PERSONAL_ALIAS[k]) delete PERSONAL_ALIAS[k]; });
+        return true;
+    } catch (e) {
+        return false;
+    }
+}
+const ALI_JORNADA        = 450;   // 7:30 de jornada normal
+const ALI_REPOSO_LARGO   = 690;   // 11:30 entre residencias EZ / El Arenal
+const ALI_REPOSO_CORTO   = 600;   // 10:00 en los demás pares
+const ALI_MANEJO_BLOQUE  = 300;   // 5:00 por bloque de manejo
+const ALI_NOCTURNA_DESDE = 1380;  // 23:00
+const ALI_NOCTURNA_HASTA = 1860;  // 07:00 del día siguiente
+
+// Residencias que exigen el reposo largo.
+const ALI_RESIDENCIA_LARGA = ['EZ', 'AR', 'ARENAL', 'EL ARENAL'];
+
+let ALISTACION = {};      // { "<nombre>|<mes>": { "2026-09-01": {...} } }
+let ALI_DIA_ABIERTO = '';
+
+/* ------------------------------------------------------------- minutos ---- */
+
+function aliMin(hhmm) {
+    const m = String(hhmm || '').match(/^(\d{1,2})[:.](\d{2})/);
+    if (!m) return null;
+    return parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+}
+function aliHHMM(min) {
+    if (min === null || min === undefined) return '';
+    const v = ((min % 1440) + 1440) % 1440;
+    return String(Math.floor(v / 60)).padStart(2, '0') + ':' + String(v % 60).padStart(2, '0');
+}
+function aliHM(min) {
+    if (!min) return '';
+    return Math.floor(min / 60) + ':' + String(min % 60).padStart(2, '0');
+}
+function aliDec(min) {
+    if (!min) return '';
+    return (min / 60).toFixed(2).replace('.', ',');
+}
+function aliTraslape(a1, a2, b1, b2) {
+    return Math.max(0, Math.min(a2, b2) - Math.max(a1, b1));
+}
+function aliEsResidenciaLarga(lugar) {
+    const t = pautaNorm(lugar).replace(/\s*V\d+.*$/, '').trim();
+    return ALI_RESIDENCIA_LARGA.indexOf(t) >= 0;
+}
+
+/* ------------------------------------------------------------ guardado ---- */
+
+function aliClave(nombre, mes) { return pautaNorm(nombre) + '|' + mes; }
+
+function aliLeerTodo() {
+    try {
+        const crudo = localStorage.getItem(ALI_LLAVE);
+        ALISTACION = crudo ? JSON.parse(crudo) : {};
+    } catch (e) { ALISTACION = {}; }
+    if (!ALISTACION || typeof ALISTACION !== 'object') ALISTACION = {};
+}
+
+function aliGuardarTodo() {
+    try {
+        localStorage.setItem(ALI_LLAVE, JSON.stringify(ALISTACION));
+        return true;
+    } catch (e) {
+        console.warn('No se pudo guardar la alistación:', e);
+        return false;
+    }
+}
+
+function aliMes(nombre, mes) {
+    const k = aliClave(nombre, mes);
+    if (!ALISTACION[k]) ALISTACION[k] = {};
+    return ALISTACION[k];
+}
+
+/* ------------------------------------------- lo que manda el gráfico ------ */
+
+// Turno programado del día: número, horario del catálogo y si es feriado.
+function aliProgramado(g, fecha, nombre) {
+    if (!g) return null;
+    const dia = g.dias.find(d => d.fecha === fecha);
+    if (!dia) return null;
+
+    const valor = grafLeerValor(dia.valores[pautaNorm(nombre)]);
+    const clave = valor.turno || pautaNorm(valor.etiqueta || '');
+    const cat = clave ? grafCatalogoDe(g, dia.dia, clave) : null;
+    const r = cat ? grafResumen(cat.tramos) : null;
+
+    return {
+        fecha: fecha,
+        diaSemana: dia.dia,
+        valor: valor,
+        turno: valor.turno || '',
+        etiqueta: valor.etiqueta || '',
+        tipo: valor.tipo,
+        catalogo: cat ? cat.catalogo : '',
+        tramos: cat ? cat.tramos : [],
+        apertura: r ? r.apertura : '',
+        cierre: r ? r.cierre : '',
+        combinado: r ? r.combinado : false,
+        feriado: cat ? cat.catalogo === 'FER' : false,
+        aperturaLugar: cat && cat.tramos.length ? cat.tramos[0].aperturaLugar : '',
+        cierreLugar: cat && cat.tramos.length ? cat.tramos[cat.tramos.length - 1].cierreLugar : '',
+        servicios: cat ? cat.tramos.map(t => t.servicios).filter(Boolean).join(' + ') : ''
+    };
+}
+
+// La pauta del día, cuando está publicada, manda sobre el gráfico: es lo que
+// realmente se programó para esa fecha.
+function aliDeLaPauta(fecha, nombre) {
+    const pauta = (typeof PAUTAS !== 'undefined' ? PAUTAS : []).find(p => p.fecha === fecha);
+    if (!pauta) return null;
+    const entradas = pautaTurnosDe(pauta, nombre);
+    if (!entradas.length) return null;
+
+    const t0 = entradas[0].turno;
+    const ultimo = entradas[entradas.length - 1].turno;
+    return {
+        turno: t0.turno || '',
+        rol: entradas[0].rol,
+        servicios: entradas.map(e => e.turno.servicios).filter(Boolean).join(' + '),
+        apertura: t0.apertura || '',
+        cierre: ultimo.fin || ultimo.terminoServicio || '',
+        aperturaLugar: t0.aperturaLugar || '',
+        cierreLugar: ultimo.baseFin || ''
+    };
+}
+
+/* ------------------------------------------------------------- cálculo ---- */
+
+// Ventana en minutos, permitiendo que el cierre caiga al día siguiente.
+function aliVentana(desde, hasta) {
+    const a = aliMin(desde);
+    let b = aliMin(hasta);
+    if (a === null || b === null) return null;
+    if (b < a) b += 1440;
+    return { ini: a, fin: b, dura: Math.min(b - a, 1440) };
+}
+
+// Minutos de la ventana que caen entre las 23:00 y las 07:00.
+function aliNocturnas(ini, fin) {
+    let total = 0;
+    for (let k = -1; k <= 1; k++) {
+        total += aliTraslape(ini, fin, ALI_NOCTURNA_DESDE + 1440 * k, ALI_NOCTURNA_HASTA + 1440 * k);
+    }
+    return total;
+}
+
+// Calcula un día. `previo` es el día anterior ya calculado, para el reposo.
+function aliCalcularDia(fecha, reg, prog, pauta, siguienteEsDescanso, previo) {
+    const r = {
+        fecha: fecha,
+        turno: (reg && reg.turno) || (pauta && pauta.turno) || (prog && prog.turno) || '',
+        servicio: (reg && reg.servicio) || (pauta && pauta.servicios) || (prog && prog.servicios) || '',
+        obs: (reg && reg.obs) || '',
+        prog: prog,
+        real: null,
+        jornada: 0, exceso: 0, fueraTurno: 0, descansoAfectado: 0,
+        feriadoMin: 0, extras: 0, hrsTurno: 0, menosReposo: 0,
+        nocturnas: 0, manejo: 0,
+        esFeriado: false, sinRegistro: true, avisos: []
+    };
+
+    // ¿La pauta del día puso un turno distinto al del gráfico?
+    r.turnoGrafico = (prog && prog.turno) || '';
+    r.turnoPauta = (pauta && pauta.turno) || '';
+    r.cambioDeTurno = !!(r.turnoGrafico && r.turnoPauta && r.turnoGrafico !== r.turnoPauta);
+    r.voluntario = !!(reg && reg.voluntario);
+
+    // Con qué se compara la jornada real:
+    //   · sin cambio de turno  -> la pauta del día si está publicada, si no el gráfico
+    //   · cambio impuesto      -> el gráfico, que es el turno que correspondía; así el
+    //                             tiempo del turno nuevo que cae fuera genera horas
+    //   · cambio voluntario    -> la pauta, porque el intercambio entre compañeros no
+    //                             genera sobretiempo por sí solo
+    const usarGrafico = r.cambioDeTurno && !r.voluntario;
+    const refIni = usarGrafico ? (prog.apertura || '')
+                 : ((pauta && pauta.apertura) || (prog && prog.apertura) || '');
+    const refFin = usarGrafico ? (prog.cierre || '')
+                 : ((pauta && pauta.cierre) || (prog && prog.cierre) || '');
+    const ref = aliVentana(refIni, refFin);
+    r.refIni = refIni; r.refFin = refFin;
+    r.fuente = usarGrafico ? 'gráfico (turno que correspondía)'
+             : (pauta ? 'pauta del día' : (prog && prog.apertura ? 'gráfico' : ''));
+
+    const real = aliVentana(reg && reg.ingreso, reg && reg.termino);
+    if (!real) return r;
+
+    r.sinRegistro = false;
+    r.real = real;
+    r.jornada = real.dura;
+
+    // Feriado: manual si se marcó, si no lo que diga el catálogo del gráfico.
+    r.esFeriado = (reg && reg.feriado !== undefined && reg.feriado !== null)
+        ? !!reg.feriado
+        : !!(prog && prog.feriado);
+
+    // Descanso semanal afectado: minutos después de medianoche cuando al día
+    // siguiente toca descanso.
+    if (siguienteEsDescanso && real.fin > 1440) r.descansoAfectado = real.fin - 1440;
+
+    if (r.esFeriado) {
+        // El feriado absorbe la apertura anticipada, el cierre tardío, el turno
+        // fuera de rango y el exceso sobre 7:30. No absorbe el descanso.
+        r.feriadoMin = r.jornada;
+    } else {
+        r.exceso = Math.max(r.jornada - ALI_JORNADA, 0);
+        if (ref) {
+            r.fueraTurno = r.jornada - aliTraslape(real.ini, real.fin, ref.ini, ref.fin);
+        }
+    }
+
+    // Para exigir justificación se compara contra el turno que efectivamente te
+    // asignaron —la pauta del día—, no contra el del gráfico: si te cambiaron de
+    // turno, cerrar a la hora del turno nuevo no es un cierre tardío. El cambio
+    // en sí ya queda registrado aparte.
+    const refJustIni = (pauta && pauta.apertura) || (prog && prog.apertura) || '';
+    const refJustFin = (pauta && pauta.cierre) || (prog && prog.cierre) || '';
+    const refJust = aliVentana(refJustIni, refJustFin) || ref;
+
+    if (refJust) {
+        r.aperturaAntes = Math.max(refJust.ini - real.ini, 0);
+        r.aperturaTarde = Math.max(real.ini - refJust.ini, 0);
+        r.cierreTardio  = Math.max(real.fin - refJust.fin, 0);
+        r.cierreAntes   = Math.max(refJust.fin - real.fin, 0);
+        r.refJustFin = refJustFin;
+    }
+    r.requiereJustificacion = (r.cierreTardio || 0) > 0;
+    r.justificado = !!String((reg && reg.obs) || '').trim();
+
+    // Manejo: solo para maquinistas. Se guarda como hora (HH:MM) y se declara
+    // aparte; el estimado del itinerario es una referencia, no se cobra solo.
+    r.manejoExtra = !!(reg && reg.manejoExtra);
+    r.manejo = r.manejoExtra ? (aliMin((reg && reg.manejoHoras) || '') || 0) : 0;
+    r.manejoMotivo = String((reg && reg.manejoMotivo) || '').trim();
+    r.manejoEstimado = aliManejoDelTurno(prog);
+
+    r.extras = (r.esFeriado ? 0 : r.exceso) + r.descansoAfectado;
+
+    // Sin duplicar, pero sin castigar tampoco:
+    //   · Mismo turno: si la jornada pasó de 7:30, ese exceso es la medida del
+    //     sobretiempo y "Hrs Turno" queda en cero (es como se paga hoy).
+    //   · Cambio de turno impuesto: el tiempo fuera del turno que correspondía
+    //     es un concepto propio, así que solo se le resta lo que el exceso ya
+    //     pagó. Si no, trabajar más terminaría pagando menos.
+    if (r.esFeriado) {
+        r.hrsTurno = 0;
+    } else if (r.cambioDeTurno && !r.voluntario) {
+        r.hrsTurno = Math.max(r.fueraTurno - r.exceso, 0);
+    } else {
+        r.hrsTurno = r.exceso > 0 ? 0 : r.fueraTurno;
+    }
+    if (r.fueraTurno > r.hrsTurno && !r.esFeriado) {
+        r.absorbido = r.fueraTurno - r.hrsTurno;   // para explicarlo en pantalla
+    }
+
+    r.total = r.extras + r.hrsTurno + r.feriadoMin;
+
+    // Nocturnas: presentación → término efectivo del maestro, no el cierre
+    // administrativo. El traslado de vuelta queda fuera.
+    if (prog && prog.tramos.length) {
+        prog.tramos.forEach(function (t) {
+            const v = aliVentana(t.apertura, t.terminoOp || t.cierre);
+            if (v) r.nocturnas += aliNocturnas(v.ini, v.fin);
+        });
+    } else if (real) {
+        r.nocturnas = aliNocturnas(real.ini, real.fin);
+        r.avisos.push('Nocturnas calculadas sobre el horario real: el turno no está en el catálogo.');
+    }
+
+    // Menor reposo contra el cierre del día anterior.
+    if (previo && previo.real && previo.cierreAbs !== undefined) {
+        const aperturaAbs = r.diaIndice * 1440 + real.ini;
+        const reposo = aperturaAbs - previo.cierreAbs;
+        if (reposo >= 0) {
+            const minimo = (aliEsResidenciaLarga(previo.cierreLugar) && aliEsResidenciaLarga(r.aperturaLugar))
+                ? ALI_REPOSO_LARGO : ALI_REPOSO_CORTO;
+            r.menosReposo = Math.max(minimo - reposo, 0);
+            r.reposoReal = reposo;
+            r.reposoMinimo = minimo;
+        }
+    }
+
+    return r;
+}
+
+// Recorre el mes completo, en orden, para poder encadenar el reposo.
+function aliCalcularMes(nombre, mes) {
+    const g = GRAFICOS.find(x => x.mes === mes) || null;
+    const datos = aliMes(nombre, mes);
+    const dias = g ? g.dias.map(d => d.fecha) : aliDiasDelMes(mes);
+
+    const salida = [];
+    let previo = null;
+
+    dias.forEach(function (fecha, i) {
+        const prog = aliProgramado(g, fecha, nombre);
+        const pauta = aliDeLaPauta(fecha, nombre);
+        const siguiente = g ? aliProgramado(g, dias[i + 1], nombre) : null;
+        const siguienteEsDescanso = !!siguiente && siguiente.tipo === 'DESCANSO';
+
+        const r = aliCalcularDia(fecha, datos[fecha], prog, pauta, siguienteEsDescanso, previo);
+        r.diaIndice = i;
+        r.aperturaLugar = (pauta && pauta.aperturaLugar) || (prog && prog.aperturaLugar) || '';
+        r.cierreLugar = (pauta && pauta.cierreLugar) || (prog && prog.cierreLugar) || '';
+        r.diaSemana = prog ? prog.diaSemana : '';
+
+        // Se recalcula el reposo ahora que el índice del día ya está puesto.
+        if (previo && previo.cierreAbs !== undefined && r.real) {
+            const reposo = (i * 1440 + r.real.ini) - previo.cierreAbs;
+            if (reposo >= 0) {
+                const minimo = (aliEsResidenciaLarga(previo.cierreLugar) && aliEsResidenciaLarga(r.aperturaLugar))
+                    ? ALI_REPOSO_LARGO : ALI_REPOSO_CORTO;
+                r.menosReposo = Math.max(minimo - reposo, 0);
+                r.reposoReal = reposo;
+                r.reposoMinimo = minimo;
+            }
+        }
+        if (r.real) r.cierreAbs = i * 1440 + r.real.fin;
+
+        salida.push(r);
+        if (r.real) previo = r;
+    });
+
+    return { grafico: g, dias: salida, totales: aliTotales(salida) };
+}
+
+function aliDiasDelMes(mes) {
+    const [a, m] = mes.split('-').map(Number);
+    const n = new Date(Date.UTC(a, m, 0)).getUTCDate();
+    const out = [];
+    for (let d = 1; d <= n; d++) out.push(mes + '-' + String(d).padStart(2, '0'));
+    return out;
+}
+
+function aliTotales(dias) {
+    const t = { jornada: 0, extras: 0, hrsTurno: 0, feriado: 0, menosReposo: 0, manejo: 0, nocturnas: 0, total: 0, trabajados: 0 };
+    dias.forEach(function (d) {
+        if (d.sinRegistro) return;
+        t.trabajados++;
+        t.jornada += d.jornada;
+        t.extras += d.extras;
+        t.hrsTurno += d.hrsTurno;
+        t.feriado += d.feriadoMin;
+        t.menosReposo += d.menosReposo;
+        t.manejo += d.manejo;
+        t.nocturnas += d.nocturnas;
+        t.total += d.total;
+    });
+    return t;
+}
+
+/* --------------------------------------------------- manejo del turno ----- */
+
+const ALI_MANEJO_CORTE = 60;   // un descanso de hasta 1 h no corta el bloque
+
+function aliHoraServicio(hhmmss) {
+    const m = String(hhmmss || '').match(/^(\d{1,2}):(\d{2})/);
+    return m ? parseInt(m[1], 10) * 60 + parseInt(m[2], 10) : null;
+}
+
+// Cuánto se maneja en el turno, según los itinerarios que la app ya conoce.
+// Cada servicio aporta desde su primera hasta su última hora; los servicios
+// separados por más de una hora abren un bloque nuevo, y cada bloque tiene un
+// máximo normal de 5 horas.
+function aliManejoDelTurno(prog) {
+    if (!prog || !prog.tramos.length) return null;
+    const grupo = prog.catalogo === 'SAB' ? 'SAB'
+                : (prog.catalogo === 'DOM' || prog.catalogo === 'FER') ? 'DOM' : 'LV';
+
+    const corridas = [];
+    const sinItinerario = [];
+
+    prog.tramos.forEach(function (tr) {
+        pautaTrenesDeServicio(tr.servicios).forEach(function (num) {
+            const info = (baseDatosTrenes[grupo] || {})[num];
+            if (!info) { if (sinItinerario.indexOf(num) < 0) sinItinerario.push(num); return; }
+            const horas = info.horarios.filter(Boolean).map(aliHoraServicio).filter(h => h !== null);
+            if (horas.length < 2) return;
+            let ini = horas[0], fin = horas[horas.length - 1];
+            if (fin < ini) fin += 1440;
+            corridas.push({ num: num, ini: ini, fin: fin });
+        });
+    });
+
+    if (!corridas.length) return { total: 0, extra: 0, bloques: [], sinItinerario: sinItinerario, vacio: true };
+
+    corridas.sort((a, b) => a.ini - b.ini);
+    const bloques = [];
+    let actual = { ini: corridas[0].ini, fin: corridas[0].fin, trenes: [corridas[0].num] };
+    for (let i = 1; i < corridas.length; i++) {
+        const c = corridas[i];
+        if (c.ini - actual.fin > ALI_MANEJO_CORTE) {
+            bloques.push(actual);
+            actual = { ini: c.ini, fin: c.fin, trenes: [c.num] };
+        } else {
+            actual.fin = Math.max(actual.fin, c.fin);
+            actual.trenes.push(c.num);
+        }
+    }
+    bloques.push(actual);
+
+    let total = 0, extra = 0;
+    bloques.forEach(function (b) {
+        b.dura = b.fin - b.ini;
+        total += b.dura;
+        extra += Math.max(b.dura - ALI_MANEJO_BLOQUE, 0);
+    });
+
+    return { total: total, extra: extra, bloques: bloques, sinItinerario: sinItinerario, vacio: false };
+}
+
+/* ------------------------------------------------------------- pantalla --- */
+
+function aliNombre() {
+    const input = document.getElementById('ali-nombre');
+    const texto = input ? input.value : '';
+    if (!pautaNorm(texto)) return '';
+    const exacto = GRAF_ROSTER.find(n => pautaNorm(n) === pautaNorm(texto));
+    if (exacto) return exacto;
+    const sug = pautaSugerencias(texto, 1, GRAF_ROSTER);
+    return sug.length ? sug[0] : '';
+}
+
+function aliMesSel() {
+    const sel = document.getElementById('ali-mes');
+    return sel ? sel.value : '';
+}
+
+function aliAutocompletar() {
+    const input = document.getElementById('ali-nombre');
+    const caja = document.getElementById('ali-sugerencias');
+    if (!input || !caja) return;
+    const opciones = pautaSugerencias(input.value, 8, GRAF_ROSTER);
+    if (!opciones.length) { caja.hidden = true; caja.innerHTML = ''; return; }
+    caja.innerHTML = opciones.map(n =>
+        `<button type="button" class="pauta-sug" onclick="aliElegirNombre(&quot;${escAttr(n)}&quot;)">` +
+        `${escHtml(pautaApellido(n))}<small>${escHtml(n)}</small></button>`).join('');
+    caja.hidden = false;
+}
+
+function aliElegirNombre(nombre) {
+    const input = document.getElementById('ali-nombre');
+    const caja = document.getElementById('ali-sugerencias');
+    if (input) input.value = nombre;
+    if (caja) { caja.hidden = true; caja.innerHTML = ''; }
+    try { localStorage.setItem(GRAF_LLAVE_NOMBRE, nombre); } catch (e) {}
+    ALI_DIA_ABIERTO = '';
+    aliRenderizar();
+}
+
+function aliCampo(fecha, campo, valor) {
+    const nombre = aliNombre(), mes = aliMesSel();
+    if (!nombre || !mes) return;
+    const datos = aliMes(nombre, mes);
+    if (!datos[fecha]) datos[fecha] = {};
+    datos[fecha][campo] = valor;
+    aliGuardarTodo();
+    aliRenderizar();
+}
+
+function aliToggleDia(fecha) {
+    ALI_DIA_ABIERTO = (ALI_DIA_ABIERTO === fecha) ? '' : fecha;
+    aliRenderizar();
+}
+
+// Copia al registro las horas del turno programado, en los días que estén en
+// blanco. Lo que ya esté escrito no se toca.
+function aliPrellenarMes() {
+    const nombre = aliNombre(), mes = aliMesSel();
+    if (!nombre || !mes) return;
+    const calc = aliCalcularMes(nombre, mes);
+    const datos = aliMes(nombre, mes);
+    let n = 0;
+
+    calc.dias.forEach(function (d) {
+        if (!d.sinRegistro) return;
+        if (!d.refIni || !d.refFin) return;
+        datos[d.fecha] = Object.assign({}, datos[d.fecha], {
+            ingreso: d.refIni, termino: d.refFin,
+            servicio: d.servicio, turno: d.turno
+        });
+        n++;
+    });
+    aliGuardarTodo();
+    aliRenderizar();
+    pautaToast(n ? `✅ ${n} días prellenados con el turno programado` : 'No quedaban días en blanco por prellenar');
+}
+
+function aliBorrarDia(fecha) {
+    const nombre = aliNombre(), mes = aliMesSel();
+    if (!nombre || !mes) return;
+    const datos = aliMes(nombre, mes);
+    delete datos[fecha];
+    aliGuardarTodo();
+    aliRenderizar();
+}
+
+// Solo se le pregunta por manejo a quien maneja. El estimado sale de los
+// itinerarios del turno; lo que se declara es únicamente el extra.
+function aliManejoHTML(d) {
+    if (!personalEsMaquinista(aliNombre())) return '';
+
+    const est = d.manejoEstimado;
+    let referencia = '';
+    if (est && !est.vacio) {
+        const bloques = est.bloques.map((b, i) =>
+            `bloque ${i + 1}: ${aliHHMM(b.ini)}–${aliHHMM(b.fin)} (${aliHM(b.dura)})`).join(' · ');
+        referencia = `<div class="ali-manejo-ref">🚆 Manejo del turno según itinerario:
+            <strong>${escHtml(aliHM(est.total))}</strong> en ${est.bloques.length}
+            ${est.bloques.length === 1 ? 'bloque' : 'bloques'}<br><small>${escHtml(bloques)}</small>
+            ${est.extra ? `<br><strong>El itinerario ya pasa ${escHtml(aliHM(est.extra))} del máximo de 5:00 por bloque.</strong>` : ''}
+            ${est.sinItinerario.length ? `<br><small>Sin itinerario guardado: ${escHtml(est.sinItinerario.join(', '))} — el total puede quedar corto.</small>` : ''}
+        </div>`;
+    } else if (est) {
+        referencia = `<div class="ali-manejo-ref">🚆 No hay itinerarios guardados para los servicios de este turno,
+            así que no se puede estimar el manejo.</div>`;
+    }
+
+    return `
+        <div class="ali-manejo">
+            ${referencia}
+            <div class="ali-manejo-preg">¿Hiciste manejo extra este día?</div>
+            <div class="ali-manejo-si-no">
+                <button type="button" class="ali-sn${d.manejoExtra ? '' : ' activo'}"
+                    onclick="aliCampo('${escAttr(d.fecha)}','manejoExtra',false)">No</button>
+                <button type="button" class="ali-sn${d.manejoExtra ? ' activo si' : ''}"
+                    onclick="aliCampo('${escAttr(d.fecha)}','manejoExtra',true)">Sí</button>
+            </div>
+            ${d.manejoExtra ? `
+                <div class="ali-editor-fila">
+                    <label>Cuánto manejo extra
+                        <input type="text" class="campo-hora" inputmode="numeric" maxlength="5"
+                            placeholder="hh:mm" autocomplete="off" value="${escAttr(aliHM(d.manejo) ? aliHHMM(d.manejo) : '')}"
+                            oninput="horaFiltrar(this)"
+                            onchange="aliCampo('${escAttr(d.fecha)}','manejoHoras',horaNormalizar(this.value))"></label>
+                </div>
+                <label class="ali-largo${d.manejoMotivo ? '' : ' requerido'}">Por qué (obligatorio)
+                    <input type="text" placeholder="Ej: RELEVO EN CORONEL, MANEJO CONTINUO 5:30"
+                        value="${escAttr(d.manejoMotivo)}"
+                        onchange="aliCampo('${escAttr(d.fecha)}','manejoMotivo',this.value)"></label>
+                ${!d.manejo ? `<div class="ali-obliga">⚠ Falta indicar cuánto manejo extra hiciste.</div>` : ''}
+                ${d.manejo && !d.manejoMotivo ? `<div class="ali-obliga">⚠ Falta el motivo del manejo extra.</div>` : ''}
+            ` : ''}
+        </div>`;
+}
+
+function aliChip(etiqueta, min, clase) {
+    return min ? `<span class="ali-chip ${clase || ''}">${escHtml(etiqueta)} <strong>${escHtml(aliHM(min))}</strong></span>` : '';
+}
+
+function aliTarjetaDia(d) {
+    const abierto = ALI_DIA_ABIERTO === d.fecha;
+    const dia = new Date(d.fecha + 'T12:00:00').getUTCDate();
+    const prog = d.prog;
+    const esDescanso = prog && prog.tipo === 'DESCANSO';
+
+    const turnoTxt = prog && prog.turno
+        ? `TURNO GRÁFICO ${prog.turno} DE ${prog.apertura || '—'} A ${prog.cierre || '—'}`
+        : (prog && prog.etiqueta ? prog.etiqueta : (esDescanso ? 'DESCANSO' : ''));
+
+    return `
+        <div class="ali-dia${abierto ? ' abierto' : ''}${d.sinRegistro ? ' vacio' : ''}${d.requiereJustificacion && !d.justificado ? ' sin-justificar' : ''}">
+            <button type="button" class="ali-dia-top" onclick="aliToggleDia('${escAttr(d.fecha)}')">
+                <span class="ali-n">${dia}</span>
+                <span class="ali-dia-info">
+                    <span class="ali-serv">${escHtml(d.servicio || (esDescanso ? 'Descanso' : '—'))}</span>
+                    <span class="ali-graf">${escHtml(turnoTxt)}</span>
+                </span>
+                ${d.sinRegistro
+                    ? `<span class="ali-horas vacio">sin registrar</span>`
+                    : `<span class="ali-horas">${escHtml(aliHHMM(d.real.ini))}–${escHtml(aliHHMM(d.real.fin))}
+                        <strong>${escHtml(aliHM(d.jornada))}</strong></span>`}
+            </button>
+
+            ${d.sinRegistro ? '' : `
+            <div class="ali-chips">
+                ${aliChip('Extras', d.extras, 'extra')}
+                ${aliChip('Turno', d.hrsTurno, 'turno')}
+                ${aliChip('Feriado', d.feriadoMin, 'feriado')}
+                ${aliChip('Menos rep.', d.menosReposo, 'reposo')}
+                ${aliChip('Nocturnas', d.nocturnas, 'noct')}
+                ${aliChip('Manejo extra', d.manejo, 'manejo')}
+                ${d.descansoAfectado ? aliChip('Descanso afectado', d.descansoAfectado, 'desc') : ''}
+                ${d.absorbido ? `<span class="ali-chip absorbido">Fuera de turno ${escHtml(aliHM(d.absorbido))} · ya contado en el exceso</span>` : ''}
+                ${d.cambioDeTurno ? `<span class="ali-chip cambio">Cambio de turno ${escHtml(d.turnoGrafico)} → ${escHtml(d.turnoPauta)}${d.voluntario ? ' · voluntario' : ''}</span>` : ''}
+                ${d.cierreTardio ? `<span class="ali-chip tarde">Cierre +${escHtml(aliHM(d.cierreTardio))}</span>` : ''}
+                ${d.aperturaAntes ? `<span class="ali-chip tarde">Apertura −${escHtml(aliHM(d.aperturaAntes))}</span>` : ''}
+                ${d.requiereJustificacion
+                    ? (d.justificado
+                        ? `<span class="ali-chip justificado">✔ justificado</span>`
+                        : `<span class="ali-chip falta">⚠ falta justificación</span>`)
+                    : ''}
+            </div>`}
+
+            ${abierto ? `
+            <div class="ali-editor">
+                <div class="ali-editor-fila">
+                    <label>Ingreso<input type="text" class="campo-hora" inputmode="numeric" maxlength="5"
+                        placeholder="hh:mm" autocomplete="off"
+                        value="${escAttr(d.real ? aliHHMM(d.real.ini) : (d.refIni || ''))}"
+                        oninput="horaFiltrar(this)"
+                        onchange="aliCampo('${escAttr(d.fecha)}','ingreso',horaNormalizar(this.value))"></label>
+                    <label>Término<input type="text" class="campo-hora" inputmode="numeric" maxlength="5"
+                        placeholder="hh:mm" autocomplete="off"
+                        value="${escAttr(d.real ? aliHHMM(d.real.fin) : (d.refFin || ''))}"
+                        oninput="horaFiltrar(this)"
+                        onchange="aliCampo('${escAttr(d.fecha)}','termino',horaNormalizar(this.value))"></label>
+
+                </div>
+                <label class="ali-largo">Servicio
+                    <input type="text" value="${escAttr(d.servicio)}"
+                        onchange="aliCampo('${escAttr(d.fecha)}','servicio',this.value)"></label>
+                <label class="ali-largo${d.requiereJustificacion && !d.justificado ? ' requerido' : ''}">
+                    ${d.requiereJustificacion ? 'Justificación (obligatoria)' : 'Observaciones'}
+                    <input type="text" placeholder="Ej: EXCEDE POR ATRASO" value="${escAttr(d.obs)}"
+                        onchange="aliCampo('${escAttr(d.fecha)}','obs',this.value)"></label>
+                ${d.requiereJustificacion && !d.justificado
+                    ? `<div class="ali-obliga">⚠ Cerraste ${escHtml(aliHM(d.cierreTardio))} más tarde que tu turno
+                        (${escHtml(d.refJustFin || d.refFin)}). Escribe por qué: sin justificación el día sale marcado en el PDF.</div>`
+                    : ''}
+                <label class="ali-check">
+                    <input type="checkbox" ${d.esFeriado ? 'checked' : ''}
+                        onchange="aliCampo('${escAttr(d.fecha)}','feriado',this.checked)"> Feriado trabajado
+                </label>
+                ${aliManejoHTML(d)}
+                ${d.cambioDeTurno ? `
+                <label class="ali-check">
+                    <input type="checkbox" ${d.voluntario ? 'checked' : ''}
+                        onchange="aliCampo('${escAttr(d.fecha)}','voluntario',this.checked)">
+                    Cambio voluntario con un compañero (no genera sobretiempo)
+                </label>
+                <div class="ali-cambio">La pauta del día te puso el <strong>turno ${escHtml(d.turnoPauta)}</strong>
+                    y el gráfico decía <strong>turno ${escHtml(d.turnoGrafico)}</strong>
+                    (${escHtml(d.prog ? d.prog.apertura + '–' + d.prog.cierre : '—')}).
+                    ${d.voluntario
+                        ? 'Marcado como voluntario: se compara contra el turno nuevo.'
+                        : 'Se compara contra el turno del gráfico, que era el que te correspondía.'}</div>` : ''}
+                ${d.refIni ? `<div class="ali-ref">Programado: ${escHtml(d.refIni)} – ${escHtml(d.refFin)}
+                    <small>según ${escHtml(d.fuente)}</small></div>` : ''}
+                ${d.reposoReal !== undefined ? `<div class="ali-ref">Reposo desde el cierre anterior:
+                    ${escHtml(aliHM(d.reposoReal))} · mínimo ${escHtml(aliHM(d.reposoMinimo))}</div>` : ''}
+                ${d.avisos.map(a => `<div class="pauta-aviso info">${escHtml(a)}</div>`).join('')}
+                <button type="button" class="ali-borrar" onclick="aliBorrarDia('${escAttr(d.fecha)}')">Borrar este día</button>
+            </div>` : ''}
+        </div>`;
+}
+
+function aliRenderizar() {
+    const caja = document.getElementById('ali-resultados');
+    if (!caja) return;
+
+    const nombre = aliNombre(), mes = aliMesSel();
+    if (!GRAFICOS.length) {
+        caja.innerHTML = `<div class="plan-vacio">Falta el gráfico del mes para poder comparar.</div>`;
+        return;
+    }
+    if (!nombre) {
+        caja.innerHTML = `<div class="plan-vacio">Escribe tu apellido arriba y elige tu nombre de la lista.</div>`;
+        return;
+    }
+
+    const calc = aliCalcularMes(nombre, mes);
+    const t = calc.totales;
+
+    let html = `<p class="plan-hint"><strong>${escHtml(nombre)}</strong> · ${escHtml(grafMesTxt(mes))}
+        · ${t.trabajados} días registrados</p>`;
+
+    html += `<div class="ali-totales">
+        <div class="ali-tot destacado"><span>Total horas extra</span><strong>${escHtml(aliHM(t.total) || '0:00')}</strong></div>
+        <div class="ali-tot"><span>Jornada</span><strong>${escHtml(aliHM(t.jornada) || '0:00')}</strong></div>
+        <div class="ali-tot"><span>Hrs Extras</span><strong>${escHtml(aliHM(t.extras) || '0:00')}</strong></div>
+        <div class="ali-tot"><span>Hrs Turno</span><strong>${escHtml(aliHM(t.hrsTurno) || '0:00')}</strong></div>
+        <div class="ali-tot"><span>Feriado</span><strong>${escHtml(aliHM(t.feriado) || '0:00')}</strong></div>
+        <div class="ali-tot aparte"><span>Menos reposo</span><strong>${escHtml(aliHM(t.menosReposo) || '0:00')}</strong></div>
+        <div class="ali-tot aparte"><span>Nocturnas</span><strong>${escHtml(aliHM(t.nocturnas) || '0:00')}</strong></div>
+        <div class="ali-tot aparte"><span>Manejo</span><strong>${escHtml(aliHM(t.manejo) || '0:00')}</strong></div>
+    </div>
+    <p class="ali-nota">Los mismos minutos no se cuentan dos veces: si la jornada pasó de 7:30,
+        el sobretiempo se paga como exceso y «Hrs Turno» queda en cero.<br>
+        Menos reposo, nocturnas y manejo van aparte: no suman al total de horas extra.</p>`;
+
+    const cambios = calc.dias.filter(d => d.cambioDeTurno);
+    if (cambios.length) {
+        html += `<div class="pauta-aviso info">🔄 ${cambios.length}
+            ${cambios.length === 1 ? 'día con turno distinto al graficado' : 'días con turno distinto al graficado'}:
+            ${cambios.map(d => new Date(d.fecha + 'T12:00:00').getUTCDate() + ' (' +
+                escHtml(d.turnoGrafico) + '→' + escHtml(d.turnoPauta) + ')').join(', ')}.
+            Se comparan contra el turno del gráfico, salvo los marcados como cambio voluntario.</div>`;
+    }
+
+    const faltan = calc.dias.filter(d => d.requiereJustificacion && !d.justificado);
+    if (faltan.length) {
+        html += `<div class="pauta-aviso error">⚠️ ${faltan.length}
+            ${faltan.length === 1 ? 'día con cierre tardío sin justificar' : 'días con cierre tardío sin justificar'}:
+            ${escHtml(faltan.map(d => new Date(d.fecha + 'T12:00:00').getUTCDate()).join(', '))}.
+            Todo cierre fuera del horario programado necesita una explicación, y esa explicación va en el PDF.</div>`;
+    }
+
+    html += calc.dias.map(aliTarjetaDia).join('');
+    html += `<div class="pauta-pie">Lo que escribes queda guardado en este teléfono, día a día.
+        Se pierde si borras los datos del sitio o desinstalas la app: descarga el PDF de respaldo.</div>`;
+
+    caja.innerHTML = html;
+}
+
+/* ----------------------------------------------------------------- PDF ---- */
+
+function aliDescargarPDF() {
+    if (!(window.jspdf && window.jspdf.jsPDF)) { alert('No se pudo preparar el PDF.'); return; }
+    const nombre = aliNombre(), mes = aliMesSel();
+    if (!nombre) { alert('Elige primero tu nombre.'); return; }
+
+    const calc = aliCalcularMes(nombre, mes);
+    const t = calc.totales;
+
+    const faltan = calc.dias.filter(d => d.requiereJustificacion && !d.justificado);
+    if (faltan.length && !confirm(
+            faltan.length + ' día(s) con cierre tardío sin justificar (' +
+            faltan.map(d => new Date(d.fecha + 'T12:00:00').getUTCDate()).join(', ') +
+            ').\nEn el PDF saldrán marcados como SIN JUSTIFICAR.\n\n¿Descargar igual?')) {
+        return;
+    }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+
+    doc.setFontSize(13); doc.setFont(undefined, 'bold');
+    doc.text('ALISTACIÓN · ' + nombre.toUpperCase(), 40, 34);
+    doc.setFontSize(9); doc.setFont(undefined, 'normal');
+    doc.text(grafMesTxt(mes) + '  ·  EFE Sur  ·  emitido ' + fechaChile(), 40, 48);
+
+    const cuerpo = calc.dias.map(function (d) {
+        const dia = new Date(d.fecha + 'T12:00:00').getUTCDate();
+        const prog = d.prog;
+        const graf = prog && prog.turno
+            ? 'TURNO GRAFICO ' + prog.turno + ' DE ' + (prog.apertura || '—') + ' A ' + (prog.cierre || '—')
+            : (prog && prog.etiqueta ? prog.etiqueta : '');
+        if (d.sinRegistro) {
+            const esDesc = prog && prog.tipo === 'DESCANSO';
+            return [dia, esDesc ? 'DESCANSO' : (d.servicio || ''), '', '', '', '', '', '', '', '', '', '', d.obs || '', esDesc ? '' : graf];
+        }
+        // La justificación viaja al PDF. Si falta, el día queda marcado.
+        let obs = d.obs || '';
+        if (d.cambioDeTurno) {
+            const cambio = 'CAMBIO DE TURNO ' + d.turnoGrafico + '→' + d.turnoPauta +
+                           (d.voluntario ? ' (VOLUNTARIO)' : '');
+            obs = obs ? obs + ' · ' + cambio : cambio;
+        }
+        if (d.cierreTardio) {
+            const detalle = 'CIERRE +' + aliHM(d.cierreTardio);
+            obs = obs ? obs + ' (' + detalle + ')' : 'SIN JUSTIFICAR (' + detalle + ')';
+        }
+        if (d.manejo) {
+            const m = 'MANEJO EXTRA ' + aliHM(d.manejo) +
+                      (d.manejoMotivo ? ': ' + d.manejoMotivo : ' SIN JUSTIFICAR');
+            obs = obs ? obs + ' · ' + m : m;
+        }
+        return [
+            dia, d.servicio || '',
+            aliHHMM(d.real.ini), aliHHMM(d.real.fin),
+            aliHM(d.jornada), aliDec(d.jornada),
+            aliHM(d.extras), aliHM(d.hrsTurno), aliHM(d.feriadoMin),
+            aliHM(d.menosReposo), aliHM(d.manejo), aliHM(d.nocturnas),
+            obs, graf
+        ];
+    });
+
+    cuerpo.push(['', 'TOTALES', '', '', aliHM(t.jornada), aliDec(t.jornada),
+        aliHM(t.extras), aliHM(t.hrsTurno), aliHM(t.feriado),
+        aliHM(t.menosReposo), aliHM(t.manejo), aliHM(t.nocturnas),
+        'TOTAL HORAS EXTRA ' + (aliHM(t.total) || '0:00'), '']);
+
+    const opts = {
+        startY: 60,
+        head: [['', 'Día Servicio', 'Ingreso', 'Término', 'Horas', 'Horas', 'Hrs Extras',
+                'Hrs Turno', 'Hrs Feriado', 'Hrs Menos Rep', 'Hrs Manejo', 'Hrs Nocturnas',
+                'Observaciones', 'Turno del gráfico']],
+        body: cuerpo,
+        theme: 'grid',
+        styles: { fontSize: 6.5, cellPadding: 2, overflow: 'linebreak', lineColor: [120, 120, 120], lineWidth: 0.4 },
+        headStyles: { fillColor: [255, 255, 255], textColor: [20, 20, 20], fontStyle: 'bold', halign: 'center' },
+        columnStyles: {
+            0: { cellWidth: 16, halign: 'center' },
+            1: { cellWidth: 168, fillColor: [252, 224, 208] },
+            2: { cellWidth: 34, halign: 'center' }, 3: { cellWidth: 34, halign: 'center' },
+            4: { cellWidth: 32, halign: 'center' }, 5: { cellWidth: 32, halign: 'center' },
+            6: { cellWidth: 38, halign: 'center' }, 7: { cellWidth: 38, halign: 'center' },
+            8: { cellWidth: 40, halign: 'center' }, 9: { cellWidth: 46, halign: 'center' },
+            10: { cellWidth: 40, halign: 'center' }, 11: { cellWidth: 44, halign: 'center' },
+            12: { cellWidth: 120, fillColor: [255, 246, 178], fontStyle: 'bold', halign: 'center' },
+            13: { cellWidth: 150, fillColor: [225, 240, 219], fontStyle: 'bold' }
+        },
+        didParseCell: function (data) {
+            if (data.row.index === cuerpo.length - 1) {
+                data.cell.styles.fontStyle = 'bold';
+                data.cell.styles.fillColor = [238, 242, 247];
+                return;
+            }
+            // Los cierres tardíos sin explicar quedan en rojo, para que salten.
+            if (data.section === 'body' && data.column.index === 12 &&
+                String(data.cell.raw || '').indexOf('SIN JUSTIFICAR') === 0) {
+                data.cell.styles.fillColor = [253, 220, 220];
+                data.cell.styles.textColor = [141, 29, 38];
+            }
+        }
+    };
+    if (typeof doc.autoTable === 'function') doc.autoTable(opts);
+    else if (window.jspdf.autoTable) window.jspdf.autoTable(doc, opts);
+
+    doc.save('Alistacion_' + pautaApellido(nombre).replace(/\s+/g, '_') + '_' + mes + '.pdf');
+}
+
+/* ----------------------------------------------------------- abrir/cerrar -- */
+
+function aliLlenarSelectorMes() {
+    const sel = document.getElementById('ali-mes');
+    if (!sel) return;
+    const previo = sel.value;
+    sel.innerHTML = GRAFICOS.map(g => `<option value="${escAttr(g.mes)}">${escHtml(grafMesTxt(g.mes))}</option>`).join('');
+    if (previo && GRAFICOS.some(g => g.mes === previo)) { sel.value = previo; return; }
+    const hoy = fechaArchivoChile().slice(0, 7);
+    const actual = GRAFICOS.find(g => g.mes >= hoy) || GRAFICOS[GRAFICOS.length - 1];
+    if (actual) sel.value = actual.mes;
+}
+
+function abrirAlistacion() {
+    const overlay = document.getElementById('ali-overlay');
+    const input = document.getElementById('ali-nombre');
+    aliLeerTodo();
+    if (input && !input.value) {
+        try { input.value = localStorage.getItem(GRAF_LLAVE_NOMBRE) || ''; } catch (e) {}
+    }
+    aliLlenarSelectorMes();
+    overlay.hidden = false;
+    overlay.classList.add('abierto');
+    document.body.classList.add('plan-abierto');
+    aliRenderizar();
+}
+
+function cerrarAlistacion() {
+    const overlay = document.getElementById('ali-overlay');
+    const caja = document.getElementById('ali-sugerencias');
+    if (caja) caja.hidden = true;
+    overlay.classList.remove('abierto');
+    overlay.hidden = true;
+    if (!document.querySelector('.plan-overlay.abierto')) document.body.classList.remove('plan-abierto');
+}
+
+document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && document.getElementById('ali-overlay').classList.contains('abierto')) cerrarAlistacion();
+});
+document.getElementById('ali-overlay').addEventListener('click', function (e) {
+    if (e.target === this) cerrarAlistacion();
+});
+document.addEventListener('click', function (e) {
+    const caja = document.getElementById('ali-sugerencias');
+    if (!caja || caja.hidden) return;
+    if (!e.target.closest('.ali-auto')) caja.hidden = true;
+});
+
+aliLeerTodo();
+
+window.addEventListener('load', function () {
+    personalCargar();
+    grafCargar().then(function (ok) {
+        if (ok && document.getElementById('graf-overlay').classList.contains('abierto')) grafRenderizar();
+    });
+});
+
+window.addEventListener('load', function () {
+    prevAjustarTope();
+    prevCargarBoletin().then(function () {
+        prevActualizar();
+        if (document.getElementById('prev-overlay').classList.contains('abierto')) prevRenderizar();
+    });
+    // La vigencia depende de la hora: se revisa cada minuto aunque no haya GPS.
+    setInterval(prevActualizar, 60000);
 });
 
 /* ------------------------------ pareja dentro del planificador de viajes -- */
