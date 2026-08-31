@@ -99,9 +99,15 @@ def folio_de_las_filas(filas, nombre):
     return m.group(1) if m else ""
 
 
-def leer_hoja(ruta):
-    wb = openpyxl.load_workbook(ruta, data_only=True)
-    ws = wb[wb.sheetnames[0]]
+def orden_folio(folio):
+    """243 < 243-A < 243-B. Sirve para saber cual es la ultima revision."""
+    m = re.match(r"\s*(\d+)\s*-?\s*([A-Za-z]?)", str(folio))
+    if not m:
+        return (-1, "")
+    return (int(m.group(1)), m.group(2).upper())
+
+
+def leer_filas(ws):
     filas = []
     for fila in ws.iter_rows(values_only=True):
         celdas = [celda_a_texto(v) for v in fila]
@@ -120,6 +126,29 @@ def leer_hoja(ruta):
     return filas
 
 
+def leer_hoja(ruta):
+    """Un mismo Excel puede traer el boletin y sus reediciones en pestanas
+    distintas (243, 243-A, 243-B). Manda siempre la ultima revision."""
+    wb = openpyxl.load_workbook(ruta, data_only=True)
+
+    candidatas = []
+    for nombre in wb.sheetnames:
+        filas = leer_filas(wb[nombre])
+        folio = folio_de_las_filas(filas, "")
+        if folio:
+            candidatas.append((orden_folio(folio), nombre, folio, filas))
+
+    if not candidatas:
+        return leer_filas(wb[wb.sheetnames[0]]), ""
+
+    candidatas.sort(key=lambda c: c[0])
+    _, nombre, folio, filas = candidatas[-1]
+    if len(candidatas) > 1:
+        print("    (%d versiones en el archivo: %s -> se usa el folio %s)" % (
+            len(candidatas), ", ".join(c[2] for c in candidatas), folio))
+    return filas, folio
+
+
 def main():
     if not ORIGEN.exists():
         ORIGEN.mkdir(parents=True)
@@ -136,7 +165,7 @@ def main():
 
     hojas = []
     for ruta in archivos:
-        filas = leer_hoja(ruta)
+        filas, folio = leer_hoja(ruta)
         fecha = fecha_de_las_filas(filas, ruta.stem)
         if not fecha:
             print("  ! %s: no se pudo deducir la fecha; se omite." % ruta.name)
@@ -144,15 +173,17 @@ def main():
         hojas.append({
             "archivo": ruta.name,
             "fecha": fecha,
-            "folio": folio_de_las_filas(filas, ruta.stem),
+            "folio": folio or folio_de_las_filas(filas, ruta.stem),
             "filas": filas,
         })
         print("  + %s  ->  %s  folio %s  (%d filas utiles)" % (
             ruta.name, fecha, hojas[-1]["folio"], len(filas)))
 
-    # Un boletin por fecha: gana el ultimo modificado.
+    # Un boletin por fecha: gana la ultima revision del folio y, en empate,
+    # el archivo copiado mas tarde.
     unicas = {}
-    for hoja in sorted(hojas, key=lambda h: (ORIGEN / h["archivo"]).stat().st_mtime):
+    for hoja in sorted(hojas, key=lambda h: (orden_folio(h["folio"]),
+                                             (ORIGEN / h["archivo"]).stat().st_mtime)):
         unicas[hoja["fecha"]] = hoja
     hojas = sorted(unicas.values(), key=lambda h: h["fecha"])
 

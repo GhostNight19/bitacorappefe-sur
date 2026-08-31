@@ -123,3 +123,20 @@ que es su horario).
 
 **Esto es una ayuda de conducción. El Boletín de Vía C sigue siendo el documento
 válido.**
+
+---
+
+## Cuando el boletín trae varias versiones en un mismo Excel
+
+Un archivo como `243-B BOLETÍN DE VIA C (CTC) 31-08-26.xlsx` puede venir con
+tres pestañas: el boletín original y sus reediciones (`243`, `243-A`, `243-B`).
+El conversor lee el **folio de cada pestaña** y se queda siempre con la última
+revisión; al ejecutarlo lo dice en pantalla:
+
+```
+(3 versiones en el archivo: 243, 243-A, 243-B -> se usa el folio 243-B)
+```
+
+Lo mismo entre archivos distintos del mismo día: si en `boletines_excel` están
+el `243` y el `243-B`, gana el `243-B` aunque el otro se haya copiado después.
+No hace falta borrar el archivo viejo.
