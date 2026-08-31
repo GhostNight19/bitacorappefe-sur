@@ -1,13 +1,17 @@
 {
-  "name": "Bitácora EFE Sur - Control de Turnos",
-  "short_name": "Bitácora EFE",
-  "description": "Control de turnos e itinerarios de servicios EFE Sur (zona Concepción).",
+  "name": "SYNCRORED EFESUR - Control de Turnos",
+  "short_name": "SyncroRed EFESUR",
+  "description": "SyncroRed EFE Sur: bitacora, pauta diaria, prevenciones, grafico y alistacion.",
   "lang": "es-CL",
   "dir": "ltr",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "display_override": ["fullscreen", "standalone", "minimal-ui"],
+  "display_override": [
+    "fullscreen",
+    "standalone",
+    "minimal-ui"
+  ],
   "orientation": "portrait-primary",
   "background_color": "#eef2f7",
   "theme_color": "#003399",

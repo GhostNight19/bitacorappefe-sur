@@ -1,16 +1,17 @@
 /* ============================================================
-   Service Worker - Bitácora EFE Sur
+   Service Worker - SYNCRORED EFESUR
    Versión 12: HTML, pautas, boletín, gráfico y dotación desde internet
    y conserva una copia para poder seguir usando la app sin señal.
    ============================================================ */
 
-const CACHE = 'bitacora-efe-v12';
+const CACHE = 'bitacora-efe-v14';
 
 // Archivos que componen la aplicación. Todos existen en el repositorio.
 const ASSETS = [
   './index.html',
   './manifest.json',
   './icon-512.png',
+  './logo-syncrored.png',
   './pautas/pautas.json',
   './prevenciones/boletin.json',
   './grafico/grafico.json',
