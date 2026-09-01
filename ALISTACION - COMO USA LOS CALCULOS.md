@@ -204,3 +204,37 @@ repositorio ni a ningún servidor.
 - No aparece en otro teléfono ni en el computador.
 - Se pierde si borras los datos del sitio o desinstalas la app.
 - **Descarga el PDF con frecuencia**: es el único respaldo.
+
+---
+
+## Doble turno
+
+Cuando la pauta del día nombra a la misma persona en **dos turnos distintos**,
+se trabajan los dos. La jornada va desde la **apertura del primero** hasta el
+**cierre del último**, igual que un turno combinado del gráfico, y los dos
+servicios quedan juntos en la línea del día.
+
+Ejemplo real (1 de septiembre, N.J. Henriquez, turnos 3 y 20):
+
+| | |
+|---|---|
+| Turno 3 | 03:25 – 10:55 · `20200-20397-REC` |
+| Turno 20 | 07:30 – 16:55 · `20865 LJ 20856-20248` |
+| Jornada | **13:30** |
+| Sobre 7:30 | **6:00 de horas extra** |
+| Nocturnas | 3:35 (de 03:25 a 07:00) |
+
+Dos precisiones:
+
+- **No es un cambio de turno.** El turno del gráfico sigue estando en la pauta;
+  lo que hay es un turno más encima. Por eso el día no se marca como cambio y
+  la comparación se hace contra la pauta completa, no contra el gráfico.
+- Un turno de **dos tramos** (dos filas con el mismo número, o la segunda sin
+  número) no es doble turno: es un turno solo, y se lee como siempre.
+
+En la tarjeta sale la marca **«Doble turno 3 + 20»**, y en el PDF queda escrito
+`DOBLE TURNO 3 + 20` en observaciones.
+
+Las nocturnas de un doble turno se cuentan sobre los tramos de la pauta —de la
+presentación al término del servicio de cada uno—, porque el catálogo del
+gráfico solo conoce uno de los dos turnos.

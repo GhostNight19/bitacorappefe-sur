@@ -436,6 +436,7 @@
         .ali-dia { margin-bottom: 7px; background: #fff; border: 1px solid #dde5ef; border-radius: 10px; overflow: hidden; }
         .ali-dia.abierto { border-color: #7c3a00; box-shadow: 0 3px 12px rgba(124,58,0,0.14); }
         .ali-dia.vacio { background: #fbfcfe; }
+        .ali-dia.borrador { border-style: dashed; border-color: #d6a34f; }
         .ali-dia-top { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 11px; border: 0; background: none; text-align: left; font: inherit; cursor: pointer; }
         .ali-n { min-width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; background: #eef2f7; color: #2b3d5c; font-weight: 900; font-size: 0.9rem; flex: none; }
         .ali-dia-info { min-width: 0; flex: 1; }
@@ -458,8 +459,11 @@
         .ali-chip.absorbido { background: #f2f5f9; color: #7c8aa3; font-style: italic; }
         .ali-chip.tarde { background: #fff3e6; color: #7c3a00; }
         .ali-chip.cambio { background: #e7f0ff; color: #14459c; }
+        .ali-chip.doble { background: #ede4fb; color: #4b2a86; }
         .ali-chip.justificado { background: #e7f7ee; color: #0a5b36; }
         .ali-chip.falta { background: #b4232f; color: #fff; }
+        .ali-chip.guardado { background: #dff4e8; color: #075437; }
+        .ali-chip.borrador { background: #fff3d8; color: #805300; }
         .ali-dia.sin-justificar { border-color: #b4232f; }
         .ali-dia.sin-justificar .ali-n { background: #fdecec; color: #8d1d26; }
         .ali-obliga { margin-top: 9px; padding: 8px 11px; border-radius: 9px; background: #fdecec; border: 1px solid #eab0b5; color: #8d1d26; font-size: 0.82rem; font-weight: 800; line-height: 1.4; }
@@ -487,11 +491,15 @@
         .ali-cambio { margin-top: 9px; padding: 8px 11px; border-radius: 9px; background: #e7f0ff; border: 1px solid #adc8f0; color: #14459c; font-size: 0.8rem; font-weight: 750; line-height: 1.45; }
         .ali-igual { width: 100%; margin-top: 4px; min-height: 44px; padding: 0 12px; border: 2px solid #9ec8b4; border-radius: 9px; background: #eef8f3; color: #0a5c42; font: inherit; font-weight: 850; font-size: 0.85rem; cursor: pointer; }
         .ali-igual:active { background: #ddf0e7; }
-        .ali-borrar { margin-top: 10px; min-height: 40px; padding: 0 14px; border: 2px solid #eab0b5; border-radius: 8px; background: #fff; color: #8d1d26; font-weight: 800; font-size: 0.82rem; cursor: pointer; }
+        .ali-editor-acciones { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, auto); gap: 8px; margin-top: 12px; }
+        .ali-guardar { min-height: 44px; padding: 0 14px; border: 2px solid #0a7d5a; border-radius: 8px; background: #0a7d5a; color: #fff; font: inherit; font-weight: 900; font-size: 0.85rem; cursor: pointer; }
+        .ali-guardar.guardado { background: #eaf7f1; color: #075437; }
+        .ali-borrar { min-height: 44px; padding: 0 14px; border: 2px solid #eab0b5; border-radius: 8px; background: #fff; color: #8d1d26; font-weight: 800; font-size: 0.82rem; cursor: pointer; }
 
         @media (max-width: 720px) {
             .ali-acciones { grid-template-columns: 1fr; }
             .ali-totales { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .ali-editor-acciones { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -2939,6 +2947,15 @@ function pautaNorm(txt) {
         .toUpperCase().replace(/\s+/g, ' ').trim();
 }
 
+// Clave para comparar personas entre el gráfico y la pauta. Ignora puntos y
+// espaciado de las iniciales: "N.J Henriquez" y "N. J. HENRIQUEZ" son la misma
+// persona, mientras que "N. Henriquez" sigue siendo otra distinta.
+function pautaClavePersona(txt) {
+    return pautaNorm(pautaLimpiarNombre(txt))
+        .replace(/[^A-ZÑ0-9]+/g, ' ')
+        .replace(/\s+/g, ' ').trim();
+}
+
 // Quita las marcas que la pauta pone junto al nombre: (+), (-), (−), ** ...
 function pautaLimpiarNombre(txt) {
     return String(txt == null ? '' : txt)
@@ -3071,15 +3088,21 @@ function pautaInterpretarHoja(hoja) {
     }
     if (iCab < 0) return null;
 
-    // 2) La pauta viene en dos formatos. Entre semana hay una columna en
-    //    blanco entre MAQUINISTA y AYUDANTE (y dos columnas más de término);
-    //    el fin de semana esa columna no existe.
+    // 2) Las columnas se ubican por su encabezado, no por una posición fija:
+    //    hay pautas con una columna en blanco entre MAQUINISTA y AYUDANTE y
+    //    otras sin ella, y el cierre no puede quedar corrido por eso.
     const cab = filas[iCab] || [];
-    const formatoLargo = pautaNorm(celda(cab, 4)).indexOf('AYUDANTE') >= 0;
-    const iAyudante = formatoLargo ? 4 : 3;
-    const iPractica = 3;
-    const b = formatoLargo ? 5 : 4;   // primera columna de horarios
-    const campos = formatoLargo
+    const cabNorm = cab.map(pautaNorm);
+    const iAy = cabNorm.findIndex(x => x.indexOf('AYUDANTE') >= 0);
+    const iAp = cabNorm.findIndex(x => x.indexOf('APERTURA') >= 0);
+    const iAyudante = iAy >= 0 ? iAy : 3;
+    const b = iAp >= 0 ? iAp : iAyudante + 1;   // primera columna de horarios
+
+    //    Entre semana el turno trae traslado de regreso y entrega, y el cierre
+    //    queda diez columnas más allá de la apertura. El fin de semana no las
+    //    trae y el cierre está a siete.
+    const conEntrega = cabNorm.some(x => x.indexOf('ENTREGA') >= 0);
+    const campos = conEntrega
         ? { aperturaLugar: b, apertura: b + 1, traslado: b + 2, base: b + 3, inicio: b + 4,
             baseTermino: b + 5, terminoServicio: b + 6, entrega: b + 9, fin: b + 10, baseFin: b + 11 }
         : { aperturaLugar: b, apertura: b + 1, traslado: b + 2, base: b + 3, inicio: b + 4,
@@ -3122,13 +3145,23 @@ function pautaInterpretarHoja(hoja) {
         }
         seccion = null;
 
-        // La fila PRACTICA no es un turno: cuelga un alumno del turno anterior.
-        if (/^PRACTICAS?$/.test(pautaNorm(servicio))) {
-            const alumno = pautaLimpiarNombre(celda(f, iPractica)) || pautaLimpiarNombre(celda(f, iAyudante));
-            if (previo && alumno && pautaEsNombre(alumno) && previo.practicas.indexOf(alumno) < 0) {
-                previo.practicas.push(alumno);
+        // La fila de práctica cuelga un alumno del turno anterior; no es un
+        // turno propio. Unas pautas dicen solo "PRACTICA" y otras agregan los
+        // servicios, y el nombre cae en la columna del maquinista o en la del
+        // ayudante segun el formato. Lo que la distingue de un turno de verdad
+        // es que trae UN solo nombre: "PRACTICAS NOCTURNAS EMU 117", que lleva
+        // maquinista y ayudante, sigue siendo un turno.
+        if (/^PRACTICAS?\b/.test(pautaNorm(servicio))) {
+            const enFila = [];
+            for (let c = 2; c <= iAyudante; c++) {
+                const cand = pautaLimpiarNombre(celda(f, c));
+                if (pautaEsNombre(cand) && enFila.indexOf(cand) < 0) enFila.push(cand);
             }
-            continue;
+            if (enFila.length === 1) {
+                const alumno = enFila[0];
+                if (previo && previo.practicas.indexOf(alumno) < 0) previo.practicas.push(alumno);
+                continue;
+            }
         }
 
         // Sin tripulación no hay a quién buscar (filas "Jornada" en blanco).
@@ -3553,33 +3586,33 @@ function pautaNombreResuelto() {
 }
 
 function pautaTurnosDe(pauta, nombre) {
-    const k = pautaNorm(nombre);
+    const k = pautaClavePersona(nombre);
     const res = [];
     pauta.turnos.forEach(function (t, idx) {
         let rol = '';
-        if (pautaNorm(t.maquinista) === k) rol = 'Maquinista';
-        else if (pautaNorm(t.ayudante) === k) rol = 'Ayudante';
-        else if (t.practicas.some(p => pautaNorm(p) === k)) rol = 'Práctica';
+        if (pautaClavePersona(t.maquinista) === k) rol = 'Maquinista';
+        else if (pautaClavePersona(t.ayudante) === k) rol = 'Ayudante';
+        else if (t.practicas.some(p => pautaClavePersona(p) === k)) rol = 'Práctica';
         if (rol) res.push({ turno: t, rol: rol, idx: idx });
     });
     return res;
 }
 
 function pautaSituacionDe(pauta, nombre) {
-    const k = pautaNorm(nombre);
+    const k = pautaClavePersona(nombre);
     for (const clave in pauta.listas) {
-        if (pauta.listas[clave].nombres.some(n => pautaNorm(n) === k)) return pauta.listas[clave].etiqueta;
+        if (pauta.listas[clave].nombres.some(n => pautaClavePersona(n) === k)) return pauta.listas[clave].etiqueta;
     }
     return '';
 }
 
 // Con quién trabaja: el resto de la tripulación de ese mismo turno.
 function pautaParejaDe(turno, nombre) {
-    const k = pautaNorm(nombre);
+    const k = pautaClavePersona(nombre);
     const gente = [];
-    if (turno.maquinista && pautaNorm(turno.maquinista) !== k) gente.push({ nombre: turno.maquinista, rol: 'Maquinista' });
-    if (turno.ayudante && pautaNorm(turno.ayudante) !== k) gente.push({ nombre: turno.ayudante, rol: 'Ayudante' });
-    turno.practicas.forEach(p => { if (pautaNorm(p) !== k) gente.push({ nombre: p, rol: 'Práctica' }); });
+    if (turno.maquinista && pautaClavePersona(turno.maquinista) !== k) gente.push({ nombre: turno.maquinista, rol: 'Maquinista' });
+    if (turno.ayudante && pautaClavePersona(turno.ayudante) !== k) gente.push({ nombre: turno.ayudante, rol: 'Ayudante' });
+    turno.practicas.forEach(p => { if (pautaClavePersona(p) !== k) gente.push({ nombre: p, rol: 'Práctica' }); });
     return gente;
 }
 
@@ -5481,22 +5514,65 @@ function aliProgramado(g, fecha, nombre) {
 
 // La pauta del día, cuando está publicada, manda sobre el gráfico: es lo que
 // realmente se programó para esa fecha.
-function aliDeLaPauta(fecha, nombre) {
+function aliDeLaPauta(fecha, nombre, turnoGrafico) {
     const pauta = (typeof PAUTAS !== 'undefined' ? PAUTAS : []).find(p => p.fecha === fecha);
     if (!pauta) return null;
     const entradas = pautaTurnosDe(pauta, nombre);
     if (!entradas.length) return null;
 
-    const t0 = entradas[0].turno;
-    const ultimo = entradas[entradas.length - 1].turno;
+    // Un turno puede ocupar dos filas (dos tramos): la segunda no repite el
+    // número y va con la primera. Cada número abre un bloque nuevo.
+    const bloques = [];
+    entradas.forEach(function (e) {
+        if (e.turno.turno || !bloques.length) bloques.push([e]);
+        else bloques[bloques.length - 1].push(e);
+    });
+
+    // Cuando la pauta asigna dos turnos el mismo día se trabajan los dos: la
+    // jornada va de la apertura más temprana al cierre más tardío, igual que un
+    // turno combinado del gráfico. El tiempo de más sale como sobretiempo.
+    const conHora = [];
+    bloques.forEach(function (bl) {
+        const ini = aliMin(bl[0].turno.apertura);
+        const ult = bl[bl.length - 1].turno;
+        let fin = aliMin(ult.fin || ult.terminoServicio);
+        // Un cierre pasada la medianoche es el más tardío, no el más temprano.
+        if (fin !== null && ini !== null && fin < ini) fin += 1440;
+        conHora.push({ bl: bl, ini: ini === null ? 1e9 : ini, fin: fin === null ? -1 : fin });
+    });
+    conHora.sort((a, b) => a.ini - b.ini);
+
+    const primero = conHora[0];
+    const ultimoBl = conHora.reduce((m, x) => (x.fin > m.fin ? x : m), conHora[0]);
+    const t0 = primero.bl[0].turno;
+    const ultimo = ultimoBl.bl[ultimoBl.bl.length - 1].turno;
+
+    // Un turno de dos tramos repite o deja en blanco el número: eso no es doble
+    // turno. Lo es cuando la pauta trae dos números distintos.
+    const numeros = [];
+    conHora.forEach(function (x) {
+        const n = x.bl[0].turno.turno;
+        if (n && numeros.indexOf(n) < 0) numeros.push(n);
+    });
+
     return {
-        turno: t0.turno || '',
-        rol: entradas[0].rol,
-        servicios: entradas.map(e => e.turno.servicios).filter(Boolean).join(' + '),
+        turno: numeros.join(' + ') || (t0.turno || ''),
+        turnos: numeros,
+        doble: numeros.length > 1,
+        rol: primero.bl[0].rol,
+        servicios: conHora.reduce((s, x) => s.concat(x.bl.map(e => e.turno.servicios)), [])
+                          .filter(Boolean).join(' + '),
         apertura: t0.apertura || '',
         cierre: ultimo.fin || ultimo.terminoServicio || '',
         aperturaLugar: t0.aperturaLugar || '',
-        cierreLugar: ultimo.baseFin || ''
+        cierreLugar: ultimo.baseFin || '',
+        // Para las nocturnas: cada tramo, de la presentación al término del
+        // servicio; el traslado de vuelta queda fuera, como en el gráfico.
+        tramos: conHora.map(x => ({
+            apertura: x.bl[0].turno.apertura || '',
+            termino: (x.bl[x.bl.length - 1].turno.terminoServicio ||
+                      x.bl[x.bl.length - 1].turno.fin || '')
+        }))
     };
 }
 
@@ -5532,13 +5608,21 @@ function aliCalcularDia(fecha, reg, prog, pauta, siguienteEsDescanso, previo) {
         jornada: 0, exceso: 0, fueraTurno: 0, descansoAfectado: 0,
         feriadoMin: 0, extras: 0, hrsTurno: 0, menosReposo: 0,
         nocturnas: 0, manejo: 0,
-        esFeriado: false, sinRegistro: true, avisos: []
+        esFeriado: false, sinRegistro: true, avisos: [],
+        guardado: !!(reg && reg.guardado),
+        tieneDatos: !!(reg && Object.keys(reg).some(k => reg[k] !== '' && reg[k] !== false && reg[k] != null))
     };
 
     // ¿La pauta del día puso un turno distinto al del gráfico?
     r.turnoGrafico = (prog && prog.turno) || '';
     r.turnoPauta = (pauta && pauta.turno) || '';
-    r.cambioDeTurno = !!(r.turnoGrafico && r.turnoPauta && r.turnoGrafico !== r.turnoPauta);
+    r.dobleTurno = !!(pauta && pauta.doble);
+    r.turnosPauta = (pauta && pauta.turnos) || [];
+    // Con doble turno el número del gráfico sigue estando en la pauta: eso no
+    // es un cambio de turno, es un turno más encima del que tocaba.
+    r.cambioDeTurno = !!(r.turnoGrafico && r.turnoPauta &&
+        (r.turnosPauta.length ? r.turnosPauta.indexOf(r.turnoGrafico) < 0
+                              : r.turnoGrafico !== r.turnoPauta));
     r.voluntario = !!(reg && reg.voluntario);
 
     // Con qué se compara la jornada real:
@@ -5632,7 +5716,12 @@ function aliCalcularDia(fecha, reg, prog, pauta, siguienteEsDescanso, previo) {
 
     // Nocturnas: presentación → término efectivo del maestro, no el cierre
     // administrativo. El traslado de vuelta queda fuera.
-    if (prog && prog.tramos.length) {
+    if (r.dobleTurno && pauta && pauta.tramos && pauta.tramos.length) {
+        pauta.tramos.forEach(function (t) {
+            const v = aliVentana(t.apertura, t.termino);
+            if (v) r.nocturnas += aliNocturnas(v.ini, v.fin);
+        });
+    } else if (prog && prog.tramos.length) {
         prog.tramos.forEach(function (t) {
             const v = aliVentana(t.apertura, t.terminoOp || t.cierre);
             if (v) r.nocturnas += aliNocturnas(v.ini, v.fin);
@@ -5669,12 +5758,16 @@ function aliCalcularMes(nombre, mes) {
 
     dias.forEach(function (fecha, i) {
         const prog = aliProgramado(g, fecha, nombre);
-        const pauta = aliDeLaPauta(fecha, nombre);
+        const pauta = aliDeLaPauta(fecha, nombre, prog && prog.turno);
         const siguiente = g ? aliProgramado(g, dias[i + 1], nombre) : null;
         const siguienteEsDescanso = !!siguiente && siguiente.tipo === 'DESCANSO';
 
         const r = aliCalcularDia(fecha, datos[fecha], prog, pauta, siguienteEsDescanso, previo);
         r.diaIndice = i;
+        if (pauta && pauta.doble) {
+            r.avisos.push('Doble turno: la pauta te da el ' + pauta.turnos.join(' y el ') +
+                '. La jornada va desde la apertura del primero hasta el cierre del último.');
+        }
         r.aperturaLugar = (pauta && pauta.aperturaLugar) || (prog && prog.aperturaLugar) || '';
         r.cierreLugar = (pauta && pauta.cierreLugar) || (prog && prog.cierreLugar) || '';
         r.diaSemana = prog ? prog.diaSemana : '';
@@ -5829,6 +5922,8 @@ function aliCampo(fecha, campo, valor) {
     const datos = aliMes(nombre, mes);
     if (!datos[fecha]) datos[fecha] = {};
     datos[fecha][campo] = valor;
+    // Si se corrige algo, el día vuelve a quedar pendiente de guardar.
+    datos[fecha].guardado = false;
     aliGuardarTodo();
     aliRenderizar();
 }
@@ -5877,16 +5972,63 @@ function aliUsarProgramado(fecha) {
 
     const datos = aliMes(nombre, mes);
     datos[fecha] = Object.assign({}, datos[fecha], {
-        ingreso: d.refIni, termino: d.refFin, servicio: d.servicio, turno: d.turno
+        ingreso: d.refIni, termino: d.refFin, servicio: d.servicio, turno: d.turno,
+        guardado: true
     });
     aliGuardarTodo();
+    ALI_DIA_ABIERTO = '';
     aliRenderizar();
+    pautaToast('✅ Día ' + new Date(fecha + 'T12:00:00').getUTCDate() + ' guardado');
 }
 
+// Guardar deja el día por escrito: así se distingue del que quedó a medio
+// llenar y sale marcado en el PDF.
+function aliGuardarDia(fecha) {
+    const nombre = aliNombre(), mes = aliMesSel();
+    if (!nombre || !mes) return;
+    const d = aliCalcularMes(nombre, mes).dias.find(x => x.fecha === fecha);
+    if (!d) return;
+
+    if (d.sinRegistro) {
+        pautaToast('Escribe primero el ingreso y el término.');
+        return;
+    }
+    if (d.requiereJustificacion && !d.justificado) {
+        pautaToast('Falta la justificación del cierre tardío.');
+        return;
+    }
+
+    const datos = aliMes(nombre, mes);
+    if (!datos[fecha]) datos[fecha] = {};
+    datos[fecha].guardado = true;
+    aliGuardarTodo();
+    ALI_DIA_ABIERTO = '';
+    aliRenderizar();
+    pautaToast('✅ Día ' + new Date(fecha + 'T12:00:00').getUTCDate() + ' guardado');
+}
+
+// Borrar pregunta antes cuando el día tiene algo escrito: lo que se pierde no
+// se puede recuperar.
 function aliBorrarDia(fecha) {
     const nombre = aliNombre(), mes = aliMesSel();
     if (!nombre || !mes) return;
     const datos = aliMes(nombre, mes);
+    const g = datos[fecha] || {};
+
+    const detalle = [];
+    if (g.ingreso || g.termino) detalle.push('horario ' + (g.ingreso || '—') + '–' + (g.termino || '—'));
+    if (g.servicio) detalle.push('servicio ' + g.servicio);
+    if (g.obs) detalle.push('justificación «' + g.obs + '»');
+    if (g.manejoHoras) detalle.push('manejo extra ' + g.manejoHoras);
+    if (g.manejoMotivo) detalle.push('motivo del manejo');
+    if (g.feriado) detalle.push('feriado trabajado');
+
+    if (detalle.length && !confirm(
+            'Vas a borrar el día ' + new Date(fecha + 'T12:00:00').getUTCDate() + '.\n\n' +
+            'Se pierde: ' + detalle.join(', ') + '.\n\n¿Borrar de todas formas?')) {
+        return;
+    }
+
     delete datos[fecha];
     aliGuardarTodo();
     aliRenderizar();
@@ -5955,7 +6097,9 @@ function aliTarjetaDia(d) {
         : (prog && prog.etiqueta ? prog.etiqueta : (esDescanso ? 'DESCANSO' : ''));
 
     return `
-        <div class="ali-dia${abierto ? ' abierto' : ''}${d.sinRegistro ? ' vacio' : ''}${d.requiereJustificacion && !d.justificado ? ' sin-justificar' : ''}">
+        <div class="ali-dia${abierto ? ' abierto' : ''}${d.sinRegistro ? ' vacio' : ''}${
+            !d.sinRegistro && !d.guardado ? ' borrador' : ''}${
+            d.requiereJustificacion && !d.justificado ? ' sin-justificar' : ''}">
             <button type="button" class="ali-dia-top" onclick="aliToggleDia('${escAttr(d.fecha)}')">
                 <span class="ali-n">${dia}</span>
                 <span class="ali-dia-info">
@@ -5978,6 +6122,7 @@ function aliTarjetaDia(d) {
                 ${aliChip('Manejo extra', d.manejo, 'manejo')}
                 ${d.descansoAfectado ? aliChip('Descanso afectado', d.descansoAfectado, 'desc') : ''}
                 ${d.absorbido ? `<span class="ali-chip absorbido">Fuera de turno ${escHtml(aliHM(d.absorbido))} · ya contado en el exceso</span>` : ''}
+                ${d.dobleTurno ? `<span class="ali-chip doble">Doble turno ${escHtml(d.turnoPauta)}</span>` : ''}
                 ${d.cambioDeTurno ? `<span class="ali-chip cambio">Cambio de turno ${escHtml(d.turnoGrafico)} → ${escHtml(d.turnoPauta)}${d.voluntario ? ' · voluntario' : ''}</span>` : ''}
                 ${d.cierreTardio ? `<span class="ali-chip tarde">Cierre +${escHtml(aliHM(d.cierreTardio))}</span>` : ''}
                 ${d.aperturaAntes ? `<span class="ali-chip tarde">Apertura −${escHtml(aliHM(d.aperturaAntes))}</span>` : ''}
@@ -5986,6 +6131,9 @@ function aliTarjetaDia(d) {
                         ? `<span class="ali-chip justificado">✔ justificado</span>`
                         : `<span class="ali-chip falta">⚠ falta justificación</span>`)
                     : ''}
+                ${d.guardado
+                    ? `<span class="ali-chip guardado">✔ guardado</span>`
+                    : `<span class="ali-chip borrador">✎ sin guardar</span>`}
             </div>`}
 
             ${abierto ? `
@@ -6035,8 +6183,13 @@ function aliTarjetaDia(d) {
                 ${d.reposoReal !== undefined ? `<div class="ali-ref">Reposo desde el cierre anterior:
                     ${escHtml(aliHM(d.reposoReal))} · mínimo ${escHtml(aliHM(d.reposoMinimo))}</div>` : ''}
                 ${d.avisos.map(a => `<div class="pauta-aviso info">${escHtml(a)}</div>`).join('')}
-                ${d.sinRegistro ? '' : `<button type="button" class="ali-borrar"
-                    onclick="aliBorrarDia('${escAttr(d.fecha)}')">Borrar este día</button>`}
+                <div class="ali-editor-acciones">
+                    <button type="button" class="ali-guardar${d.guardado ? ' guardado' : ''}"
+                        onclick="aliGuardarDia('${escAttr(d.fecha)}')">${
+                        d.guardado ? '✔ Día guardado' : '💾 Guardar día'}</button>
+                    ${d.sinRegistro && !d.tieneDatos ? '' : `<button type="button" class="ali-borrar"
+                        onclick="aliBorrarDia('${escAttr(d.fecha)}')">🗑 Borrar día</button>`}
+                </div>
             </div>` : ''}
         </div>`;
 }
@@ -6110,6 +6263,14 @@ function aliDescargarPDF() {
         return;
     }
 
+    const borradores = calc.dias.filter(d => !d.sinRegistro && !d.guardado);
+    if (borradores.length && !confirm(
+            borradores.length + ' día(s) con horas escritas pero sin guardar (' +
+            borradores.map(d => new Date(d.fecha + 'T12:00:00').getUTCDate()).join(', ') +
+            ').\nEn el PDF saldrán marcados como SIN GUARDAR.\n\n¿Descargar igual?')) {
+        return;
+    }
+
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
 
@@ -6128,6 +6289,12 @@ function aliDescargarPDF() {
         }
         // La justificación viaja al PDF. Si falta, el día queda marcado.
         let obs = d.obs || '';
+        // Un día que nunca se guardó sale señalado: puede estar a medio llenar.
+        if (!d.guardado) obs = obs ? 'SIN GUARDAR · ' + obs : 'SIN GUARDAR';
+        if (d.dobleTurno) {
+            const doble = 'DOBLE TURNO ' + d.turnoPauta;
+            obs = obs ? obs + ' · ' + doble : doble;
+        }
         if (d.cambioDeTurno) {
             const cambio = 'CAMBIO DE TURNO ' + d.turnoGrafico + '→' + d.turnoPauta +
                            (d.voluntario ? ' (VOLUNTARIO)' : '');
