@@ -3049,6 +3049,75 @@ function pautaTrenesDeServicio(texto, prefijoPrevio) {
 
 /* ----------------------------------------------------------- interpretar -- */
 
+// Cuando la pauta viene de una foto, el OCR deja horas rotas: "14c45" por los
+// dos puntos leidos como letra, o "2155" sin separador. Se arreglan solo las que
+// no dejan dudas; lo demas se deja tal cual, a la vista, en vez de inventarlo.
+const PAUTA_CAMPOS_HORA = ['apertura', 'traslado', 'inicio', 'terminoServicio',
+                           'trasladoRegreso', 'entrega', 'fin'];
+
+function pautaHoraOCR(txt) {
+    const s = String(txt == null ? '' : txt).trim();
+    if (!s) return s;
+
+    const bien = s.match(/^(\d{1,2})\s*:\s*(\d{2})$/);
+    if (bien) return pautaHoraValida(bien[1], bien[2]) || s;
+
+    // Un solo caracter en lugar de los dos puntos: 14c45, 14.45, 14-45.
+    const separador = s.match(/^(\d{1,2})[^\d\s](\d{2})$/);
+    if (separador) return pautaHoraValida(separador[1], separador[2]) || s;
+
+    // Cuatro digitos seguidos: 2155. Con tres no se toca, porque "100" tanto
+    // puede ser 1:00 como un 11:00 al que se le perdio un digito.
+    const pegado = s.match(/^(\d{2})(\d{2})$/);
+    if (pegado) return pautaHoraValida(pegado[1], pegado[2]) || s;
+
+    return s;
+}
+
+// Lo que el OCR dejó ilegible y se completó leyendo la pauta original. Cada
+// hora anotada aquí coincide además con el catálogo del gráfico, que es una
+// fuente aparte: no es una suposición, es una lectura contrastada.
+// Formato: fecha -> número de turno -> campo -> hora.
+const PAUTA_CORRECCIONES = {
+    '2026-09-04': {
+        '2':  { fin: '11:00' },
+        '21': { apertura: '9:05' },
+        '22': { apertura: '9:45', inicio: '9:45' },
+        '26': { apertura: '11:00', inicio: '11:00' },
+        '36': { fin: '1:35' },
+        '37': { fin: '1:35' },
+        '47': { apertura: '9:30' },
+        // El OCR leyó 12:45 donde la foto y el catálogo dicen 11:45: aquí sí se
+        // pisa lo leído, porque hay dos fuentes que coinciden contra una.
+        '10': { fin: '11:45', terminoServicio: '11:45', forzar: ['fin', 'terminoServicio'] }
+    }
+};
+
+// Solo rellena lo que quedó vacío o ilegible: nunca pisa una hora que se leyó
+// bien, para que una corrección vieja no tape un cambio real de la pauta.
+function pautaCorregirTurno(fecha, turno) {
+    const porTurno = PAUTA_CORRECCIONES[fecha];
+    if (!porTurno || !turno.turno) return;
+    const arreglos = porTurno[turno.turno];
+    if (!arreglos) return;
+
+    const forzar = arreglos.forzar || [];
+    Object.keys(arreglos).forEach(function (campo) {
+        if (campo === 'forzar') return;
+        if (forzar.indexOf(campo) >= 0 || !/\d{1,2}:\d{2}/.test(String(turno[campo] || ''))) {
+            turno[campo] = arreglos[campo];
+            if (!turno.corregidos) turno.corregidos = [];
+            turno.corregidos.push(campo);
+        }
+    });
+}
+
+function pautaHoraValida(h, m) {
+    const hh = parseInt(h, 10), mm = parseInt(m, 10);
+    if (!isFinite(hh) || !isFinite(mm) || hh > 23 || mm > 59) return '';
+    return hh + ':' + String(mm).padStart(2, '0');
+}
+
 const PAUTA_SECCIONES = [
     { clave: 'descanso',   etiqueta: 'Descanso',         re: /^DESCANSO$/ },
     { clave: 'licencia',   etiqueta: 'Licencia médica',  re: /^LICENCIA MEDICA$/ },
@@ -3187,8 +3256,10 @@ function pautaInterpretarHoja(hoja) {
             descanso: /^DESCANSO$/.test(pautaNorm(servicio))
         };
         Object.keys(campos).forEach(function (k) {
-            turno[k] = campos[k] < 0 ? '' : celda(f, campos[k]);
+            const bruto = campos[k] < 0 ? '' : celda(f, campos[k]);
+            turno[k] = PAUTA_CAMPOS_HORA.indexOf(k) >= 0 ? pautaHoraOCR(bruto) : bruto;
         });
+        pautaCorregirTurno(hoja.fecha, turno);
 
         turnos.push(turno);
         previo = turno;
@@ -3746,7 +3817,24 @@ function pautaRenderizar() {
 }
 
 function pautaPieHTML(pauta) {
-    return `<div class="pauta-pie">Pauta del ${escHtml(pauta.titulo)}${pauta.archivo ? ' · ' + escHtml(pauta.archivo) : ''} · ${pauta.turnos.length} turnos leídos.</div>`;
+    // Las pautas que llegan como foto traen horas que el OCR no alcanza a leer.
+    // No se inventan: se avisa cuáles hay que mirar en el original.
+    const rotos = pauta.turnos
+        .filter(t => t.turno && !t.descanso && (!/\d{1,2}:\d{2}/.test(t.apertura || '') ||
+                                 !/\d{1,2}:\d{2}/.test(t.fin || '')))
+        .map(t => t.turno);
+    const completados = pauta.turnos.filter(t => t.corregidos && t.corregidos.length).map(t => t.turno);
+
+    return `<div class="pauta-pie">Pauta del ${escHtml(pauta.titulo)}${pauta.archivo ? ' · ' + escHtml(pauta.archivo) : ''} · ${pauta.turnos.length} turnos leídos.` +
+        (completados.length
+            ? `<br>Horario completado a mano en ${completados.length}
+               ${completados.length === 1 ? 'turno' : 'turnos'} (${escHtml(completados.join(', '))}),
+               porque el archivo venía de una foto.`
+            : '') +
+        (rotos.length
+            ? `<br>⚠ Horario ilegible en ${rotos.length} ${rotos.length === 1 ? 'turno' : 'turnos'}
+               (${escHtml(rotos.join(', '))}): revísalos en la pauta original.`
+            : '') + `</div>`;
 }
 
 /* -------------------------------------------------- volcar a la bitácora -- */
@@ -3939,6 +4027,9 @@ const PREV_ESTACIONES = {"L1":[["San Rosendo",-37.263557,-72.727845],["Buenuraqu
 
 const PREV_ARCHIVO   = 'prevenciones/boletin.json';
 const PREV_AVISO_M   = 500;    // metros de anticipación del aviso
+const PREV_SENTIDO_VENTANA   = 15000;  // ms de historia para deducir el sentido
+const PREV_SENTIDO_MIN_KM    = 0.03;   // movimiento mínimo para darlo por bueno
+const PREV_SENTIDO_VIGENCIA  = 45000;  // ms que sigue valiendo ese sentido
 const PREV_PASADA_M  = 300;    // cuánto sigue a la vista después de salir de la zona
 const PREV_VIA_MAX_M = 400;    // más lejos que esto de la vía, el GPS no sirve
 const PREV_LISTA_KM  = 15;     // cuántos km hacia adelante lista el panel
@@ -3954,7 +4045,8 @@ let PREV_BOLETINES = [];
 let PREV_GPS = {
     watchId: null, lat: null, lon: null, precision: null,
     linea: '', pk: null, distVia: null, sentido: 0, ts: 0, error: '',
-    velocidad: null                 // km/h, cuando el equipo la entrega
+    velocidad: null,                // km/h, cuando el equipo la entrega
+    sentidoTs: 0                    // cuándo se dedujo el sentido de un movimiento real
 };
 let PREV_HISTORIA = [];        // últimos PK, para deducir el sentido
 let PREV_MANUAL = { activo: false, linea: 'L2', pk: 0, sentido: 1 };
@@ -4333,13 +4425,25 @@ function prevUbicar(lat, lon) {
 
 function prevRegistrarPosicion(linea, pk, ts) {
     PREV_HISTORIA.push({ linea: linea, pk: pk, ts: ts });
-    if (PREV_HISTORIA.length > 6) PREV_HISTORIA.shift();
+    // La ventana es de tiempo, no de cantidad: con actualizaciones espaciadas
+    // seis lecturas pueden cubrir medio minuto o dos segundos.
+    while (PREV_HISTORIA.length > 2 && ts - PREV_HISTORIA[0].ts > PREV_SENTIDO_VENTANA) {
+        PREV_HISTORIA.shift();
+    }
+    if (PREV_HISTORIA.length > 20) PREV_HISTORIA.shift();
 
     const mismos = PREV_HISTORIA.filter(h => h.linea === linea);
     if (mismos.length < 2) return PREV_GPS.sentido;
     const d = mismos[mismos.length - 1].pk - mismos[0].pk;
-    if (Math.abs(d) < 0.05) return PREV_GPS.sentido;   // detenido: se conserva
+    if (Math.abs(d) < PREV_SENTIDO_MIN_KM) return PREV_GPS.sentido;   // detenido: se conserva
+
+    PREV_GPS.sentidoTs = ts;
     return d > 0 ? 1 : -1;
+}
+
+// Un sentido deducido hace rato ya no sirve para decidir qué quedó atrás.
+function prevSentidoFirme() {
+    return !!PREV_GPS.sentidoTs && (Date.now() - PREV_GPS.sentidoTs) < PREV_SENTIDO_VIGENCIA;
 }
 
 function prevIniciarGPS() {
@@ -4384,6 +4488,7 @@ function prevIniciarGPS() {
 function prevDetenerGPS() {
     if (PREV_GPS.watchId !== null) navigator.geolocation.clearWatch(PREV_GPS.watchId);
     PREV_GPS.watchId = null;
+    PREV_GPS.sentidoTs = 0;
     PREV_HISTORIA = [];
     prevActualizar();
 }
@@ -4391,11 +4496,12 @@ function prevDetenerGPS() {
 function prevPosicionActual() {
     if (PREV_MANUAL.activo) {
         return { linea: PREV_MANUAL.linea, pk: PREV_MANUAL.pk,
-                 sentido: PREV_MANUAL.sentido, dist: 0, manual: true };
+                 sentido: PREV_MANUAL.sentido, dist: 0, manual: true, firme: true };
     }
     if (PREV_GPS.pk === null) return null;
     return { linea: PREV_GPS.linea, pk: PREV_GPS.pk,
-             sentido: PREV_GPS.sentido, dist: PREV_GPS.distVia, manual: false };
+             sentido: PREV_GPS.sentido, dist: PREV_GPS.distVia, manual: false,
+             firme: prevSentidoFirme() };
 }
 
 /* ------------------------------------------------------------ proximidad -- */
@@ -4406,7 +4512,11 @@ function prevPosicionActual() {
 //   'pasada' : ya se salió, hace N metros
 // Devuelve null si el tramo no es de esta línea o no se puede ubicar.
 function prevDistanciaA(p, pos) {
-    const sentido = pos.sentido || 1;
+    const sentido = pos.sentido || 0;
+    // Si no se sabe hacia dónde va el tren —recién partiendo, marchando lento o
+    // con el GPS espaciado— se avisa de los dos lados. Vale más un aviso de
+    // sobra que quedarse callado hasta tener la zona encima.
+    const firme = pos.firme !== undefined ? pos.firme : prevSentidoFirme();
     let mejor = null;
 
     p.tramos.forEach(function (t) {
@@ -4415,6 +4525,9 @@ function prevDistanciaA(p, pos) {
         let estado, km;
         if (pos.pk >= t.desde && pos.pk <= t.hasta) {
             estado = 'dentro'; km = 0;
+        } else if (!sentido || !firme) {
+            estado = 'antes';
+            km = pos.pk < t.desde ? t.desde - pos.pk : pos.pk - t.hasta;
         } else if (sentido > 0) {
             estado = pos.pk < t.desde ? 'antes' : 'pasada';
             km = estado === 'antes' ? t.desde - pos.pk : pos.pk - t.hasta;
