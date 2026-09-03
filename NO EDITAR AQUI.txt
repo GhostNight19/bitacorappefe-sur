@@ -1,0 +1,3 @@
+Esta carpeta se genera sola con generar_sin_conduccion.py.
+Lo que se edite aqui se pierde en la proxima generacion: los
+cambios van en la carpeta de arriba y se vuelve a generar.

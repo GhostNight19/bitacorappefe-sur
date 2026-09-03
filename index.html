@@ -491,6 +491,7 @@
         .ali-cambio { margin-top: 9px; padding: 8px 11px; border-radius: 9px; background: #e7f0ff; border: 1px solid #adc8f0; color: #14459c; font-size: 0.8rem; font-weight: 750; line-height: 1.45; }
         .ali-igual { width: 100%; margin-top: 4px; min-height: 44px; padding: 0 12px; border: 2px solid #9ec8b4; border-radius: 9px; background: #eef8f3; color: #0a5c42; font: inherit; font-weight: 850; font-size: 0.85rem; cursor: pointer; }
         .ali-igual:active { background: #ddf0e7; }
+
         .ali-editor-acciones { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, auto); gap: 8px; margin-top: 12px; }
         .ali-guardar { min-height: 44px; padding: 0 14px; border: 2px solid #0a7d5a; border-radius: 8px; background: #0a7d5a; color: #fff; font: inherit; font-weight: 900; font-size: 0.85rem; cursor: pointer; }
         .ali-guardar.guardado { background: #eaf7f1; color: #075437; }
@@ -722,6 +723,7 @@
         <div class="plan-cuerpo" id="graf-resultados" aria-live="polite"></div>
     </div>
 </div>
+
 
 <!-- ===== Mi Alistación: horas trabajadas día a día ===== -->
 <div id="ali-overlay" class="plan-overlay" role="dialog" aria-modal="true" aria-labelledby="ali-titulo" hidden>
@@ -3951,7 +3953,8 @@ const PREV_RANGO = { L1: [40, 86], L2: [0, 28.5] };
 let PREV_BOLETINES = [];
 let PREV_GPS = {
     watchId: null, lat: null, lon: null, precision: null,
-    linea: '', pk: null, distVia: null, sentido: 0, ts: 0, error: ''
+    linea: '', pk: null, distVia: null, sentido: 0, ts: 0, error: '',
+    velocidad: null                 // km/h, cuando el equipo la entrega
 };
 let PREV_HISTORIA = [];        // últimos PK, para deducir el sentido
 let PREV_MANUAL = { activo: false, linea: 'L2', pk: 0, sentido: 1 };
@@ -4355,6 +4358,8 @@ function prevIniciarGPS() {
             const u = prevUbicar(lat, lon);
             PREV_GPS.lat = lat; PREV_GPS.lon = lon;
             PREV_GPS.precision = pos.coords.accuracy;
+            PREV_GPS.velocidad = (pos.coords.speed !== null && isFinite(pos.coords.speed) &&
+                                  pos.coords.speed >= 0) ? pos.coords.speed * 3.6 : null;
             PREV_GPS.ts = Date.now();
             PREV_GPS.error = '';
             if (u) {
@@ -6408,6 +6413,8 @@ document.addEventListener('keydown', function (e) {
 document.getElementById('ali-overlay').addEventListener('click', function (e) {
     if (e.target === this) cerrarAlistacion();
 });
+
+
 document.addEventListener('click', function (e) {
     const caja = document.getElementById('ali-sugerencias');
     if (!caja || caja.hidden) return;
