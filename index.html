@@ -3042,6 +3042,20 @@ function pautaTrenesDeServicio(texto, prefijoPrevio) {
                 return;
             }
         }
+        // Y a veces son dos abreviados los que quedan pegados: "110-111" llega
+        // como "110111". Se separan por la mitad solo si los dos servicios que
+        // salen van correlativos, que es como se numeran dentro de un turno.
+        if (ultimoCompleto && tok.length % 2 === 0 && tok.length >= 4 && tok.length <= 8) {
+            const mitad = tok.length / 2;
+            const a = tok.slice(0, mitad), b = tok.slice(mitad);
+            const na = parseInt(ultimoCompleto.slice(0, 5 - mitad) + a, 10);
+            const nb = parseInt(ultimoCompleto.slice(0, 5 - mitad) + b, 10);
+            if (isFinite(na) && isFinite(nb) && nb - na > 0 && nb - na <= 20) {
+                agregar(a);
+                agregar(b);
+                return;
+            }
+        }
         agregar(tok);
     });
     return trenes;
@@ -3090,6 +3104,13 @@ const PAUTA_CORRECCIONES = {
         // El OCR leyó 12:45 donde la foto y el catálogo dicen 11:45: aquí sí se
         // pisa lo leído, porque hay dos fuentes que coinciden contra una.
         '10': { fin: '11:45', terminoServicio: '11:45', forzar: ['fin', 'terminoServicio'] }
+    },
+    // El Excel del lunes 7 tambien salio de una foto y trae lo suyo: el nombre
+    // del maquinista del 27 llego como "LCBEA" y el termino del 46 como
+    // "07:61", que ni siquiera es una hora. Ambos leidos de la imagen.
+    '2026-09-07': {
+        '27': { maquinista: 'J. CABEZA', forzar: ['maquinista'] },
+        '46': { terminoServicio: '19:40', forzar: ['terminoServicio'] }
     }
 };
 
@@ -3104,7 +3125,10 @@ function pautaCorregirTurno(fecha, turno) {
     const forzar = arreglos.forzar || [];
     Object.keys(arreglos).forEach(function (campo) {
         if (campo === 'forzar') return;
-        if (forzar.indexOf(campo) >= 0 || !/\d{1,2}:\d{2}/.test(String(turno[campo] || ''))) {
+        const esHora = PAUTA_CAMPOS_HORA.indexOf(campo) >= 0;
+        const vacio = esHora ? !/\d{1,2}:\d{2}/.test(String(turno[campo] || ''))
+                             : !String(turno[campo] || '').trim();
+        if (forzar.indexOf(campo) >= 0 || vacio) {
             turno[campo] = arreglos[campo];
             if (!turno.corregidos) turno.corregidos = [];
             turno.corregidos.push(campo);
@@ -3183,6 +3207,7 @@ function pautaInterpretarHoja(hoja) {
     const listas = {};
     let seccion = null;
     let previo = null;
+    let numeroSuelto = '';   // número que llegó en una fila para él solo
 
     for (let i = iCab + 1; i < filas.length; i++) {
         const f = filas[i] || [];
@@ -3190,6 +3215,15 @@ function pautaInterpretarHoja(hoja) {
         const restoVacio = f.slice(1).every(c => !String(c || '').trim());
 
         // ¿Empieza un listado (DESCANSO, LICENCIA MEDICA, ...)?
+        // Cuando la celda del número viene combinada, la pauta lo deja en una
+        // fila para él solo, entre el servicio y su fila de práctica. Ese número
+        // es del turno de arriba, y la fila no debe cortar la secuencia.
+        if (restoVacio && /^\d+$/.test(c0)) {
+            if (previo && !previo.turno) previo.turno = c0;
+            else numeroSuelto = c0;
+            continue;
+        }
+
         const sec = (c0 && restoVacio) ? PAUTA_SECCIONES.find(s => s.re.test(c0)) : null;
         if (sec) {
             seccion = sec;
@@ -3235,6 +3269,22 @@ function pautaInterpretarHoja(hoja) {
             }
         }
 
+        // Otra variante de lo mismo: la fila de práctica repite el servicio del
+        // turno anterior y se trae el número pegado. Un solo nombre y sin horas.
+        if (previo && !tieneHoras && servicio &&
+            pautaNorm(servicio) === pautaNorm(previo.servicios)) {
+            const nombres = [];
+            for (let c = 2; c <= iAyudante; c++) {
+                const cand = pautaLimpiarNombre(celda(f, c));
+                if (pautaEsNombre(cand) && nombres.indexOf(cand) < 0) nombres.push(cand);
+            }
+            if (nombres.length === 1) {
+                if (/^\d+$/.test(c0) && !previo.turno) previo.turno = c0;
+                if (previo.practicas.indexOf(nombres[0]) < 0) previo.practicas.push(nombres[0]);
+                continue;
+            }
+        }
+
         // Sin tripulación no hay a quién buscar (filas "Jornada" en blanco).
         if (!maquinista && !ayudante) { previo = null; continue; }
 
@@ -3245,8 +3295,8 @@ function pautaInterpretarHoja(hoja) {
             pautaNorm(ayudante) === pautaNorm(previo.ayudante);
 
         const turno = {
-            turno: /^\d+$/.test(c0) ? c0 : (mismaPareja ? previo.turno : ''),
-            continuacion: !/^\d+$/.test(c0) && !!mismaPareja,
+            turno: /^\d+$/.test(c0) ? c0 : (numeroSuelto || (mismaPareja ? previo.turno : '')),
+            continuacion: !/^\d+$/.test(c0) && !numeroSuelto && !!mismaPareja,
             servicios: servicio,
             maquinista: maquinista,
             ayudante: ayudante,
@@ -3260,6 +3310,7 @@ function pautaInterpretarHoja(hoja) {
             turno[k] = PAUTA_CAMPOS_HORA.indexOf(k) >= 0 ? pautaHoraOCR(bruto) : bruto;
         });
         pautaCorregirTurno(hoja.fecha, turno);
+        numeroSuelto = '';
 
         turnos.push(turno);
         previo = turno;
@@ -3281,7 +3332,8 @@ function pautaInterpretarHoja(hoja) {
 
 function pautaReconstruir() {
     const porFecha = new Map();
-    PAUTA_HOJAS_REPO.forEach(h => { if (h && h.fecha) porFecha.set(h.fecha, Object.assign({}, h, { origen: 'repositorio' })); });
+    // Una pauta transcrita de una foto trae su propio origen: no se pisa.
+    PAUTA_HOJAS_REPO.forEach(h => { if (h && h.fecha) porFecha.set(h.fecha, Object.assign({}, h, { origen: h.origen || 'repositorio' })); });
     // Lo subido a mano manda: es lo más reciente que vio la persona.
     PAUTA_HOJAS_LOCAL.forEach(h => { if (h && h.fecha) porFecha.set(h.fecha, Object.assign({}, h, { origen: 'teléfono' })); });
 
@@ -3826,6 +3878,9 @@ function pautaPieHTML(pauta) {
     const completados = pauta.turnos.filter(t => t.corregidos && t.corregidos.length).map(t => t.turno);
 
     return `<div class="pauta-pie">Pauta del ${escHtml(pauta.titulo)}${pauta.archivo ? ' · ' + escHtml(pauta.archivo) : ''} · ${pauta.turnos.length} turnos leídos.` +
+        (pauta.origen === 'imagen'
+            ? `<br>📷 Transcrita desde la foto de la pauta, no desde el Excel: contrastada turno a turno con el gráfico, pero conviene mirarla.`
+            : '') +
         (completados.length
             ? `<br>Horario completado a mano en ${completados.length}
                ${completados.length === 1 ? 'turno' : 'turnos'} (${escHtml(completados.join(', '))}),

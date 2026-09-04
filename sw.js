@@ -4,7 +4,7 @@
    y conserva una copia para poder seguir usando la app sin señal.
    ============================================================ */
 
-const CACHE = 'bitacora-efe-v21';
+const CACHE = 'bitacora-efe-v23';
 
 // Archivos que componen la aplicación. Todos existen en el repositorio.
 const ASSETS = [
