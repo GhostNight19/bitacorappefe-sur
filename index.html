@@ -274,6 +274,19 @@
         .train-card.recien-cargada { animation: destello-tarjeta 1.6s ease-out 1; }
         @keyframes destello-tarjeta { 0%, 100% { box-shadow: 0 2px 5px rgba(0,0,0,0.1); } 30% { box-shadow: 0 0 0 4px rgba(111, 66, 193, 0.45); } }
 
+        .pauta-subir { margin-top: 4px; padding: 10px 12px; border: 1px dashed #cbd7e6;
+            border-radius: 10px; background: #f8fbff; }
+        .pauta-subir summary { cursor: pointer; font-weight: 800; font-size: 0.84rem; color: #37455e; }
+        .pauta-subir[open] summary { margin-bottom: 10px; }
+        .pauta-subir-btn { display: block; min-height: 48px; padding: 13px 14px; border-radius: 9px;
+            border: 2px solid #6f42c1; background: #6f42c1; color: #fff; font-weight: 850;
+            font-size: 0.9rem; text-align: center; cursor: pointer; }
+        .pauta-subir-btn:hover { filter: brightness(1.08); }
+        .pauta-subir-nota { margin: 9px 0 0; color: #6a7891; font-size: 0.78rem;
+            font-weight: 700; line-height: 1.45; }
+        .pauta-subir-otro { width: 100%; margin-top: 9px; min-height: 42px; border-radius: 9px;
+            border: 2px solid #cbd7e6; background: #fff; color: #37455e; font: inherit;
+            font-weight: 800; font-size: 0.82rem; cursor: pointer; }
         .pauta-pie { margin-top: 16px; padding-top: 12px; border-top: 1px dashed #cbd7e6; color: #6a7891; font-size: 0.78rem; font-weight: 700; line-height: 1.5; }
 
         /* Pareja de turno mostrada dentro del planificador de viajes */
@@ -633,10 +646,21 @@
                 <button type="button" class="plan-buscar" onclick="pautaRenderizar()">🔍 Ver turnos</button>
             </div>
 
-            <!-- Las pautas llegan solas desde pautas/pautas.json, así que aquí no
-                 hay nada que cargar. Las funciones de subir un Excel a mano y de
-                 exportar el pautas.json siguen en el código (pautaSubirArchivos y
-                 pautaExportarJSON) por si alguna vez hace falta volver a mostrarlas. -->
+            <!-- Las pautas llegan solas desde pautas/pautas.json. Esto es para
+                 el día que todavía no está subido: se abre el Excel que llegó por
+                 WhatsApp y queda en este teléfono, sin esperar a nadie. -->
+            <details class="pauta-subir">
+                <summary>¿Falta el día de hoy? Cargar el Excel</summary>
+                <label class="pauta-subir-btn">
+                    📂 Elegir el Excel de la pauta
+                    <input type="file" accept=".xlsx,.xlsm" multiple hidden
+                           onchange="pautaSubirArchivos(this)">
+                </label>
+                <p class="pauta-subir-nota">Queda guardado <strong>solo en este teléfono</strong>.
+                   Para que le llegue a todos, el archivo tiene que ir al repositorio.</p>
+                <button type="button" class="pauta-subir-otro" onclick="pautaExportarJSON()">
+                    ⬇ Descargar pautas.json (para el repositorio)</button>
+            </details>
         </div>
 
         <div class="plan-cuerpo" id="pauta-resultados" aria-live="polite"></div>
@@ -3116,6 +3140,20 @@ const PAUTA_CORRECCIONES = {
 
 // Solo rellena lo que quedó vacío o ilegible: nunca pisa una hora que se leyó
 // bien, para que una corrección vieja no tape un cambio real de la pauta.
+// Cuando el traslado de ida es 0:00, la apertura y el inicio del servicio son
+// la misma hora. Eso permite recuperar una apertura que el OCR dejo ilegible
+// sin adivinar: la respuesta esta en la misma fila.
+function pautaRecuperarApertura(turno) {
+    const hora = /\d{1,2}:\d{2}/;
+    if (hora.test(String(turno.apertura || ''))) return;
+    if (!/^0{1,2}:00$/.test(String(turno.traslado || '').trim())) return;
+    if (!hora.test(String(turno.inicio || ''))) return;
+
+    turno.apertura = turno.inicio;
+    if (!turno.corregidos) turno.corregidos = [];
+    turno.corregidos.push('apertura');
+}
+
 function pautaCorregirTurno(fecha, turno) {
     const porTurno = PAUTA_CORRECCIONES[fecha];
     if (!porTurno || !turno.turno) return;
@@ -3309,6 +3347,7 @@ function pautaInterpretarHoja(hoja) {
             const bruto = campos[k] < 0 ? '' : celda(f, campos[k]);
             turno[k] = PAUTA_CAMPOS_HORA.indexOf(k) >= 0 ? pautaHoraOCR(bruto) : bruto;
         });
+        pautaRecuperarApertura(turno);
         pautaCorregirTurno(hoja.fecha, turno);
         numeroSuelto = '';
 
