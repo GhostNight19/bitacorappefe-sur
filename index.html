@@ -3215,9 +3215,16 @@ function pautaInterpretarHoja(hoja) {
     const celda = (f, i) => String((f && f[i]) || '').trim();
 
     // 1) Fila de encabezados: la que empieza con "TURNOS".
+    // La cabecera se busca por MAQUINISTA + SERVICIOS, no por la primera celda:
+    // en una pauta salida de una foto ese "TURNOS" puede llegar como "TUNNOS".
     let iCab = -1;
     for (let i = 0; i < Math.min(filas.length, 14); i++) {
-        if (pautaNorm(celda(filas[i], 0)).indexOf('TURNO') === 0) { iCab = i; break; }
+        const fila = (filas[i] || []).map(pautaNorm);
+        if (fila.some(c => c.indexOf('MAQUINISTA') >= 0) &&
+            fila.some(c => c.indexOf('SERVICIO') >= 0)) { iCab = i; break; }
+    }
+    for (let i = 0; iCab < 0 && i < Math.min(filas.length, 14); i++) {
+        if (pautaNorm(celda(filas[i], 0)).indexOf('TURNO') === 0) iCab = i;
     }
     if (iCab < 0) return null;
 
