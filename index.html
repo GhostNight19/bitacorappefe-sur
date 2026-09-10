@@ -96,6 +96,13 @@
         .delete-card { background: #6c757d; color: white; border: none; padding: 6px 10px; border-radius: 5px; cursor: pointer; }
         .min-card { background: #0056b3; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-left: auto; }
         .train-card.minimized .table-responsive { display: none; }
+        /* El mismo boton, repetido al final del servicio: en un tren de veinte
+           estaciones cerrarlo no obliga a volver arriba. Al cerrarse la tarjeta
+           el pie sobra, porque el boton del encabezado queda a la vista. */
+        .card-pie { display: flex; justify-content: flex-end; padding: 10px 15px 14px;
+                    border-top: 1px solid #e3e9f1; background: #f7f9fc; }
+        .card-pie .min-card { margin-left: 0; }
+        .train-card.minimized .card-pie { display: none; }
         /* Evita que la tabla desborde la pantalla: si algo se ensancha, hace scroll dentro de su caja */
         .table-responsive { overflow-x: auto; }
 
@@ -1804,6 +1811,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
                     </tbody>
                 </table>
             </div>
+            <div class="card-pie">
+                <button class="min-card" onclick="toggleMinimize(${serviceCount}, true)">🔽 Minimizar</button>
+            </div>
         `;
         list.appendChild(card);
     }
@@ -1997,6 +2007,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
                     <tbody id="body-${id}"></tbody>
                 </table>
             </div>
+            <div class="card-pie">
+                <button class="min-card" onclick="toggleMinimize(${id}, true)">🔽 Minimizar</button>
+            </div>
         `;
         list.appendChild(card);
     }
@@ -2184,11 +2197,24 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
         }
     }
 
-    function toggleMinimize(id) {
+    // La tarjeta tiene el mismo boton arriba y abajo, así que los dos tienen
+    // que decir lo mismo. Si se cierra desde el pie, el pie desaparece con la
+    // tabla: se acerca el encabezado para no quedar mirando el servicio de más
+    // abajo sin saber qué pasó.
+    function toggleMinimize(id, desdePie) {
         const card = document.getElementById(`card-${id}`);
-        const btn = card.querySelector('.min-card');
         const minimizado = card.classList.toggle('minimized');
-        btn.innerText = minimizado ? '▶️ Mostrar' : '🔽 Minimizar';
+        card.querySelectorAll('.min-card').forEach(function (btn) {
+            btn.innerText = minimizado ? '▶️ Mostrar' : '🔽 Minimizar';
+        });
+        // El reloj va pegado arriba, así que la tarjeta se deja justo debajo:
+        // si no, el encabezado del servicio recién cerrado queda tapado.
+        if (minimizado && desdePie) {
+            const reloj = document.querySelector('.clock-dock');
+            const margen = (reloj ? reloj.getBoundingClientRect().height : 0) + 14;
+            const y = card.getBoundingClientRect().top + window.pageYOffset - margen;
+            window.scrollTo(0, Math.max(y, 0));
+        }
     }
 
     // --- FUNCIONES DE DESCARGA Y REPORTES ---
@@ -3974,8 +4000,9 @@ function pautaMinimizarTarjeta(id) {
     const card = document.getElementById(`card-${id}`);
     if (!card) return;
     card.classList.add('minimized');
-    const btn = card.querySelector('.min-card');
-    if (btn) btn.innerText = '▶️ Mostrar';
+    card.querySelectorAll('.min-card').forEach(function (btn) {
+        btn.innerText = '▶️ Mostrar';
+    });
 }
 
 // Crea una tarjeta por servicio, con los horarios de la memoria maestra cuando
