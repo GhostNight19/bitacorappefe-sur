@@ -2985,7 +2985,10 @@ function pautaClavePersona(txt) {
 // Quita las marcas que la pauta pone junto al nombre: (+), (-), (−), ** ...
 function pautaLimpiarNombre(txt) {
     return String(txt == null ? '' : txt)
-        .replace(/[\(\[]\s*[-+−–]?\s*[\)\]]/g, ' ')
+        // Marcas cortas entre parentesis junto al nombre: (+), (-), (t), (+t).
+        // Son anotaciones de la pauta, no parte del apellido; si se quedan
+        // pegadas, esa persona no se reconoce y pierde su turno.
+        .replace(/[\(\[]\s*[-+−–a-zA-Z]{0,3}\s*[\)\]]/g, ' ')
         .replace(/[-+−–]\s*\)/g, ' ')
         .replace(/\*+/g, ' ')
         .replace(/\s+/g, ' ').trim();
@@ -3092,8 +3095,11 @@ function pautaTrenesDeServicio(texto, prefijoPrevio) {
 // no dejan dudas; lo demas se deja tal cual, a la vista, en vez de inventarlo.
 const PAUTA_CAMPOS_HORA = ['apertura', 'traslado', 'inicio', 'terminoServicio',
                            'trasladoRegreso', 'entrega', 'fin'];
+// Traslados y entrega son duraciones, no horas del reloj: nunca pasan de unas
+// pocas horas, asi que "130" solo puede ser 1:30 y "045" solo 0:45.
+const PAUTA_CAMPOS_DURACION = ['traslado', 'trasladoRegreso', 'entrega'];
 
-function pautaHoraOCR(txt) {
+function pautaHoraOCR(txt, esDuracion) {
     const s = String(txt == null ? '' : txt).trim();
     if (!s) return s;
 
@@ -3108,6 +3114,13 @@ function pautaHoraOCR(txt) {
     // puede ser 1:00 como un 11:00 al que se le perdio un digito.
     const pegado = s.match(/^(\d{2})(\d{2})$/);
     if (pegado) return pautaHoraValida(pegado[1], pegado[2]) || s;
+
+    // Tres digitos solo se aceptan en las duraciones, donde "130" es 1:30 y no
+    // deja lugar a otra lectura. En una hora del reloj se quedan como estan.
+    if (esDuracion) {
+        const corto = s.match(/^(\d)(\d{2})$/);
+        if (corto) return pautaHoraValida(corto[1], corto[2]) || s;
+    }
 
     return s;
 }
@@ -3129,27 +3142,49 @@ const PAUTA_CORRECCIONES = {
         // pisa lo leído, porque hay dos fuentes que coinciden contra una.
         '10': { fin: '11:45', terminoServicio: '11:45', forzar: ['fin', 'terminoServicio'] }
     },
-    // El Excel del lunes 7 tambien salio de una foto y trae lo suyo: el nombre
-    // del maquinista del 27 llego como "LCBEA" y el termino del 46 como
-    // "07:61", que ni siquiera es una hora. Ambos leidos de la imagen.
     '2026-09-07': {
         '27': { maquinista: 'J. CABEZA', forzar: ['maquinista'] },
         '46': { terminoServicio: '19:40', forzar: ['terminoServicio'] }
+    },
+    // El turno 26 abre a las 11:00 y en dos pautas esa hora llego como "0:11".
+    '2026-09-10': { '26': { inicio: '11:00', forzar: ['inicio'] } },
+
+    // Horas que llegaron mal escritas y se contrastaron con el mismo turno en
+    // los demas dias y con el catalogo del grafico.
+    '2026-08-28': {
+        // el cierre llego como "15"
+        '22': { fin: '17:15', forzar: ['fin'] }
+    },
+    '2026-08-31': {
+        // apertura e inicio llegaron como "576"
+        '22': { apertura: '9:45', inicio: '9:45', forzar: ['apertura', 'inicio'] }
+    },
+    '2026-09-01': {
+        '26': { apertura: '11:00', forzar: ['apertura'] },
+        // apertura e inicio llegaron como "1:0"
+        '25': { apertura: '13:00', inicio: '13:00', forzar: ['apertura', 'inicio'] },
+        // toda la fila venia corrida una hora
+        '16': { apertura: '4:00', inicio: '4:00', terminoServicio: '11:30', fin: '11:30',
+                forzar: ['apertura', 'inicio', 'terminoServicio', 'fin'] }
     }
 };
 
 // Solo rellena lo que quedó vacío o ilegible: nunca pisa una hora que se leyó
 // bien, para que una corrección vieja no tape un cambio real de la pauta.
-// Cuando el traslado de ida es 0:00, la apertura y el inicio del servicio son
-// la misma hora. Eso permite recuperar una apertura que el OCR dejo ilegible
-// sin adivinar: la respuesta esta en la misma fila.
+// La apertura se puede recomponer desde la misma fila: es el inicio del
+// servicio menos el traslado de ida. No hay nada que adivinar, es una resta.
 function pautaRecuperarApertura(turno) {
     const hora = /\d{1,2}:\d{2}/;
     if (hora.test(String(turno.apertura || ''))) return;
-    if (!/^0{1,2}:00$/.test(String(turno.traslado || '').trim())) return;
     if (!hora.test(String(turno.inicio || ''))) return;
 
-    turno.apertura = turno.inicio;
+    const ini = aliHoraServicio(turno.inicio);
+    const tras = /^\d{1,2}:\d{2}$/.test(String(turno.traslado || '').trim())
+        ? aliHoraServicio(turno.traslado) : null;
+    if (ini === null || tras === null) return;
+
+    const min = ((ini - tras) % 1440 + 1440) % 1440;
+    turno.apertura = Math.floor(min / 60) + ':' + String(min % 60).padStart(2, '0');
     if (!turno.corregidos) turno.corregidos = [];
     turno.corregidos.push('apertura');
 }
@@ -3352,7 +3387,9 @@ function pautaInterpretarHoja(hoja) {
         };
         Object.keys(campos).forEach(function (k) {
             const bruto = campos[k] < 0 ? '' : celda(f, campos[k]);
-            turno[k] = PAUTA_CAMPOS_HORA.indexOf(k) >= 0 ? pautaHoraOCR(bruto) : bruto;
+            turno[k] = PAUTA_CAMPOS_HORA.indexOf(k) >= 0
+                ? pautaHoraOCR(bruto, PAUTA_CAMPOS_DURACION.indexOf(k) >= 0)
+                : bruto;
         });
         pautaRecuperarApertura(turno);
         pautaCorregirTurno(hoja.fecha, turno);
@@ -3914,28 +3951,11 @@ function pautaRenderizar() {
     caja.innerHTML = html + pautaPieHTML(pauta);
 }
 
+// El pie dice de qué pauta se trata y nada más. Las horas que hubo que
+// recomponer se arreglan al leer el archivo, en silencio: al maquinista le
+// interesa su turno, no de dónde salió cada dato.
 function pautaPieHTML(pauta) {
-    // Las pautas que llegan como foto traen horas que el OCR no alcanza a leer.
-    // No se inventan: se avisa cuáles hay que mirar en el original.
-    const rotos = pauta.turnos
-        .filter(t => t.turno && !t.descanso && (!/\d{1,2}:\d{2}/.test(t.apertura || '') ||
-                                 !/\d{1,2}:\d{2}/.test(t.fin || '')))
-        .map(t => t.turno);
-    const completados = pauta.turnos.filter(t => t.corregidos && t.corregidos.length).map(t => t.turno);
-
-    return `<div class="pauta-pie">Pauta del ${escHtml(pauta.titulo)}${pauta.archivo ? ' · ' + escHtml(pauta.archivo) : ''} · ${pauta.turnos.length} turnos leídos.` +
-        (pauta.origen === 'imagen'
-            ? `<br>📷 Transcrita desde la foto de la pauta, no desde el Excel: contrastada turno a turno con el gráfico, pero conviene mirarla.`
-            : '') +
-        (completados.length
-            ? `<br>Horario completado a mano en ${completados.length}
-               ${completados.length === 1 ? 'turno' : 'turnos'} (${escHtml(completados.join(', '))}),
-               porque el archivo venía de una foto.`
-            : '') +
-        (rotos.length
-            ? `<br>⚠ Horario ilegible en ${rotos.length} ${rotos.length === 1 ? 'turno' : 'turnos'}
-               (${escHtml(rotos.join(', '))}): revísalos en la pauta original.`
-            : '') + `</div>`;
+    return `<div class="pauta-pie">Pauta del ${escHtml(pauta.titulo)}${pauta.archivo ? ' · ' + escHtml(pauta.archivo) : ''} · ${pauta.turnos.length} turnos leídos.</div>`;
 }
 
 /* -------------------------------------------------- volcar a la bitácora -- */
@@ -5787,8 +5807,10 @@ function aliDeLaPauta(fecha, nombre, turnoGrafico) {
         cierreLugar: ultimo.baseFin || '',
         // Para las nocturnas: cada tramo, de la presentación al término del
         // servicio; el traslado de vuelta queda fuera, como en el gráfico.
+        inicio: primero.bl[0].turno.inicio || '',
         tramos: conHora.map(x => ({
             apertura: x.bl[0].turno.apertura || '',
+            inicio: x.bl[0].turno.inicio || '',
             termino: (x.bl[x.bl.length - 1].turno.terminoServicio ||
                       x.bl[x.bl.length - 1].turno.fin || '')
         }))
@@ -5850,7 +5872,9 @@ function aliCalcularDia(fecha, reg, prog, pauta, siguienteEsDescanso, previo) {
     //                             tiempo del turno nuevo que cae fuera genera horas
     //   · cambio voluntario    -> la pauta, porque el intercambio entre compañeros no
     //                             genera sobretiempo por sí solo
-    const usarGrafico = r.cambioDeTurno && !r.voluntario;
+    // Con doble turno la referencia es el turno del gráfico, el que de verdad
+    // era suyo: lo que se trabaja fuera de esa ventana es lo que se paga aparte.
+    const usarGrafico = (r.cambioDeTurno && !r.voluntario) || r.dobleTurno;
     const refIni = usarGrafico ? (prog.apertura || '')
                  : ((pauta && pauta.apertura) || (prog && prog.apertura) || '');
     const refFin = usarGrafico ? (prog.cierre || '')
@@ -5881,10 +5905,12 @@ function aliCalcularDia(fecha, reg, prog, pauta, siguienteEsDescanso, previo) {
         // fuera de rango y el exceso sobre 7:30. No absorbe el descanso.
         r.feriadoMin = r.jornada;
     } else {
-        r.exceso = Math.max(r.jornada - ALI_JORNADA, 0);
-        if (ref) {
-            r.fueraTurno = r.jornada - aliTraslape(real.ini, real.fin, ref.ini, ref.fin);
-        }
+        r.dentroTurno = ref ? aliTraslape(real.ini, real.fin, ref.ini, ref.fin) : r.jornada;
+        r.fueraTurno = r.jornada - r.dentroTurno;
+        // Con doble turno lo que se paga es la diferencia de horas contra el
+        // turno propio, y solo eso: el sobretiempo del turno propio no se cobra
+        // aparte. En cualquier otro día el exceso se mide sobre la jornada.
+        r.exceso = r.dobleTurno ? 0 : Math.max(r.jornada - ALI_JORNADA, 0);
     }
 
     // Para exigir justificación se compara contra el turno que efectivamente te
@@ -5914,41 +5940,41 @@ function aliCalcularDia(fecha, reg, prog, pauta, siguienteEsDescanso, previo) {
 
     r.extras = (r.esFeriado ? 0 : r.exceso) + r.descansoAfectado;
 
-    // Sin duplicar, pero sin castigar tampoco:
-    //   · Mismo turno: si la jornada pasó de 7:30, ese exceso es la medida del
-    //     sobretiempo y "Hrs Turno" queda en cero (es como se paga hoy).
-    //   · Cambio de turno impuesto: el tiempo fuera del turno que correspondía
-    //     es un concepto propio, así que solo se le resta lo que el exceso ya
-    //     pagó. Si no, trabajar más terminaría pagando menos.
+    // Qué se paga cada día:
+    //   · Feriado          -> lo absorbe el feriado.
+    //   · Doble turno      -> solo la diferencia de horas contra el turno propio:
+    //                         si abría a las 07:30 y hubo que abrir a las 03:25,
+    //                         son esas 4:05 y nada más.
+    //   · Cambio impuesto  -> el tiempo fuera del turno que correspondía, menos
+    //                         lo que el exceso ya pagó.
+    //   · Día normal       -> si la jornada pasó de 7:30 manda el exceso; si no,
+    //                         se paga lo que quedó fuera del turno.
     if (r.esFeriado) {
         r.hrsTurno = 0;
+    } else if (r.dobleTurno) {
+        r.hrsTurno = r.fueraTurno;
     } else if (r.cambioDeTurno && !r.voluntario) {
         r.hrsTurno = Math.max(r.fueraTurno - r.exceso, 0);
     } else {
         r.hrsTurno = r.exceso > 0 ? 0 : r.fueraTurno;
-    }
-    if (r.fueraTurno > r.hrsTurno && !r.esFeriado) {
-        r.absorbido = r.fueraTurno - r.hrsTurno;   // para explicarlo en pantalla
     }
 
     r.total = r.extras + r.hrsTurno + r.feriadoMin;
 
     // Nocturnas: presentación → término efectivo del maestro, no el cierre
     // administrativo. El traslado de vuelta queda fuera.
-    if (r.dobleTurno && pauta && pauta.tramos && pauta.tramos.length) {
-        pauta.tramos.forEach(function (t) {
-            const v = aliVentana(t.apertura, t.termino);
-            if (v) r.nocturnas += aliNocturnas(v.ini, v.fin);
-        });
-    } else if (prog && prog.tramos.length) {
-        prog.tramos.forEach(function (t) {
-            const v = aliVentana(t.apertura, t.terminoOp || t.cierre);
-            if (v) r.nocturnas += aliNocturnas(v.ini, v.fin);
-        });
-    } else if (real) {
-        r.nocturnas = aliNocturnas(real.ini, real.fin);
-        r.avisos.push('Nocturnas calculadas sobre el horario real: el turno no está en el catálogo.');
-    }
+    // Nocturnas: desde que empieza el servicio hasta el cierre real. La
+    // presentación y el traslado de ida no se cuentan —el turno de las 03:25
+    // que arranca a las 04:55 paga desde las 04:55—, pero el cierre sí es el de
+    // verdad: si se termina a la 01:35, la noche se paga hasta esa hora.
+    // Manda el inicio del turno que de verdad se hizo: con doble turno el
+    // servicio arranca con el primero, no con el del gráfico.
+    const inicioServ = (pauta && pauta.inicio) ||
+                       (prog && prog.tramos.length && prog.tramos[0].inicio) || '';
+    const iniMin = aliMin(inicioServ);
+    const desde = (iniMin === null || iniMin < real.ini) ? real.ini : iniMin;
+    if (real.fin > desde) r.nocturnas = aliNocturnas(desde, real.fin);
+    r.nocturnasDesde = aliHHMM(desde);
 
     // Menor reposo contra el cierre del día anterior.
     if (previo && previo.real && previo.cierreAbs !== undefined) {
@@ -6340,7 +6366,6 @@ function aliTarjetaDia(d) {
                 ${aliChip('Nocturnas', d.nocturnas, 'noct')}
                 ${aliChip('Manejo extra', d.manejo, 'manejo')}
                 ${d.descansoAfectado ? aliChip('Descanso afectado', d.descansoAfectado, 'desc') : ''}
-                ${d.absorbido ? `<span class="ali-chip absorbido">Fuera de turno ${escHtml(aliHM(d.absorbido))} · ya contado en el exceso</span>` : ''}
                 ${d.dobleTurno ? `<span class="ali-chip doble">Doble turno ${escHtml(d.turnoPauta)}</span>` : ''}
                 ${d.cambioDeTurno ? `<span class="ali-chip cambio">Cambio de turno ${escHtml(d.turnoGrafico)} → ${escHtml(d.turnoPauta)}${d.voluntario ? ' · voluntario' : ''}</span>` : ''}
                 ${d.cierreTardio ? `<span class="ali-chip tarde">Cierre +${escHtml(aliHM(d.cierreTardio))}</span>` : ''}
