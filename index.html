@@ -3442,6 +3442,10 @@ function pautaInterpretarHoja(hoja) {
         // es que trae UN solo nombre: "PRACTICAS NOCTURNAS EMU 117", que lleva
         // maquinista y ayudante, sigue siendo un turno.
         if (/^PRACTICAS?\b/.test(pautaNorm(servicio))) {
+            // El número del turno va en una celda combinada que abarca el
+            // servicio y su práctica, y la foto a veces lo deja en la fila de
+            // abajo. Si el turno de arriba quedó sin número, este es el suyo.
+            if (/^\d+$/.test(c0) && previo && !previo.turno) previo.turno = c0;
             const enFila = [];
             for (let c = iMaquinista; c <= iAyudante; c++) {
                 const cand = pautaLimpiarNombre(celda(f, c));
