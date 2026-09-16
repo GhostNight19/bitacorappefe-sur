@@ -3256,6 +3256,15 @@ const PAUTA_CORRECCIONES = {
         // toda la fila venia corrida una hora
         '16': { apertura: '4:00', inicio: '4:00', terminoServicio: '11:30', fin: '11:30',
                 forzar: ['apertura', 'inicio', 'terminoServicio', 'fin'] }
+    },
+    '2026-09-16': {
+        // el servicio llego con un pedazo de formula de Excel pegado al medio:
+        // "202+D4:F6002-20301-304-309-20220"
+        '1': { servicios: '20202-20301-304-309-20220', forzar: ['servicios'] },
+        // la apertura llego como "1:35"; el inicio menos el traslado da 17:35
+        '35': { apertura: '17:35', forzar: ['apertura'] },
+        // el numero llego como "63" entre el 38 y el 40
+        '63': { turno: '39', forzar: ['turno'] }
     }
 };
 
@@ -3526,6 +3535,17 @@ function pautaInterpretarHoja(hoja) {
         turnos.push(turno);
         previo = turno;
     }
+
+    // Hay números de turno que llegan tarde: la foto los deja en la fila de la
+    // práctica o en una fila para ellos solos, y recién ahí se sabe de quién
+    // son. Por eso las correcciones se repasan al final, cuando todos tienen su
+    // número. Si el arreglo cambió el texto del servicio, los trenes se vuelven
+    // a leer de ese texto.
+    turnos.forEach(function (t) {
+        const antes = t.servicios;
+        pautaCorregirTurno(hoja.fecha, t);
+        if (t.servicios !== antes) t.trenes = pautaTrenesDeServicio(t.servicios, '');
+    });
 
     return {
         fecha: hoja.fecha,
@@ -5181,7 +5201,42 @@ const GRAF_ESTADOS = {
 
 // Las hojas de horarios no traen las mismas columnas (la de fin de semana no
 // tiene "Término operación"), así que se ubican por el nombre del encabezado.
+// Hay gráficos que titulan las columnas de otra manera: donde uno dice
+// "Apertura / Hora" el otro dice "Base / Apertura", y repite "BASE" y "TÉRMINO"
+// varias veces en la misma fila. El orden de las columnas sí es siempre el
+// mismo, así que cuando los títulos no alcanzan se ubican por su turno de
+// aparición: la primera base es la de apertura, la última el cierre.
+function grafColumnasPorOrden(cabecera) {
+    const m = {};
+    const bases = [], traslados = [], terminos = [];
+    (cabecera || []).forEach(function (c, i) {
+        const t = pautaNorm(c);
+        if (t.indexOf('TURNO') === 0) m.turno = i;
+        else if (t.indexOf('SERVICIO') === 0) m.servicios = i;
+        else if (t === 'APERTURA') m.hora = i;
+        else if (t.indexOf('INICIO') === 0) m.inicio = i;
+        else if (t === 'BASE') bases.push(i);
+        else if (t === 'TRASLADO') traslados.push(i);
+        else if (t.indexOf('TERMINO') === 0) terminos.push(i);
+        else if (t.indexOf('OBSERVACION') === 0) m.obs = i;
+    });
+    if (bases[0] !== undefined) m.aperturaLugar = bases[0];
+    if (bases[1] !== undefined) m.baseInicio = bases[1];
+    if (bases[2] !== undefined) m.baseTermino = bases[2];
+    if (bases[3] !== undefined) m.cierreLugar = bases[3];
+    if (traslados[0] !== undefined) m.traslado = traslados[0];
+    if (traslados.length > 1) m.trasladoVuelta = traslados[traslados.length - 1];
+    if (terminos.length) m.terminoFinal = terminos[terminos.length - 1];
+    // El fin de semana no trae la columna de término de operación: ahí el único
+    // término es el final.
+    if (terminos.length > 1) m.terminoOp = terminos[0];
+    return m;
+}
+
 function grafColumnas(cabecera) {
+    const titulos = (cabecera || []).map(pautaNorm);
+    if (titulos.indexOf('HORA') < 0) return grafColumnasPorOrden(cabecera);
+
     const m = {};
     (cabecera || []).forEach(function (c, i) {
         const t = pautaNorm(c);
@@ -5326,6 +5381,19 @@ function grafResumen(tramos) {
 
 /* ----------------------------------------------------------- interpretar -- */
 
+// La primera celda de la fila del día puede venir como fecha completa
+// ("2026-10-01") o como la muestra Excel en pantalla ("01-oct"). En ese caso el
+// mes lo pone el propio gráfico, que es de un mes solo.
+function grafFechaDeFila(c0, mes) {
+    const iso = String(c0).match(/^(\d{4}-\d{2}-\d{2})/);
+    if (iso) return iso[1];
+    const corta = String(c0).match(/^(\d{1,2})\s*[-\/. ]\s*[A-Za-zÁÉÍÓÚÑáéíóúñ]{3,}/);
+    if (corta && /^\d{4}-\d{2}$/.test(String(mes || ''))) {
+        return mes + '-' + String(parseInt(corta[1], 10)).padStart(2, '0');
+    }
+    return '';
+}
+
 function grafInterpretar(entrada) {
     const hojas = entrada.hojas || {};
     const filas = hojas.GRAFICO || [];
@@ -5342,7 +5410,10 @@ function grafInterpretar(entrada) {
         // Encabezado del bloque. Casi todos dicen "PAREJAS 1–12" y llevan el
         // número de la pareja de dos en dos; el último dice "PAREJA 49 ·
         // PRÁCTICAS" y usa etiquetas en vez de números.
-        if (/^PAREJAS?\b/.test(pautaNorm(c0))) {
+        // Hay meses donde esa fila no dice "PAREJAS" sino "GRÁFICO" a secas, con
+        // los números de pareja al lado igual que siempre.
+        const numerada = f.slice(2).some(x => /^\d+$/.test(String(x || '').trim()));
+        if (/^PAREJAS?\b/.test(pautaNorm(c0)) || (pautaNorm(c0) === 'GRAFICO' && numerada)) {
             columnas = { parejas: {} };
             for (let i = 2; i < f.length; i++) {
                 if (celda(f, i)) columnas.parejas[i] = celda(f, i);
@@ -5351,7 +5422,7 @@ function grafInterpretar(entrada) {
         }
 
         // Fila de nombres: cada columna es una persona.
-        if (columnas && !columnas.gente && c0 && !/^\d{4}-\d{2}-\d{2}/.test(c0)) {
+        if (columnas && !columnas.gente && c0 && !grafFechaDeFila(c0, entrada.mes)) {
             columnas.gente = {};
             let parejaActual = '';
             for (let i = 2; i < f.length; i++) {
@@ -5376,8 +5447,9 @@ function grafInterpretar(entrada) {
         }
 
         // Fila de día.
-        if (columnas && columnas.gente && /^\d{4}-\d{2}-\d{2}/.test(c0)) {
-            const fecha = c0.slice(0, 10);
+        const fechaFila = grafFechaDeFila(c0, entrada.mes);
+        if (columnas && columnas.gente && fechaFila) {
+            const fecha = fechaFila;
             let dia = dias.find(d => d.fecha === fecha);
             if (!dia) { dia = { fecha: fecha, dia: celda(f, 1), valores: {} }; dias.push(dia); }
             Object.keys(columnas.gente).forEach(function (i) {
