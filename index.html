@@ -3265,6 +3265,14 @@ const PAUTA_CORRECCIONES = {
         '35': { apertura: '17:35', forzar: ['apertura'] },
         // el numero llego como "63" entre el 38 y el 40
         '63': { turno: '39', forzar: ['turno'] }
+    },
+    '2026-09-17': {
+        // "0220" se leia como 20220; es el 022 de siempre
+        '2': { servicios: '20000-001-022-023-036', forzar: ['servicios'] },
+        // el maquinista llego como "TPI". Es J. Tapia: el grafico le da el
+        // turno 3 ese dia y en la pauta aparece marcado con doble turno (**)
+        // pero una sola vez, en el 20.
+        '3': { maquinista: 'J. TAPIA', forzar: ['maquinista'] }
     }
 };
 
@@ -3328,6 +3336,31 @@ function pautaGrupoDia(iso) {
     const n = d.getDay();
     return n === 6 ? 'SAB' : n === 0 ? 'DOM' : 'LV';
 }
+
+// Qué itinerario corre ese día. Un feriado corre el de domingo y festivos
+// aunque caiga en día de semana. Lo dice la propia pauta, que ese día llega en
+// la planilla corta de los feriados, o el gráfico, que reparte turnos del
+// catálogo de feriados.
+function pautaDiaDeItinerario(iso, planillaDeFeriado) {
+    const natural = pautaGrupoDia(iso);
+    if (natural === 'DOM') return natural;
+    return (planillaDeFeriado || grafEsFeriado(iso)) ? 'DOM' : natural;
+}
+
+function grafEsFeriado(iso) {
+    const g = (typeof GRAFICOS !== 'undefined' ? GRAFICOS : []).find(x => x.mes === String(iso).slice(0, 7));
+    const d = g && (g.dias || []).find(x => x.fecha === iso);
+    const cat = g && g.catalogos;
+    if (!d || !cat || !cat.FER) return false;
+    const natural = pautaGrupoDia(iso);
+    // Los feriados el gráfico escribe el turno con su detalle: "83 (859-46)".
+    const nums = Object.keys(d.valores)
+        .map(k => (String(d.valores[k] || '').trim().match(/^(\d+)/) || [])[1])
+        .filter(Boolean);
+    const enFeriado = nums.filter(n => cat.FER[n]).length;
+    const enSuDia = nums.filter(n => (cat[natural] || {})[n]).length;
+    return enFeriado > enSuDia;
+}
 function pautaFechaLarga(iso) {
     const d = new Date(iso + 'T12:00:00');
     const txt = new Intl.DateTimeFormat('es-CL', {
@@ -3384,9 +3417,16 @@ function pautaInterpretarHoja(hoja) {
     //    queda diez columnas más allá de la apertura. El fin de semana no las
     //    trae y el cierre está a siete.
     const conEntrega = cabNorm.some(x => x.indexOf('ENTREGA') >= 0);
+    const compacta = !conEntrega && cabNorm.some(x => /TRASLADO\s*TERMINO/.test(x));
     const campos = conEntrega
         ? { aperturaLugar: b, apertura: b + 1, traslado: b + 2, base: b + 3, inicio: b + 4,
             baseTermino: b + 5, terminoServicio: b + 6, entrega: b + 9, fin: b + 10, baseFin: b + 11 }
+        : compacta
+        // Los feriados llegan en una planilla más corta: sin columnas de
+        // traslado, y cuando hay traslado va pegado a la hora en la misma celda
+        // ("9:45 0:45"). Se reconoce porque el encabezado junta TRASLADO TÉRMINO.
+        ? { aperturaLugar: b, apertura: b + 1, traslado: -1, base: b + 2, inicio: b + 3,
+            baseTermino: b + 4, terminoServicio: -1, entrega: -1, fin: b + 5, baseFin: b + 6 }
         : { aperturaLugar: b, apertura: b + 1, traslado: b + 2, base: b + 3, inicio: b + 4,
             baseTermino: b + 5, terminoServicio: -1, entrega: b + 6, fin: b + 7, baseFin: b + 8 };
 
@@ -3418,7 +3458,13 @@ function pautaInterpretarHoja(hoja) {
             continue;
         }
 
-        const sec = etiqueta ? PAUTA_SECCIONES.find(s => s.re.test(etiqueta)) : null;
+        // El título del listado también puede venir con su sigla al lado, en
+        // otra celda: "LM | LICENCIA MEDICA", "P.E | PERMISO ESPECIAL".
+        const llenas = f.map(c => pautaNorm(c)).filter(Boolean);
+        const conSigla = !sola && llenas.length === 2 && llenas.some(t => t.length <= 4)
+            ? llenas.find(t => PAUTA_SECCIONES.some(s => s.re.test(t))) : '';
+        const sec = (etiqueta || conSigla)
+            ? PAUTA_SECCIONES.find(s => s.re.test(etiqueta || conSigla)) : null;
         if (sec) {
             seccion = sec;
             if (!listas[sec.clave]) listas[sec.clave] = { etiqueta: sec.etiqueta, nombres: [] };
@@ -3427,7 +3473,15 @@ function pautaInterpretarHoja(hoja) {
         }
 
         const servicio   = celda(f, iServicio);
-        const maquinista = pautaLimpiarNombre(celda(f, iMaquinista));
+        // Entre el servicio y el maquinista a veces quedan columnas sin título,
+        // de una celda combinada: el nombre puede haber caído en cualquiera.
+        let colMaquinista = iMaquinista;
+        if (!celda(f, iMaquinista)) {
+            for (let c = iMaquinista - 1; c > iServicio; c--) {
+                if (!String(cab[c] || '').trim() && pautaEsNombre(celda(f, c))) { colMaquinista = c; break; }
+            }
+        }
+        const maquinista = pautaLimpiarNombre(celda(f, colMaquinista));
         const ayudante   = pautaLimpiarNombre(celda(f, iAyudante));
         const tieneHoras = f.slice(b).some(c => /\d\s*:\s*\d/.test(String(c || '')));
 
@@ -3521,6 +3575,22 @@ function pautaInterpretarHoja(hoja) {
                 ? pautaHoraOCR(bruto, PAUTA_CAMPOS_DURACION.indexOf(k) >= 0)
                 : bruto;
         });
+        // En la planilla de feriado el traslado va pegado a la hora en la misma
+        // celda: "9:45 0:45" es la apertura y su traslado, y "0:45 17:15" es el
+        // traslado de vuelta y el término.
+        if (compacta) {
+            const dos = t => String(t || '').match(/(\d{1,2}\s*:\s*\d{2})\s+(\d{1,2}\s*:\s*\d{2})/);
+            const ida = dos(celda(f, campos.apertura));
+            if (ida) {
+                turno.apertura = pautaHoraOCR(ida[1].replace(/\s/g, ''));
+                turno.traslado = pautaHoraOCR(ida[2].replace(/\s/g, ''), true);
+            }
+            const vuelta = dos(celda(f, campos.fin));
+            if (vuelta) {
+                turno.entrega = pautaHoraOCR(vuelta[1].replace(/\s/g, ''), true);
+                turno.fin = pautaHoraOCR(vuelta[2].replace(/\s/g, ''));
+            }
+        }
         pautaRecuperarApertura(turno);
         pautaCorregirTurno(hoja.fecha, turno);
         numeroSuelto = '';
@@ -3542,16 +3612,17 @@ function pautaInterpretarHoja(hoja) {
     // número. Si el arreglo cambió el texto del servicio, los trenes se vuelven
     // a leer de ese texto.
     turnos.forEach(function (t) {
-        const antes = t.servicios;
         pautaCorregirTurno(hoja.fecha, t);
-        if (t.servicios !== antes) t.trenes = pautaTrenesDeServicio(t.servicios, '');
+        if ((t.corregidos || []).indexOf('servicios') >= 0) {
+            t.trenes = pautaTrenesDeServicio(t.servicios, '');
+        }
     });
 
     return {
         fecha: hoja.fecha,
         archivo: hoja.archivo || '',
         origen: hoja.origen || 'repositorio',
-        dia: pautaGrupoDia(hoja.fecha),
+        dia: pautaDiaDeItinerario(hoja.fecha, compacta),
         titulo: pautaFechaLarga(hoja.fecha),
         corta: pautaFechaCorta(hoja.fecha),
         // Hay pautas que no numeran los turnos. No es que falte el dato: no
@@ -7029,6 +7100,9 @@ window.addEventListener('load', function () {
     personalCargar();
     grafCargar().then(function (ok) {
         if (ok && document.getElementById('graf-overlay').classList.contains('abierto')) grafRenderizar();
+        // Con el gráfico ya cargado se sabe qué días son feriado: las pautas se
+        // vuelven a leer para que esos días usen el itinerario de festivos.
+        if (ok && typeof pautaReconstruir === 'function' && PAUTA_HOJAS_REPO.length) pautaReconstruir();
     });
 });
 
