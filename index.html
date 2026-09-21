@@ -3266,6 +3266,10 @@ const PAUTA_CORRECCIONES = {
         // el numero llego como "63" entre el 38 y el 40
         '63': { turno: '39', forzar: ['turno'] }
     },
+    '2026-09-21': {
+        // "0220" se leia como 20220; es el 022 de siempre
+        '2': { servicios: '20000-001-022-023-036', forzar: ['servicios'] }
+    },
     '2026-09-17': {
         // "0220" se leia como 20220; es el 022 de siempre
         '2': { servicios: '20000-001-022-023-036', forzar: ['servicios'] },
@@ -3330,6 +3334,23 @@ const PAUTA_SECCIONES = [
     { clave: 'vacaciones', etiqueta: 'Vacaciones',       re: /^VACACIONES$/ },
     { clave: 'sinturno',   etiqueta: 'Sin turno',        re: /^SIN TURNO$/ }
 ];
+
+// La columna del turno lleva solo números, así que las letras que deja la foto
+// se devuelven a su dígito: el turno 3 llegó una vez como "ε" y el 0 llega como
+// "O". Si queda algo que no es un número, no era el número del turno.
+const PAUTA_NUM_OCR = {
+    'O': '0', 'Q': '0', 'I': '1', 'L': '1', '|': '1', 'Z': '2',
+    'E': '3', 'Ε': '3', 'ε': '3', 'A': '4', 'S': '5', 'G': '6', 'B': '8'
+};
+function pautaNumeroOCR(txt) {
+    const s = String(txt == null ? '' : txt).trim();
+    if (!s) return '';
+    if (/^\d+$/.test(s)) return s;
+    // Una sola letra en esa columna es un dígito mal leído y se puede devolver
+    // sin inventar nada. Con más de un carácter no: en "ε2" no se sabe si el
+    // turno era el 32 o el 23, y un número equivocado es peor que ninguno.
+    return s.length === 1 ? (PAUTA_NUM_OCR[s] || PAUTA_NUM_OCR[s.toUpperCase()] || '') : '';
+}
 
 function pautaGrupoDia(iso) {
     const d = new Date(iso + 'T12:00:00');
@@ -3441,6 +3462,7 @@ function pautaInterpretarHoja(hoja) {
     for (let i = iCab + 1; i < filas.length; i++) {
         const f = filas[i] || [];
         const c0 = iTurno >= 0 ? pautaNorm(celda(f, iTurno)) : '';
+        const nTurno = pautaNumeroOCR(c0);
         // Una fila que trae una sola celda es un encabezado de listado o el
         // número de un turno. Puede venir en la columna de turnos o en la de
         // servicios, según numere la pauta o no.
@@ -3452,9 +3474,10 @@ function pautaInterpretarHoja(hoja) {
         // Cuando la celda del número viene combinada, la pauta lo deja en una
         // fila para él solo, entre el servicio y su fila de práctica. Ese número
         // es del turno de arriba, y la fila no debe cortar la secuencia.
-        if (sola && iSola === iTurno && /^\d+$/.test(etiqueta)) {
-            if (previo && !previo.turno) previo.turno = etiqueta;
-            else numeroSuelto = etiqueta;
+        const nEtiqueta = sola && iSola === iTurno ? pautaNumeroOCR(etiqueta) : '';
+        if (nEtiqueta) {
+            if (previo && !previo.turno) previo.turno = nEtiqueta;
+            else numeroSuelto = nEtiqueta;
             continue;
         }
 
@@ -3487,7 +3510,7 @@ function pautaInterpretarHoja(hoja) {
 
         // Dentro de un listado las filas solo traen nombres, repartidos en
         // cualquier columna. Se corta en cuanto reaparece una fila con horas.
-        if (seccion && !tieneHoras && !/^\d+$/.test(c0)) {
+        if (seccion && !tieneHoras && !nTurno) {
             f.forEach(function (cel) {
                 if (pautaEsNombre(cel)) {
                     const n = pautaLimpiarNombre(cel);
@@ -3508,7 +3531,7 @@ function pautaInterpretarHoja(hoja) {
             // El número del turno va en una celda combinada que abarca el
             // servicio y su práctica, y la foto a veces lo deja en la fila de
             // abajo. Si el turno de arriba quedó sin número, este es el suyo.
-            if (/^\d+$/.test(c0) && previo && !previo.turno) previo.turno = c0;
+            if (nTurno && previo && !previo.turno) previo.turno = nTurno;
             const enFila = [];
             for (let c = iMaquinista; c <= iAyudante; c++) {
                 const cand = pautaLimpiarNombre(celda(f, c));
@@ -3531,7 +3554,7 @@ function pautaInterpretarHoja(hoja) {
                 if (pautaEsNombre(cand) && nombres.indexOf(cand) < 0) nombres.push(cand);
             }
             if (nombres.length === 1) {
-                if (/^\d+$/.test(c0) && !previo.turno) previo.turno = c0;
+                if (nTurno && !previo.turno) previo.turno = nTurno;
                 if (previo.practicas.indexOf(nombres[0]) < 0) previo.practicas.push(nombres[0]);
                 continue;
             }
@@ -3542,9 +3565,11 @@ function pautaInterpretarHoja(hoja) {
 
         // Un turno puede ocupar dos filas (dos tramos). La segunda no repite el
         // número: se hereda solo si va con la misma pareja.
+        // Se compara por persona, no por letra: la foto escribe "M. RAMOS" en
+        // una fila y "M RAMOS" en la de abajo, y es el mismo ayudante.
         const mismaPareja = previo &&
-            pautaNorm(maquinista) === pautaNorm(previo.maquinista) &&
-            pautaNorm(ayudante) === pautaNorm(previo.ayudante);
+            pautaClavePersona(maquinista) === pautaClavePersona(previo.maquinista) &&
+            pautaClavePersona(ayudante) === pautaClavePersona(previo.ayudante);
 
         // Sin número de turno hace falta otra forma de saber dónde termina uno
         // y empieza el siguiente: dos filas seguidas con alguien en común son
@@ -3556,8 +3581,8 @@ function pautaInterpretarHoja(hoja) {
         });
 
         const turno = {
-            turno: /^\d+$/.test(c0) ? c0 : (numeroSuelto || (mismaPareja ? previo.turno : '')),
-            continuacion: !/^\d+$/.test(c0) && !numeroSuelto && !!mismaPareja,
+            turno: nTurno || (numeroSuelto || (mismaPareja ? previo.turno : '')),
+            continuacion: !nTurno && !numeroSuelto && !!mismaPareja,
             servicios: servicio,
             maquinista: maquinista,
             ayudante: ayudante,
