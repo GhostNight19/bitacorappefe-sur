@@ -3270,6 +3270,14 @@ const PAUTA_CORRECCIONES = {
         // "0220" se leia como 20220; es el 022 de siempre
         '2': { servicios: '20000-001-022-023-036', forzar: ['servicios'] }
     },
+    '2026-09-22': {
+        // el termino de servicio llego como "10:00"; en este turno es 17:00
+        '22': { terminoServicio: '17:00', forzar: ['terminoServicio'] },
+        // "07:61", que ni siquiera es una hora; es 19:40 como todos los dias
+        '46': { terminoServicio: '19:40', forzar: ['terminoServicio'] },
+        // "110-11-20292": al 111 se le cayo un 1 y se leia como el tren 20011
+        '38': { servicios: '20250 (acoplados)-20075-092-093-110-111-20292', forzar: ['servicios'] }
+    },
     '2026-09-17': {
         // "0220" se leia como 20220; es el 022 de siempre
         '2': { servicios: '20000-001-022-023-036', forzar: ['servicios'] },
@@ -3486,8 +3494,16 @@ function pautaInterpretarHoja(hoja) {
         const llenas = f.map(c => pautaNorm(c)).filter(Boolean);
         const conSigla = !sola && llenas.length === 2 && llenas.some(t => t.length <= 4)
             ? llenas.find(t => PAUTA_SECCIONES.some(s => s.re.test(t))) : '';
-        const sec = (etiqueta || conSigla)
-            ? PAUTA_SECCIONES.find(s => s.re.test(etiqueta || conSigla)) : null;
+        // O compartir la fila con una nota: "LICENCIA MEDICA" y al lado el aviso
+        // del itinerario vigente. Cuenta como título si el resto de la fila no
+        // trae nombres ni horas; si trae nombres es un turno de descanso.
+        const primera = pautaNorm(celda(f, 0));
+        const conNota = !sola && !conSigla && primera &&
+            PAUTA_SECCIONES.some(s => s.re.test(primera)) &&
+            f.slice(1).every(c => !pautaEsNombre(c) && !/\d\s*:\s*\d/.test(String(c || '')))
+            ? primera : '';
+        const titulo = etiqueta || conSigla || conNota;
+        const sec = titulo ? PAUTA_SECCIONES.find(s => s.re.test(titulo)) : null;
         if (sec) {
             seccion = sec;
             if (!listas[sec.clave]) listas[sec.clave] = { etiqueta: sec.etiqueta, nombres: [] };
@@ -3560,6 +3576,22 @@ function pautaInterpretarHoja(hoja) {
             }
         }
 
+        // Gente que va con el turno de arriba y quedó anotada en la fila de
+        // abajo, con el primer nombre donde iría el servicio: "D. SAAVEDRA |
+        // C. BELLO | J. CHAPARRO" debajo de REC. VALLE ARENAL. No es un turno
+        // aparte, es la misma asignación con más gente.
+        // Solo se cuelgan de un turno de verdad, con horario: nunca de otra fila
+        // de nombres sueltos.
+        if (previo && (previo.apertura || previo.fin) && !tieneHoras && pautaEsNombre(servicio)) {
+            const gente = [];
+            for (let c = iServicio; c <= iAyudante; c++) {
+                const n = pautaLimpiarNombre(celda(f, c));
+                if (pautaEsNombre(n) && gente.indexOf(n) < 0) gente.push(n);
+            }
+            gente.forEach(n => { if (previo.practicas.indexOf(n) < 0) previo.practicas.push(n); });
+            if (gente.length) continue;
+        }
+
         // Sin tripulación no hay a quién buscar (filas "Jornada" en blanco).
         if (!maquinista && !ayudante) { previo = null; continue; }
 
@@ -3600,6 +3632,17 @@ function pautaInterpretarHoja(hoja) {
                 ? pautaHoraOCR(bruto, PAUTA_CAMPOS_DURACION.indexOf(k) >= 0)
                 : bruto;
         });
+        // Hay asignaciones que traen el horario escrito en el propio servicio:
+        // "REC. VALLE ARENAL 08:30 a 14:30 HORAS". Si las columnas de hora
+        // vienen vacías, se toma de ahí.
+        if (!turno.apertura && !turno.fin) {
+            const escrito = String(servicio).match(/(\d{1,2}[:.]\d{2})\s*(?:a|-|al|hasta)\s*(\d{1,2}[:.]\d{2})/i);
+            if (escrito) {
+                turno.apertura = pautaHoraOCR(escrito[1].replace('.', ':'));
+                turno.inicio = turno.apertura;
+                turno.fin = pautaHoraOCR(escrito[2].replace('.', ':'));
+            }
+        }
         // En la planilla de feriado el traslado va pegado a la hora en la misma
         // celda: "9:45 0:45" es la apertura y su traslado, y "0:45 17:15" es el
         // traslado de vuelta y el término.
