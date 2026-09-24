@@ -3193,7 +3193,8 @@ function pautaHoraOCR(txt, esDuracion) {
     const s = String(txt == null ? '' : txt).trim();
     if (!s) return s;
 
-    const bien = s.match(/^(\d{1,2})\s*:\s*(\d{2})$/);
+    // Una planilla armada en Excel manda la hora con segundos: "03:25:00".
+    const bien = s.match(/^(\d{1,2})\s*:\s*(\d{2})(?::\d{2})?$/);
     if (bien) return pautaHoraValida(bien[1], bien[2]) || s;
 
     // Un solo caracter en lugar de los dos puntos: 14c45, 14.45, 14-45.
@@ -3269,10 +3270,6 @@ const PAUTA_CORRECCIONES = {
     '2026-09-21': {
         // "0220" se leia como 20220; es el 022 de siempre
         '2': { servicios: '20000-001-022-023-036', forzar: ['servicios'] }
-    },
-    '2026-09-23': {
-        // al apellido se le cayo la ese: "L. ROJA"
-        '2': { maquinista: 'L. ROJAS', forzar: ['maquinista'] }
     },
     '2026-09-22': {
         // el termino de servicio llego como "10:00"; en este turno es 17:00
@@ -3362,6 +3359,45 @@ function pautaNumeroOCR(txt) {
     // sin inventar nada. Con más de un carácter no: en "ε2" no se sabe si el
     // turno era el 32 o el 23, y un número equivocado es peor que ninguno.
     return s.length === 1 ? (PAUTA_NUM_OCR[s] || PAUTA_NUM_OCR[s.toUpperCase()] || '') : '';
+}
+
+// ¿Dos nombres se diferencian en una sola letra?
+function pautaUnaLetraDe(a, b) {
+    if (a === b || Math.abs(a.length - b.length) > 1) return false;
+    if (a.length === b.length) {
+        let dif = 0;
+        for (let i = 0; i < a.length; i++) if (a.charAt(i) !== b.charAt(i) && ++dif > 1) return false;
+        return dif === 1;
+    }
+    const corto = a.length < b.length ? a : b, largo = a.length < b.length ? b : a;
+    for (let i = 0; i < largo.length; i++) {
+        if (largo.slice(0, i) + largo.slice(i + 1) === corto) return true;
+    }
+    return false;
+}
+
+// La foto se come o agrega una letra del apellido: "L. ROJA" por "L. ROJAS".
+// Si el nombre no está en la dotación y hay UNA sola persona con la misma
+// inicial cuyo apellido se diferencia en una letra, es esa. La inicial no se
+// toca nunca: en la dotación hay apellidos que solo se distinguen por ella
+// (A. y M. ARRIAGADA, B., N. y W. GONZALEZ), y ahí adivinar sería peor.
+function pautaNombreDeLaDotacion(nombre) {
+    if (!nombre || typeof personalDe !== 'function') return nombre;
+    if (!PERSONAL || !Object.keys(PERSONAL).length) return nombre;
+    if (personalDe(nombre)) return nombre;
+
+    const clave = personalClave(nombre);
+    if (clave.length < 5) return nombre;
+    let unica = null;
+    for (const k in PERSONAL) {
+        if (k.charAt(0) !== clave.charAt(0)) continue;
+        if (!pautaUnaLetraDe(k, clave)) continue;
+        if (unica) return nombre;          // más de una candidata: no se toca
+        unica = PERSONAL[k];
+    }
+    // La dotación escribe "L.ROJAS" y la pauta "L. ROJAS": se devuelve con el
+    // espacio, que es como se ve en todo el resto de la app.
+    return unica ? String(unica.abreviacion).replace(/\.\s*/g, '. ').trim() : nombre;
 }
 
 function pautaGrupoDia(iso) {
@@ -3524,8 +3560,8 @@ function pautaInterpretarHoja(hoja) {
                 if (!String(cab[c] || '').trim() && pautaEsNombre(celda(f, c))) { colMaquinista = c; break; }
             }
         }
-        const maquinista = pautaLimpiarNombre(celda(f, colMaquinista));
-        const ayudante   = pautaLimpiarNombre(celda(f, iAyudante));
+        const maquinista = pautaNombreDeLaDotacion(pautaLimpiarNombre(celda(f, colMaquinista)));
+        const ayudante   = pautaNombreDeLaDotacion(pautaLimpiarNombre(celda(f, iAyudante)));
         const tieneHoras = f.slice(b).some(c => /\d\s*:\s*\d/.test(String(c || '')));
 
         // Dentro de un listado las filas solo traen nombres, repartidos en
@@ -7182,7 +7218,11 @@ document.addEventListener('click', function (e) {
 aliLeerTodo();
 
 window.addEventListener('load', function () {
-    personalCargar();
+    personalCargar().then(function (ok) {
+        // Con la dotación cargada se pueden arreglar los apellidos que la foto
+        // dejó con una letra de menos, así que las pautas se releen.
+        if (ok && typeof pautaReconstruir === 'function' && PAUTA_HOJAS_REPO.length) pautaReconstruir();
+    });
     grafCargar().then(function (ok) {
         if (ok && document.getElementById('graf-overlay').classList.contains('abierto')) grafRenderizar();
         // Con el gráfico ya cargado se sabe qué días son feriado: las pautas se
