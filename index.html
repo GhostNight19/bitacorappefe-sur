@@ -547,7 +547,7 @@
         </div>
     </section>
 
-    <!-- Prevención más próxima: aparece sola cuando queda algo dentro de 500 m -->
+    <!-- Prevención más próxima: aparece sola cuando queda algo dentro de 650 m -->
     <div id="prev-aviso" class="prev-aviso" role="status" aria-live="polite" hidden></div>
 
     <div class="main-controls">
@@ -3479,7 +3479,20 @@ function pautaInterpretarHoja(hoja) {
     //    Hay pautas que no numeran los turnos: los servicios arrancan en la
     //    primera columna y no hay dónde leer el número. El turno queda sin
     //    número, que es lo que dice el papel.
-    const iTurno = iServicio > 0 ? iServicio - 1 : -1;
+    //    El número va a la izquierda del servicio, pero no siempre pegado: hay
+    //    planillas con una columna en blanco entre medio. Se toma la columna
+    //    que de verdad trae los números.
+    let iTurno = iServicio > 0 ? iServicio - 1 : -1;
+    if (iServicio > 1) {
+        let mejor = 0;
+        for (let c = 0; c < iServicio; c++) {
+            let n = 0;
+            for (let i = iCab + 1; i < filas.length; i++) {
+                if (/^\d{1,3}$/.test(celda(filas[i], c))) n++;
+            }
+            if (n > mejor) { mejor = n; iTurno = c; }
+        }
+    }
     const b = iAp >= 0 ? iAp : iAyudante + 1;   // primera columna de horarios
 
     //    Entre semana el turno trae traslado de regreso y entrega, y el cierre
@@ -3498,6 +3511,26 @@ function pautaInterpretarHoja(hoja) {
             baseTermino: b + 4, terminoServicio: -1, entrega: -1, fin: b + 5, baseFin: b + 6 }
         : { aperturaLugar: b, apertura: b + 1, traslado: b + 2, base: b + 3, inicio: b + 4,
             baseTermino: b + 5, terminoServicio: -1, entrega: b + 6, fin: b + 7, baseFin: b + 8 };
+    //    La planilla de fin de semana a veces trae una columna en blanco entre
+    //    la base y el inicio. Si los encabezados lo dicen, se sigue a los
+    //    encabezados y no a la posición.
+    if (!conEntrega && !compacta) {
+        const desde = function (re, k0, k1) {
+            for (let k = k0; k < (k1 === undefined ? cabNorm.length : k1); k++) if (re.test(cabNorm[k])) return k;
+            return -1;
+        };
+        const iIni  = desde(/^INICIO/, b + 1);
+        const iTras = desde(/^TRASLADO/, b + 1, iIni);
+        const iBase = desde(/^BASE/, b + 1, iIni);
+        const iBaseT = desde(/^BASE/, iIni + 1);
+        const iEnt  = desde(/^TRASLADO/, iIni + 1);
+        const iFin  = desde(/^TERMINO/, iIni + 1);
+        if (iIni > 0 && iTras > 0 && iBase > 0 && iBaseT > 0 && iEnt > 0 && iFin > 0 &&
+                iIni !== campos.inicio) {
+            Object.assign(campos, { traslado: iTras, base: iBase, inicio: iIni, baseTermino: iBaseT,
+                                    entrega: iEnt, fin: iFin, baseFin: iFin + 1 });
+        }
+    }
 
     const turnos = [];
     const listas = {};
@@ -3569,7 +3602,7 @@ function pautaInterpretarHoja(hoja) {
         if (seccion && !tieneHoras && !nTurno) {
             f.forEach(function (cel) {
                 if (pautaEsNombre(cel)) {
-                    const n = pautaLimpiarNombre(cel);
+                    const n = pautaNombreDeLaDotacion(pautaLimpiarNombre(cel));
                     if (listas[seccion.clave].nombres.indexOf(n) < 0) listas[seccion.clave].nombres.push(n);
                 }
             });
@@ -4490,15 +4523,15 @@ const PREV_ESTACIONES = {"L1":[["San Rosendo",-37.263557,-72.727845],["Buenuraqu
    en L2, PK subiendo = Concepción→Coronel = VÍA 1; PK bajando = VÍA 2.
 
    Qué se muestra: solo lo vigente a esta hora, solo lo que aplica a la vía por
-   la que se circula, y de todo eso lo más grave que quede dentro de 500 m.
+   la que se circula, y de todo eso lo más grave que quede dentro de 650 m.
    ========================================================================= */
 
 const PREV_ARCHIVO   = 'prevenciones/boletin.json';
-const PREV_AVISO_M   = 500;    // metros de anticipación del aviso
+const PREV_AVISO_M   = 650;    // metros de anticipación del aviso
 const PREV_SENTIDO_VENTANA   = 15000;  // ms de historia para deducir el sentido
 const PREV_SENTIDO_MIN_KM    = 0.03;   // movimiento mínimo para darlo por bueno
 const PREV_SENTIDO_VIGENCIA  = 45000;  // ms que sigue valiendo ese sentido
-const PREV_PASADA_M  = 300;    // cuánto sigue a la vista después de salir de la zona
+const PREV_PASADA_M  = 150;    // cuánto sigue a la vista después de salir de la zona
 const PREV_VIA_MAX_M = 400;    // más lejos que esto de la vía, el GPS no sirve
 const PREV_LISTA_KM  = 15;     // cuántos km hacia adelante lista el panel
 // Referencias de L1 medidas en terreno el 24 de septiembre de 2026, en el PK
@@ -5062,7 +5095,7 @@ function prevCandidatas(pos, ahora, alcanceKm) {
         .sort((a, b) => a.metros - b.metros);
 }
 
-// Las que se acaban de dejar atrás, mientras no se alejen más de 300 m.
+// Las que se acaban de dejar atrás, mientras no se alejen más de 150 m.
 function prevReciénPasadas(pos, ahora) {
     const bol = prevBoletinActivo();
     if (!bol || !pos) return [];
@@ -5078,8 +5111,8 @@ function prevReciénPasadas(pos, ahora) {
 }
 
 // La que se muestra bajo el reloj: lo más grave que se tenga encima o dentro de
-// 500 m. Si no hay nada por delante, se deja a la vista la que se acaba de
-// pasar, hasta alejarse 300 m de ella.
+// 650 m. Si no hay nada por delante, se deja a la vista la que se acaba de
+// pasar, hasta alejarse 150 m de ella.
 function prevMasImportanteCerca(pos, ahora) {
     const adelante = prevCandidatas(pos, ahora, PREV_AVISO_M / 1000)
         .sort((a, b) => prevRango(a) - prevRango(b) || a.metros - b.metros);
@@ -5124,7 +5157,7 @@ function prevRestriccionCorta(p) {
     return p.restriccion.split(/[,\n]/)[0].trim() || 'Restricción';
 }
 
-// La franja bajo el reloj: solo aparece cuando hay algo dentro de 500 m.
+// La franja bajo el reloj: solo aparece cuando hay algo dentro de 650 m.
 function prevActualizar() {
     const franja = document.getElementById('prev-aviso');
     if (!franja) return;
