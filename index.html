@@ -4835,10 +4835,15 @@ function prevInterpretarBoletin(hoja) {
         // su propio kilometraje: se listan, pero no se ubican en el mapa.
         const ajeno = /VARIANTE/.test(prevNorm(p.viaTexto)) ||
                       /INDUSTRIAS DERIVADAS/.test(prevNorm(p.bloque));
+        // Hacia el final de la línea basta con que la zona empiece antes de
+        // donde llega el tren: "27 a 29" en L2 abarca la llegada a Coronel
+        // (27,6) aunque siga más allá, y hay que avisarla.
         p.tramos.forEach(function (t) {
             const r = PREV_RANGO[t.linea];
+            const traz = PREV_TRAZADO[t.linea];
+            const fin = r && traz ? Math.min(r[1], traz[traz.length - 1][0]) : null;
             t.geo = !ajeno && !!r &&
-                    t.desde >= r[0] && t.hasta <= r[1] &&
+                    t.desde >= r[0] && t.desde <= fin &&
                     (t.hasta - t.desde) <= PREV_TRAMO_MAX;
         });
         p.geo = p.tramos.some(t => t.geo);
