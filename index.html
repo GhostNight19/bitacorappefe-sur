@@ -309,6 +309,38 @@
         /* ===== PREVENCIONES · BOLETÍN DE VÍA ===== */
         .prev-btn { background-color: #b4232f; color: #fff; }
 
+        /* ===== CRUCES EN FALLA ===== */
+        .cruces-btn { position: relative; background-color: #b45309; color: #fff; }
+        .cruces-btn b { position: absolute; top: -8px; right: -8px; min-width: 24px; height: 24px; padding: 0 7px;
+            border: 2px solid #fff; border-radius: 12px; background: #b4232f; color: #fff; font-size: 0.75rem;
+            line-height: 20px; text-align: center; box-shadow: 0 2px 6px rgba(23,32,51,0.25); }
+        #cruces-overlay .cr-ayuda { margin: 0 0 14px; color: #55637a; font-size: 0.86rem; font-weight: 650; line-height: 1.45; }
+        #cruces-overlay .cr-titulo { margin: 18px 0 8px; color: #1d2b45; font-size: 0.78rem; font-weight: 900;
+            letter-spacing: 0.06em; text-transform: uppercase; }
+        #cruces-overlay .cr-lineas { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        #cruces-overlay .cr-lineas button { min-height: 46px; border: 2px solid #c3d0e0; border-radius: 11px; background: #fff;
+            color: #1d2b45; font: inherit; font-size: 0.95rem; font-weight: 900; cursor: pointer; }
+        #cruces-overlay .cr-lineas button.sel { border-color: #003399; background: #003399; color: #fff; }
+        #cruces-overlay .cr-falla { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center;
+            margin-bottom: 8px; padding: 12px 13px; border: 2px solid #b4232f; border-radius: 12px; background: #fdecec; }
+        #cruces-overlay .cr-falla strong { display: block; color: #6e1219; font-size: 1rem; }
+        #cruces-overlay .cr-falla small { color: #8a2a33; font-size: 0.8rem; font-weight: 750; }
+        #cruces-overlay .cr-falla button { min-height: 42px; padding: 0 14px; border: 1px solid #e2a3a9; border-radius: 10px;
+            background: #fff; color: #b4232f; font: inherit; font-size: 0.84rem; font-weight: 900; cursor: pointer; }
+        #cruces-overlay .cr-cruce { margin-bottom: 7px; border: 1px solid #dbe3ec; border-radius: 12px; background: #fff; }
+        #cruces-overlay .cr-cruce.abierto { border-color: #0756a5; box-shadow: 0 0 0 2px rgba(7,86,165,0.15); }
+        #cruces-overlay .cr-cruce.falla { border-color: #b4232f; }
+        #cruces-overlay .cr-cruce > button { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 52px;
+            padding: 10px 13px; border: 0; background: none; color: #172033; font: inherit; text-align: left; cursor: pointer; }
+        #cruces-overlay .cr-cruce > button strong { flex: 1; min-width: 0; font-size: 0.96rem; }
+        #cruces-overlay .cr-cruce > button small { color: #55637a; font-size: 0.8rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+        #cruces-overlay .cr-cruce > button em { padding: 3px 7px; border-radius: 6px; background: #b4232f; color: #fff;
+            font-size: 0.68rem; font-style: normal; font-weight: 900; letter-spacing: 0.06em; }
+        #cruces-overlay .cr-vias { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; padding: 0 13px 13px; }
+        #cruces-overlay .cr-vias button { min-height: 48px; border: 0; border-radius: 10px; background: #b4232f; color: #fff;
+            font: inherit; font-size: 0.9rem; font-weight: 900; cursor: pointer; }
+        #cruces-overlay .cr-vias p { grid-column: 1 / -1; margin: 0; color: #55637a; font-size: 0.8rem; font-weight: 700; }
+
         /* Franja de aviso, justo bajo el reloj */
         .prev-aviso { position: sticky; top: var(--prev-top, 104px); z-index: 890; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: center; max-width: 980px; margin: 0 auto 12px; padding: 11px 14px; border-radius: 12px; border-left: 7px solid #6a7891; background: #eef2f7; color: #172033; box-shadow: 0 4px 14px rgba(23,32,51,0.12); }
         .prev-aviso.nivel-1 { border-left-color: #b4232f; background: #fdecec; color: #6e1219; }
@@ -547,7 +579,7 @@
         </div>
     </section>
 
-    <!-- Prevención más próxima: aparece sola cuando queda algo dentro de 650 m -->
+    <!-- Prevención más próxima: aparece sola cuando queda algo dentro de 1000 m -->
     <div id="prev-aviso" class="prev-aviso" role="status" aria-live="polite" hidden></div>
 
     <div class="main-controls">
@@ -555,6 +587,7 @@
         <button class="btn plan-btn" onclick="abrirPlanificador()">🧭 Planificar Viaje</button>
         <button class="btn pauta-btn" onclick="abrirPauta()">📋 Pauta Diaria</button>
         <button class="btn prev-btn" onclick="abrirPrevenciones()">⚠️ Prevenciones</button>
+        <button class="btn cruces-btn" onclick="abrirCruces()">🚧 Cruces<b id="cruces-n" hidden></b></button>
         <button class="btn graf-btn" onclick="abrirGrafico()">📅 Mi Gráfico</button>
         <button class="btn ali-btn" onclick="abrirAlistacion()">🕒 Mi Alistación</button>
         <button class="btn secundario delete-all-btn" onclick="borrarTodo()">🗑️ Borrar Todo</button>
@@ -720,6 +753,20 @@
         </div>
 
         <div class="plan-cuerpo" id="prev-resultados" aria-live="polite"></div>
+    </div>
+</div>
+
+<!-- ===== Cruces en falla: se marcan aquí y se avisan como prevención ===== -->
+<div id="cruces-overlay" class="plan-overlay" role="dialog" aria-modal="true" aria-labelledby="cruces-titulo" hidden>
+    <div class="plan-panel" role="document">
+        <div class="plan-head">
+            <div>
+                <h3 id="cruces-titulo">🚧 Cruces en falla</h3>
+                <small>Se avisan como prevención, 1000 m antes, en las dos vías</small>
+            </div>
+            <button type="button" class="plan-cerrar" onclick="cerrarCruces()" aria-label="Cerrar cruces">✕</button>
+        </div>
+        <div class="plan-cuerpo cr-cuerpo" id="cruces-cuerpo" aria-live="polite"></div>
     </div>
 </div>
 
@@ -4523,11 +4570,11 @@ const PREV_ESTACIONES = {"L1":[["San Rosendo",-37.263557,-72.727845],["Buenuraqu
    en L2, PK subiendo = Concepción→Coronel = VÍA 1; PK bajando = VÍA 2.
 
    Qué se muestra: solo lo vigente a esta hora, solo lo que aplica a la vía por
-   la que se circula, y de todo eso lo más grave que quede dentro de 650 m.
+   la que se circula, y de todo eso lo más grave que quede dentro de 1000 m.
    ========================================================================= */
 
 const PREV_ARCHIVO   = 'prevenciones/boletin.json';
-const PREV_AVISO_M   = 650;    // metros de anticipación del aviso
+const PREV_AVISO_M   = 1000;   // metros de anticipación del aviso
 const PREV_SENTIDO_VENTANA   = 15000;  // ms de historia para deducir el sentido
 const PREV_SENTIDO_MIN_KM    = 0.03;   // movimiento mínimo para darlo por bueno
 const PREV_SENTIDO_VIGENCIA  = 45000;  // ms que sigue valiendo ese sentido
@@ -4754,7 +4801,12 @@ function prevVia(txt) {
 // Gravedad: 1 crítica (<=15 km/h) · 2 alta (<=30) · 3 media · 4 solo toque pito.
 function prevGravedad(restriccion) {
     const t = prevNorm(restriccion);
-    const vel = (t.match(/(\d+)\s*KM\/H/g) || []).map(x => parseInt(x, 10));
+    // Cuando el boletín separa pasajeros y carga ("PASAJEROS 50 km/h, CARGA
+    // 40 km/h", como en las de la máquina registradora de vía) vale la de
+    // pasajeros: esta bitácora es de trenes de pasajeros.
+    const pasajeros = t.match(/PASAJEROS\s*:?\s*(\d+)\s*KM\/H/);
+    const vel = pasajeros ? [parseInt(pasajeros[1], 10)]
+        : (t.match(/(\d+)\s*KM\/H/g) || []).map(x => parseInt(x, 10));
     if (vel.length) {
         const v = Math.min.apply(null, vel);
         return { nivel: v <= 15 ? 1 : v <= 30 ? 2 : 3, velocidad: v };
@@ -5082,14 +5134,19 @@ const PREV_ORDEN_ESTADO = { dentro: 0, antes: 1, pasada: 2 };
 // entran a la lista, pero un paso a paso de patio no debe tapar un 30 km/h.
 function prevRango(p) { return p.nivel + (p.via === 'OTRA' ? 1 : 0); }
 
+// Las prevenciones con que se avisa: las del boletín y las que se marcan en el
+// momento (un cruce en falla).
+function prevTodas(bol) {
+    return (bol ? bol.prevenciones : []).concat(crucesComoPrevenciones());
+}
+
 // Lo que el tren tiene por delante (o encima). Las ya pasadas no entran acá:
 // el listado del panel es "lo que viene".
 function prevCandidatas(pos, ahora, alcanceKm) {
-    const bol = prevBoletinActivo();
-    if (!bol || !pos) return [];
+    if (!pos) return [];
     const lim = (alcanceKm || PREV_LISTA_KM) * 1000;
 
-    return bol.prevenciones
+    return prevTodas(prevBoletinActivo())
         .filter(p => prevVigente(p, ahora))
         .filter(p => prevViaAplica(p, pos.linea, pos.sentido))
         .map(function (p) {
@@ -5102,10 +5159,9 @@ function prevCandidatas(pos, ahora, alcanceKm) {
 
 // Las que se acaban de dejar atrás, mientras no se alejen más de 150 m.
 function prevReciénPasadas(pos, ahora) {
-    const bol = prevBoletinActivo();
-    if (!bol || !pos) return [];
+    if (!pos) return [];
 
-    return bol.prevenciones
+    return prevTodas(prevBoletinActivo())
         .filter(p => prevVigente(p, ahora))
         .filter(p => prevViaAplica(p, pos.linea, pos.sentido))
         .map(function (p) {
@@ -5116,7 +5172,7 @@ function prevReciénPasadas(pos, ahora) {
 }
 
 // La que se muestra bajo el reloj: lo más grave que se tenga encima o dentro de
-// 650 m. Si no hay nada por delante, se deja a la vista la que se acaba de
+// 1000 m. Si no hay nada por delante, se deja a la vista la que se acaba de
 // pasar, hasta alejarse 150 m de ella.
 function prevMasImportanteCerca(pos, ahora) {
     const adelante = prevCandidatas(pos, ahora, PREV_AVISO_M / 1000)
@@ -5162,7 +5218,7 @@ function prevRestriccionCorta(p) {
     return p.restriccion.split(/[,\n]/)[0].trim() || 'Restricción';
 }
 
-// La franja bajo el reloj: solo aparece cuando hay algo dentro de 650 m.
+// La franja bajo el reloj: solo aparece cuando hay algo dentro de 1000 m.
 function prevActualizar() {
     const franja = document.getElementById('prev-aviso');
     if (!franja) return;
@@ -5188,7 +5244,7 @@ function prevActualizar() {
                 <div class="prev-aviso-restr">${escHtml(prevRestriccionCorta(p))}
                     <span class="prev-aviso-via">${escHtml(p.viaTexto || '')}</span></div>
                 <div class="prev-aviso-km">PK ${escHtml(p.kmTexto)} · ${escHtml(p.bloque)}</div>
-                ${prevBoletinEsDeHoy() ? '' :
+                ${p.propia || !prevBoletinActivo() || prevBoletinEsDeHoy() ? '' :
                     `<div class="prev-aviso-viejo">⚠ Boletín del ${escHtml(prevFechaBonita(prevBoletinActivo().fecha))}, no es el de hoy</div>`}
              </div>`;
         franja.hidden = false;
@@ -5233,7 +5289,7 @@ function prevTarjeta(p) {
                 ${dist}
             </div>
             <div class="prev-item-km">PK ${escHtml(p.kmTexto)} · ${escHtml(p.bloque)}
-                · ${escHtml(p.horaIni)}–${escHtml(p.horaFin)}
+                ${p.propia ? '' : '· ' + escHtml(p.horaIni) + '–' + escHtml(p.horaFin)}
                 ${p.geo ? '' : '<span class="prev-sinubic">sin ubicación en el trazado</span>'}</div>
             ${p.descripcion ? `<div class="prev-item-desc">${escHtml(p.descripcion)}</div>` : ''}
             ${p.restriccion && p.velocidad !== null && /TOQUE PITO/.test(prevNorm(p.restriccion))
@@ -5283,6 +5339,7 @@ function prevRenderizar() {
          ${escHtml(prevFechaBonita(ahora.fecha))}. Puede tener faenas que ya terminaron y
          no traer las de hoy. Sube el boletín del día al repositorio.</div>`;
 
+    html += crucesResumenHTML();
     html += `<p class="plan-hint">Boletín folio <strong>${escHtml(bol.folio)}</strong> ·
         ${escHtml(bol.fecha)} · ${bol.prevenciones.length} prevenciones,
         <strong>${vigentes.length} vigentes</strong> a las ${escHtml(ahora.texto)}</p>`;
@@ -5358,6 +5415,278 @@ document.addEventListener('keydown', function (e) {
 document.getElementById('prev-overlay').addEventListener('click', function (e) {
     if (e.target === this) cerrarPrevenciones();
 });
+
+/* ======================================================= CRUCES EN FALLA ==
+   Cuando avisan que un paso a nivel quedó en falla (barrera atropellada, sin
+   protección) se marca aquí y la app lo avisa como una prevención más, 1000 m
+   antes. La marca queda en el teléfono y se borra sola a las 24 horas.     */
+
+// Pasos a nivel con su PK, de los listados de EFE.
+//
+// En L1 el listado trae el kilómetro con decimales. En L2 trae el kilómetro y
+// los postes: ese texto es el que se muestra, y el PK con que se avisa es el
+// del cruce marcado con GPS en terreno (septiembre de 2026), proyectado sobre
+// el mismo trazado con que se ubica el tren.
+const CRUCES = {
+    L1: [
+        ['Hualqui', 46.500],
+        ['Periquillo', 49.200],
+        ['Sin nombre, uso particular', 54.250],
+        ['Sin nombre, uso particular', 54.490],
+        ['Porvenir', 56.000],
+        ['Santa Sofía (Chiguayante)', 59.835],
+        ['Lonco', 65.626],
+        ['La Mochita', 68.200],
+        ['Sanatorio Alemán', 68.530],
+        ['Ercilla', 69.142],
+        ['Desiderio Sanhueza', 70.637],
+        ['Lorenzo Arenas', 72.960],
+        ['Parque Central', 74.500],
+        ['Santa Leonor', 76.840],
+        ['Los Cóndores', 79.088],
+        ['Las Higueras', 80.695],
+        ['Hualpén', 82.300],
+        ['Bilbao', 83.390],
+        ['La Unión', 84.200]
+    ],
+    L2: [
+        ['Desiderio Sanhueza', -0.270, '70 P. 18-19'],
+        ['Chepe (Pedro León Gallo)', 0.397, '0 P. 15-16'],
+        ['Fepasa', 3.372, '3 P. 12-13'],
+        ['Papelera Biobío', 3.728, '3 P. 20-21'],
+        ['Los Claveles', 5.272, '5 P. 7-8'],
+        ['Las Garzas', 5.422, '5 P. 13-15'],
+        ['Diagonal Biobío', 5.670, '5 P. 23-25'],
+        ['Boca Sur', 6.740, '6 P. 35-37'],
+        ['Avenida Michaihue', 7.247, '7 P. 9-11'],
+        ['Costa Verde', 8.674, '8 P. 23-25'],
+        ['Masisa (El Parque)', 9.985, '10 P. 1'],
+        ['Aserradero Trayken', 10.636, '10 P. 23-25'],
+        ['Lomas Coloradas', 11.543, '11 P. 17-19'],
+        ['Portal San Pedro', 12.235, '12 P. 7-9'],
+        ['Conavicoop', 13.115, '13 P. 3-5'],
+        ['Grau', 15.505, '15 P. 17-19'],
+        ['Vivero La Posada', 16.472, '16 P. 15-17'],
+        ['Escuadrón 2', 18.467, '18 P. 17-19'],
+        ['Escuadrón 1', 19.964, '19 P. 33-1'],
+        ['Escuadrón 3', 21.151, '21 P. 5-7'],
+        ['San Francisco', 22.363, '22 P. 13-15'],
+        ['Cerro El Plomo', 22.663, '22 P. 23-25'],
+        ['Volcán Villarrica', 23.038, '23 P. 3-5'],
+        ['Los Molineros', 23.874, '23 P. 31-33'],
+        ['Héroes de la Concepción', 25.508, '25 P. 19-21'],
+        ['Yobilo', 26.069, '26 P. 3-5'],
+        ['Cruz Mora', 26.598, '26 P. 21-23'],
+        ['Lo Rojas', 27.400, '27 P. 15-17']
+    ]
+};
+// Por dónde van los trenes de L2 en Concepción, según los cambios de vía
+// marcados en terreno: del andén hasta pasado el empalme, por la vía 4; desde
+// ahí hasta el PK 0,72, los dos sentidos por la vía 1.
+const CRUCES_L2_VIA4_HASTA = 0.12;
+const CRUCES_L2_VIA_UNICA  = [0.12, 0.72];
+const CRUCES_LLAVE   = 'syncrored_cruces_falla';
+const CRUCES_HORAS   = 24;   // una falla marcada se borra sola pasado este tiempo
+const CRUCES_ANCHO_M = 40;   // el cruce se avisa como una zona de este largo
+
+let CRUCES_UI = { linea: 'L1', abierto: -1 };
+
+function crucesLeer() {
+    let lista = [];
+    try { lista = JSON.parse(localStorage.getItem(CRUCES_LLAVE) || '[]'); } catch (e) {}
+    const limite = Date.now() - CRUCES_HORAS * 3600 * 1000;
+    return (Array.isArray(lista) ? lista : []).filter(f => f && f.ts > limite && isFinite(f.pk));
+}
+
+function crucesGuardar(lista) {
+    try { localStorage.setItem(CRUCES_LLAVE, JSON.stringify(lista)); } catch (e) {}
+}
+
+// Qué vías tiene el cruce. Donde los trenes van por una sola vía en los dos
+// sentidos, esa es la única opción.
+function cruceVias(linea, pk) {
+    if (linea === 'L1' && pk >= PREV_VIA_UNICA_L1[0] && pk <= PREV_VIA_UNICA_L1[1]) {
+        return [['V1', 'Vía única']];
+    }
+    if (linea === 'L1' && pk >= PREV_ARENAL_PK) return [['V4', 'Vía 4']];
+    if (linea === 'L2' && pk < CRUCES_L2_VIA4_HASTA) return [['V4', 'Vía 4']];
+    if (linea === 'L2' && pk <= CRUCES_L2_VIA_UNICA[1]) return [['AMBAS', 'Vía única']];
+    return [['V1', 'Vía 1'], ['V2', 'Vía 2'], ['AMBAS', 'Ambas vías']];
+}
+
+// Cómo se muestra el PK del cruce: el texto del listado si lo trae (L2, con
+// postes), o el kilómetro con decimales (L1).
+function crucePkTexto(c) {
+    return c[2] || c[1].toFixed(3).replace('.', ',');
+}
+
+function cruceHora(ts) {
+    const d = new Date(ts);
+    return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+}
+
+// Cada falla, con la forma de una prevención del boletín.
+// El cruce atraviesa las dos vías: aunque la barrera caída sea la de la vía 1,
+// el tren que va por la vía 2 también tiene que pasar con precaución. Por eso
+// se avisa en los dos sentidos, y la vía que se informó queda solo como dato.
+function crucesComoPrevenciones() {
+    const medio = CRUCES_ANCHO_M / 2000;
+    return crucesLeer().map(function (f) {
+        return {
+            n: 'cruce-' + f.id, linea: f.linea, propia: true,
+            bloque: 'Cruce ' + f.nombre, viaTexto: 'Falla ' + f.viaTexto.toLowerCase(), via: 'AMBAS',
+            kmTexto: f.km || f.pk.toFixed(3).replace('.', ','),
+            restriccion: 'Cruce en falla',
+            descripcion: 'Paso a nivel ' + f.nombre + ' en falla, avisada por ' + f.viaTexto.toLowerCase() +
+                '. Precaución en las dos vías. Marcado a las ' + cruceHora(f.ts) + '.',
+            horaIni: '', horaFin: '', minIni: null, minFin: null, fechaIni: null, fechaFin: null,
+            coordinado: false, nivel: 1, velocidad: null,
+            tramos: [{ linea: f.linea, desde: f.pk - medio, hasta: f.pk + medio, geo: true }],
+            geo: true, ajeno: false
+        };
+    });
+}
+
+// Arriba del panel de prevenciones, para que se vean aunque no haya GPS.
+function crucesResumenHTML() {
+    const lista = crucesComoPrevenciones();
+    if (!lista.length) return '';
+    return '<div class="plan-seccion-titulo">Cruces en falla (' + lista.length + ')</div>' +
+        lista.map(prevTarjeta).join('');
+}
+
+// El número sobre el botón del menú y sobre el de la cabina.
+function crucesBadge() {
+    const n = crucesLeer().length;
+    ['cruces-n', 'cond-cruces-n'].forEach(function (id) {
+        const b = document.getElementById(id);
+        if (!b) return;
+        b.hidden = !n;
+        b.textContent = n;
+        if (b.parentElement) b.parentElement.classList.toggle('activo', n > 0);
+    });
+}
+
+function crucesCuerpoHTML() {
+    const ui = CRUCES_UI;
+    const fallas = crucesLeer();
+    const cruces = CRUCES[ui.linea] || [];
+
+    let html = '<p class="cr-ayuda">Elige el cruce y la vía por la que avisaron la falla. Se avisa como ' +
+        'prevención ' + PREV_AVISO_M + ' m antes en las dos vías, porque el cruce las atraviesa a ambas; ' +
+        'la vía queda anotada como dato. Se borra sola a las ' + CRUCES_HORAS + ' horas.</p>';
+
+    if (fallas.length) {
+        html += '<div class="cr-titulo">En falla ahora</div>';
+        fallas.forEach(function (f) {
+            html += '<div class="cr-falla"><div><strong>' + escHtml(f.nombre) + '</strong>' +
+                '<small>' + escHtml(f.linea) + ' · PK ' + escHtml(f.km || f.pk.toFixed(3).replace('.', ',')) +
+                ' · ' + escHtml(f.viaTexto) + ' · desde las ' + cruceHora(f.ts) + '</small></div>' +
+                '<button type="button" onclick="cruceQuitar(\'' + escHtml(f.id) + '\')">Quitar</button></div>';
+        });
+    }
+
+    html += '<div class="cr-titulo">Línea</div><div class="cr-lineas">' +
+        ['L1', 'L2'].map(l => '<button type="button" class="' + (l === ui.linea ? 'sel' : '') +
+            '" onclick="crucesLinea(\'' + l + '\')">' + l + '</button>').join('') + '</div>';
+
+    html += '<div class="cr-titulo">Cruces de ' + ui.linea + '</div>';
+    if (!cruces.length) {
+        html += '<p class="cr-ayuda">Todavía no están cargados los cruces de ' + ui.linea + '.</p>';
+    }
+    cruces.forEach(function (c, i) {
+        const pk = c[1];
+        const enFalla = fallas.find(f => f.linea === ui.linea && Math.abs(f.pk - pk) < 0.0005);
+        const abierto = ui.abierto === i;
+        html += '<div class="cr-cruce' + (abierto ? ' abierto' : '') + (enFalla ? ' falla' : '') + '">' +
+            '<button type="button" onclick="cruceElegir(' + i + ')" aria-expanded="' + abierto + '">' +
+            '<strong>' + escHtml(c[0]) + '</strong>' +
+            (enFalla ? '<em>EN FALLA</em>' : '') +
+            '<small>PK ' + escHtml(crucePkTexto(c)) + '</small></button>';
+        if (abierto) {
+            html += '<div class="cr-vias"><p>' + (enFalla
+                ? 'Ya está marcado por ' + escHtml(enFalla.viaTexto.toLowerCase()) + '. Elige otra vía para cambiarlo.'
+                : '¿Por qué vía avisaron la falla?') + '</p>' +
+                cruceVias(ui.linea, pk).map(v => '<button type="button" onclick="cruceMarcar(' + i +
+                    ', \'' + v[0] + '\')">' + escHtml(v[1]) + '</button>').join('') + '</div>';
+        }
+        html += '</div>';
+    });
+    return html;
+}
+
+// Redibuja el panel que esté abierto: el del menú o el de la cabina.
+function crucesPintar() {
+    const overlay = document.getElementById('cruces-overlay');
+    const caja = document.getElementById('cruces-cuerpo');
+    if (overlay && caja && overlay.classList.contains('abierto')) caja.innerHTML = crucesCuerpoHTML();
+}
+
+function abrirCruces() {
+    const overlay = document.getElementById('cruces-overlay');
+    CRUCES_UI.abierto = -1;
+    overlay.hidden = false;
+    overlay.classList.add('abierto');
+    document.body.classList.add('plan-abierto');
+    crucesPintar();
+    ventanaAbierta('cruces', cerrarCruces);
+}
+
+function cerrarCruces() {
+    const overlay = document.getElementById('cruces-overlay');
+    overlay.classList.remove('abierto');
+    overlay.hidden = true;
+    if (!document.querySelector('.plan-overlay.abierto')) document.body.classList.remove('plan-abierto');
+    crucesBadge();
+    ventanaCerrada('cruces');
+}
+
+function crucesLinea(linea) {
+    CRUCES_UI = { linea: linea, abierto: -1 };
+    crucesPintar();
+}
+
+function cruceElegir(i) {
+    CRUCES_UI.abierto = CRUCES_UI.abierto === i ? -1 : i;
+    crucesPintar();
+}
+
+function crucesCambiaron() {
+    crucesBadge();
+    crucesPintar();
+    prevActualizar();
+    if (document.getElementById('prev-overlay').classList.contains('abierto')) prevRenderizar();
+}
+
+function cruceMarcar(i, via) {
+    const linea = CRUCES_UI.linea;
+    const c = (CRUCES[linea] || [])[i];
+    if (!c) return;
+    const opcion = cruceVias(linea, c[1]).find(v => v[0] === via);
+    if (!opcion) return;
+    // Un cruce tiene una sola falla vigente: marcarlo de nuevo la reemplaza.
+    const lista = crucesLeer().filter(f => !(f.linea === linea && Math.abs(f.pk - c[1]) < 0.0005));
+    lista.push({ id: String(Date.now()), linea: linea, nombre: c[0], pk: c[1], km: c[2] || '',
+                 via: via, viaTexto: opcion[1], ts: Date.now() });
+    crucesGuardar(lista);
+    CRUCES_UI.abierto = -1;
+    crucesCambiaron();
+}
+
+function cruceQuitar(id) {
+    crucesGuardar(crucesLeer().filter(f => f.id !== id));
+    crucesCambiaron();
+}
+
+document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && document.getElementById('cruces-overlay').classList.contains('abierto')) {
+        cerrarCruces();
+    }
+});
+document.getElementById('cruces-overlay').addEventListener('click', function (e) {
+    if (e.target === this) cerrarCruces();
+});
+crucesBadge();
 
 /* ---------------------------------------------------------------- arranque -- */
 
