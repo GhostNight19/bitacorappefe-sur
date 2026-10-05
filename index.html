@@ -385,6 +385,20 @@
         .prev-item.nivel-3 { border-left-color: #0b5ed7; }
         .prev-item.dentro { background: #fffaf3; }
         .prev-item-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .prev-num { padding: 2px 7px; border-radius: 6px; background: #1d2b45; color: #fff; font-size: 0.74rem; font-weight: 900; font-variant-numeric: tabular-nums; }
+        .prev-quitar-bt { margin-left: auto; min-height: 34px; padding: 0 12px; border: 1px solid #cbd7e6; border-radius: 8px; background: #fff; color: #4a5a75; font: inherit; font-size: 0.78rem; font-weight: 850; cursor: pointer; }
+        .prev-quitar-bt:hover { border-color: #b4232f; color: #b4232f; }
+        .prev-quitar { display: grid; gap: 6px; }
+        .prev-quitar label { color: #2b3d5c; font-size: 0.78rem; font-weight: 850; }
+        .prev-quitar-fila { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+        .prev-quitar-fila input { min-height: 44px; padding: 0 12px; border: 2px solid #cbd7e6; border-radius: 9px; font: inherit; font-size: 1rem; font-weight: 800; }
+        .prev-quitar-fila button { min-height: 44px; padding: 0 18px; border: 0; border-radius: 9px; background: #1d2b45; color: #fff; font: inherit; font-weight: 850; cursor: pointer; }
+        .prev-quitar-msg { min-height: 1.2em; font-size: 0.8rem; font-weight: 750; }
+        .prev-quitar-msg.ok { color: #0a5b36; }
+        .prev-quitar-msg.error { color: #b4232f; }
+        .prev-quitada { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; padding: 9px 12px; border: 1px dashed #c3d0e0; border-radius: 10px; background: #f6f9fd; color: #55637a; font-size: 0.84rem; }
+        .prev-quitada span { flex: 1; min-width: 0; }
+        .prev-quitada button { min-height: 36px; padding: 0 12px; border: 1px solid #0756a5; border-radius: 8px; background: #fff; color: #0756a5; font: inherit; font-size: 0.78rem; font-weight: 850; cursor: pointer; }
         .prev-restr { font-size: 1.02rem; font-weight: 900; color: #0f1c33; }
         .prev-via { padding: 3px 9px; border-radius: 999px; background: #eef2f7; color: #46536a; font-size: 0.74rem; font-weight: 850; }
         .prev-via.prev-via-v1 { background: #e7f0ff; color: #14459c; }
@@ -728,6 +742,16 @@
                 <button type="button" class="prev-accion iniciar" onclick="prevIniciarGPS()">📍 Seguir mi ubicación</button>
                 <button type="button" class="prev-accion detener" onclick="prevDetenerGPS()">⏹ Detener</button>
                 <button type="button" class="prev-accion prueba" id="prev-btn-prueba" onclick="prevModoPrueba()">🧪 Modo prueba</button>
+            </div>
+
+            <div class="prev-quitar">
+                <label for="prev-quitar-n">Quitar una línea que tráfico dio por terminada</label>
+                <div class="prev-quitar-fila">
+                    <input type="number" id="prev-quitar-n" inputmode="numeric" min="1" placeholder="N° de línea"
+                           onkeydown="if (event.key === 'Enter') prevQuitarPorNumero()">
+                    <button type="button" onclick="prevQuitarPorNumero()">Quitar</button>
+                </div>
+                <div id="prev-quitar-msg" class="prev-quitar-msg" aria-live="polite"></div>
             </div>
 
             <div class="plan-fila">
@@ -5178,7 +5202,83 @@ function prevRango(p) { return p.nivel + (p.via === 'ENLACE' ? 1 : 0); }
 // Las prevenciones con que se avisa: las del boletín y las que se marcan en el
 // momento (un cruce en falla).
 function prevTodas(bol) {
-    return (bol ? bol.prevenciones : []).concat(crucesComoPrevenciones());
+    return prevDelBoletin(bol).concat(crucesComoPrevenciones());
+}
+
+/* --------------------------------------------------- líneas quitadas hoy -- */
+
+// Tráfico a veces avisa que una línea del boletín ya no está vigente ("la 50
+// ya no corre"). Se puede quitar desde el panel y deja de mostrarse, esté o no
+// dentro de su horario. Vale solo para ese boletín: cuando entra el siguiente,
+// vuelven a aparecer todas las suyas.
+const PREV_QUITADAS_LLAVE = 'syncrored_prev_quitadas';
+
+function prevClaveBoletin(bol) {
+    return bol ? bol.folio + '|' + bol.fecha : '';
+}
+
+function prevQuitadas(bol) {
+    if (!bol) return [];
+    let d = null;
+    try { d = JSON.parse(localStorage.getItem(PREV_QUITADAS_LLAVE) || 'null'); } catch (e) {}
+    return d && d.boletin === prevClaveBoletin(bol) && Array.isArray(d.lineas) ? d.lineas.map(String) : [];
+}
+
+function prevGuardarQuitadas(bol, lineas) {
+    try {
+        localStorage.setItem(PREV_QUITADAS_LLAVE,
+            JSON.stringify({ boletin: prevClaveBoletin(bol), lineas: lineas }));
+    } catch (e) {}
+}
+
+// Las del boletín que siguen en pie: todas menos las quitadas.
+function prevDelBoletin(bol) {
+    if (!bol) return [];
+    const fuera = prevQuitadas(bol);
+    return fuera.length ? bol.prevenciones.filter(p => fuera.indexOf(String(p.n)) < 0) : bol.prevenciones;
+}
+
+function prevQuitadasCambiaron() {
+    prevActualizar();
+    prevRenderizar();
+}
+
+function prevQuitar(n) {
+    const bol = prevBoletinActivo();
+    if (!bol) return;
+    const lineas = prevQuitadas(bol);
+    if (lineas.indexOf(String(n)) < 0) lineas.push(String(n));
+    prevGuardarQuitadas(bol, lineas);
+    prevQuitadasCambiaron();
+}
+
+function prevVolverAMostrar(n) {
+    const bol = prevBoletinActivo();
+    if (!bol) return;
+    prevGuardarQuitadas(bol, prevQuitadas(bol).filter(x => x !== String(n)));
+    prevQuitadasCambiaron();
+}
+
+// Quitar por número, con lo que dicta tráfico, aunque la línea no esté a la
+// vista porque todavía no empieza su horario.
+function prevQuitarPorNumero() {
+    const input = document.getElementById('prev-quitar-n');
+    const msg = document.getElementById('prev-quitar-msg');
+    const bol = prevBoletinActivo();
+    const n = String((input && input.value) || '').trim().replace(/^0+/, '');
+    const decir = function (texto, error) {
+        if (!msg) return;
+        msg.textContent = texto;
+        msg.className = 'prev-quitar-msg' + (error ? ' error' : ' ok');
+    };
+    if (!bol) { decir('No hay boletín cargado.', true); return; }
+    if (!n) { decir('Escribe el número de la línea.', true); return; }
+    const p = bol.prevenciones.find(x => String(x.n) === n);
+    if (!p) { decir('El boletín folio ' + bol.folio + ' no tiene la línea ' + n + '.', true); return; }
+    if (prevQuitadas(bol).indexOf(n) >= 0) { decir('La línea ' + n + ' ya estaba quitada.', false); return; }
+    prevQuitar(n);
+    if (input) input.value = '';
+    decir('Línea ' + n + ' quitada: ' + prevRestriccionCorta(p) + ' · PK ' + p.kmTexto + ' · ' + p.bloque + '.', false);
 }
 
 // Lo que el tren tiene por delante (o encima). Las ya pasadas no entran acá:
@@ -5325,9 +5425,12 @@ function prevTarjeta(p) {
     return `
         <div class="prev-item nivel-${p.nivel}${p.estado === 'dentro' ? ' dentro' : ''}">
             <div class="prev-item-top">
+                ${p.propia ? '' : `<span class="prev-num">N° ${escHtml(p.n)}</span>`}
                 <span class="prev-restr">${escHtml(prevRestriccionCorta(p))}</span>
                 <span class="prev-via prev-via-${p.via.toLowerCase()}">${escHtml(p.viaTexto || '—')}</span>
                 ${dist}
+                ${p.propia ? '' : `<button type="button" class="prev-quitar-bt" onclick="prevQuitar('${escHtml(p.n)}')"
+                    aria-label="Quitar la línea ${escHtml(p.n)}">Quitar</button>`}
             </div>
             <div class="prev-item-km">PK ${escHtml(p.kmTexto)} · ${escHtml(p.bloque)}
                 ${p.propia ? '' : '· ' + escHtml(p.horaIni) + '–' + escHtml(p.horaFin)}
@@ -5355,7 +5458,8 @@ function prevRenderizar() {
 
     const pos = prevPosicionActual();
     const ahora = prevAhoraChile();
-    const vigentes = bol.prevenciones.filter(p => prevVigente(p, ahora));
+    const vigentes = prevDelBoletin(bol).filter(p => prevVigente(p, ahora));
+    const quitadas = prevQuitadas(bol);
 
     if (cab) {
         const estado = PREV_MANUAL.activo
@@ -5385,7 +5489,8 @@ function prevRenderizar() {
     html += crucesResumenHTML();
     html += `<p class="plan-hint">Boletín folio <strong>${escHtml(bol.folio)}</strong> ·
         ${escHtml(bol.fecha)} · ${bol.prevenciones.length} prevenciones,
-        <strong>${vigentes.length} vigentes</strong> a las ${escHtml(ahora.texto)}</p>`;
+        <strong>${vigentes.length} vigentes</strong> a las ${escHtml(ahora.texto)}${quitadas.length
+            ? ` · ${quitadas.length} quitada${quitadas.length > 1 ? 's' : ''}` : ''}</p>`;
 
     if (pos) {
         const cerca = prevCandidatas(pos, ahora, PREV_LISTA_KM);
@@ -5401,6 +5506,16 @@ function prevRenderizar() {
     html += resto.length ? resto.map(prevTarjeta).join('') : `<div class="plan-vacio">Ninguna.</div>`;
     html += `<div class="plan-seccion-titulo">Todas las vigentes · L2 Concepción–Coronel (${resto2.length})</div>`;
     html += resto2.length ? resto2.map(prevTarjeta).join('') : `<div class="plan-vacio">Ninguna.</div>`;
+
+    if (quitadas.length) {
+        html += `<div class="plan-seccion-titulo">Quitadas de este boletín (${quitadas.length})</div>`;
+        html += bol.prevenciones.filter(p => quitadas.indexOf(String(p.n)) >= 0).map(p => `
+            <div class="prev-quitada">
+                <span><strong>N° ${escHtml(p.n)}</strong> · ${escHtml(prevRestriccionCorta(p))} ·
+                    PK ${escHtml(p.kmTexto)} · ${escHtml(p.bloque)}</span>
+                <button type="button" onclick="prevVolverAMostrar('${escHtml(p.n)}')">Volver a mostrar</button>
+            </div>`).join('');
+    }
 
     html += `<div class="pauta-pie">Esto es una ayuda: el boletín de vía sigue siendo el documento válido.</div>`;
 
