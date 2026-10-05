@@ -3428,6 +3428,21 @@ function pautaUnaLetraDe(a, b) {
 // inicial cuyo apellido se diferencia en una letra, es esa. La inicial no se
 // toca nunca: en la dotación hay apellidos que solo se distinguen por ella
 // (A. y M. ARRIAGADA, B., N. y W. GONZALEZ), y ahí adivinar sería peor.
+// Dos nombres en una misma celda de un listado: "J. MONTIEL C. ACUÑA". Se
+// corta donde aparece una inicial después de un apellido; "N. J. HENRIQUEZ"
+// queda entero porque ahí la inicial sigue a otra inicial.
+function pautaPartirNombres(celda) {
+    const tokens = String(celda == null ? '' : celda).trim().split(/\s+/).filter(Boolean);
+    const partes = [];
+    tokens.forEach(function (tk, i) {
+        const inicial = /^[A-ZÁÉÍÓÚÑ]\.$/i.test(tk);
+        const anterior = i > 0 ? tokens[i - 1] : '';
+        if (!partes.length || (inicial && anterior.length > 2 && !/\.$/.test(anterior))) partes.push(tk);
+        else partes[partes.length - 1] += ' ' + tk;
+    });
+    return partes.length > 1 && partes.every(pautaEsNombre) ? partes : [String(celda == null ? '' : celda)];
+}
+
 function pautaNombreDeLaDotacion(nombre) {
     if (!nombre || typeof personalDe !== 'function') return nombre;
     if (!PERSONAL || !Object.keys(PERSONAL).length) return nombre;
@@ -3578,6 +3593,15 @@ function pautaInterpretarHoja(hoja) {
                                     entrega: iEnt, fin: iFin, baseFin: iFin + 1 });
         }
     }
+    //    Entre semana hay pautas que juntan TERMINO y TRASLADO en una sola
+    //    columna ("10:55 0:00"): la entrega y el cierre quedan una columna
+    //    antes. También aquí manda el encabezado.
+    if (conEntrega) {
+        const iEnt = cabNorm.findIndex((x, k) => k > b && /^ENTREGA/.test(x));
+        if (iEnt > 0 && iEnt !== campos.entrega && /^TERMINO/.test(cabNorm[iEnt + 1] || '')) {
+            Object.assign(campos, { entrega: iEnt, fin: iEnt + 1, baseFin: iEnt + 2 });
+        }
+    }
 
     const turnos = [];
     const listas = {};
@@ -3648,10 +3672,11 @@ function pautaInterpretarHoja(hoja) {
         // cualquier columna. Se corta en cuanto reaparece una fila con horas.
         if (seccion && !tieneHoras && !nTurno) {
             f.forEach(function (cel) {
-                if (pautaEsNombre(cel)) {
-                    const n = pautaNombreDeLaDotacion(pautaLimpiarNombre(cel));
+                pautaPartirNombres(cel).forEach(function (parte) {
+                    if (!pautaEsNombre(parte)) return;
+                    const n = pautaNombreDeLaDotacion(pautaLimpiarNombre(parte));
                     if (listas[seccion.clave].nombres.indexOf(n) < 0) listas[seccion.clave].nombres.push(n);
-                }
+                });
             });
             continue;
         }
@@ -3682,8 +3707,11 @@ function pautaInterpretarHoja(hoja) {
 
         // Otra variante de lo mismo: la fila de práctica repite el servicio del
         // turno anterior y se trae el número pegado. Un solo nombre y sin horas.
+        // A veces el servicio no viene igual sino parecido ("JORNADA-20115-128-130"
+        // bajo "20115-128-129"): basta con que comparta trenes con el de arriba.
         if (previo && !tieneHoras && servicio &&
-            pautaNorm(servicio) === pautaNorm(previo.servicios)) {
+            (pautaNorm(servicio) === pautaNorm(previo.servicios) ||
+             pautaTrenesDeServicio(servicio, '').some(n => previo.trenes.indexOf(n) >= 0))) {
             const nombres = [];
             for (let c = iMaquinista; c <= iAyudante; c++) {
                 const cand = pautaLimpiarNombre(celda(f, c));
@@ -4789,13 +4817,24 @@ function prevFechaISO(txt) {
 //              Concepción; en ambos casos se circula por ella en los dos sentidos
 //   AMBAS    : ambas vías, todas, principal, y lo que es del tramo (puente, cruce)
 //   OTRA     : patio, desviador, enlace, variante, vías de servicio
+// El tren de pasajeros va por la vía 1, la 2 o la 4. Un enlace entre ellas lo
+// cruza al cambiar de vía. Lo demás (la vía 8-B de Concepción, la 20 y el patio
+// de El Arenal, desviadores, variantes) son vías por las que casi nunca pasa:
+// esas quedan como 'OTRA' y no se avisan en marcha.
 function prevVia(txt) {
     const t = prevNorm(txt);
     if (/^VIA\s*1$/.test(t)) return 'V1';
     if (/^VIA\s*2$/.test(t)) return 'V2';
     if (/^VIA\s*4$/.test(t)) return 'V4';
     if (/^(AMBAS VIAS|TODAS|PRINCIPAL|PUENTE|CRUCE)$/.test(t)) return 'AMBAS';
+    if (/^VIAS?\s*1\s*(Y|-|,)\s*2$/.test(t) || /^PRINCIPAL\b/.test(t)) return 'AMBAS';
+    if (/^ENLACE\b/.test(t)) return 'ENLACE';
     return 'OTRA';
+}
+
+// Lo que solo afecta a los trenes de carga no se le avisa al de pasajeros.
+function prevSoloCarga(p) {
+    return p.velocidad === null && /SIN TRAFICO (DE )?CARGA/.test(prevNorm(p.restriccion));
 }
 
 // Gravedad: 1 crítica (<=15 km/h) · 2 alta (<=30) · 3 media · 4 solo toque pito.
@@ -4943,8 +4982,10 @@ function prevVigente(p, ahora) {
 //   L2  Concepción -> Coronel ... PK creciente  -> vía 1
 //       Coronel -> Concepción ... PK decreciente -> vía 2
 // Sin sentido definido (tren detenido, primera posición) no se filtra nada.
+// Las vías secundarias ('OTRA') no se avisan nunca: el tren no circula por ahí.
 function prevViaAplica(p, linea, sentido) {
-    if (p.via === 'AMBAS' || p.via === 'OTRA' || p.via === 'V4') return true;
+    if (p.via === 'OTRA') return false;
+    if (p.via === 'AMBAS' || p.via === 'ENLACE' || p.via === 'V4') return true;
     if (!sentido) return true;
     // En la vía única se va por la vía 1 en los dos sentidos: una prevención de
     // la vía 1 ahí vale también bajando.
@@ -5132,7 +5173,7 @@ const PREV_ORDEN_ESTADO = { dentro: 0, antes: 1, pasada: 2 };
 
 // Las de patio, desvío o enlace no compiten de igual a igual con las de vía:
 // entran a la lista, pero un paso a paso de patio no debe tapar un 30 km/h.
-function prevRango(p) { return p.nivel + (p.via === 'OTRA' ? 1 : 0); }
+function prevRango(p) { return p.nivel + (p.via === 'ENLACE' ? 1 : 0); }
 
 // Las prevenciones con que se avisa: las del boletín y las que se marcan en el
 // momento (un cruce en falla).
@@ -5148,7 +5189,7 @@ function prevCandidatas(pos, ahora, alcanceKm) {
 
     return prevTodas(prevBoletinActivo())
         .filter(p => prevVigente(p, ahora))
-        .filter(p => prevViaAplica(p, pos.linea, pos.sentido))
+        .filter(p => prevViaAplica(p, pos.linea, pos.sentido) && !prevSoloCarga(p))
         .map(function (p) {
             const d = prevDistanciaA(p, pos);
             return d ? Object.assign({ metros: d.metros, estado: d.estado }, p) : null;
@@ -5163,7 +5204,7 @@ function prevReciénPasadas(pos, ahora) {
 
     return prevTodas(prevBoletinActivo())
         .filter(p => prevVigente(p, ahora))
-        .filter(p => prevViaAplica(p, pos.linea, pos.sentido))
+        .filter(p => prevViaAplica(p, pos.linea, pos.sentido) && !prevSoloCarga(p))
         .map(function (p) {
             const d = prevDistanciaA(p, pos);
             return d ? Object.assign({ metros: d.metros, estado: d.estado }, p) : null;
@@ -5290,7 +5331,9 @@ function prevTarjeta(p) {
             </div>
             <div class="prev-item-km">PK ${escHtml(p.kmTexto)} · ${escHtml(p.bloque)}
                 ${p.propia ? '' : '· ' + escHtml(p.horaIni) + '–' + escHtml(p.horaFin)}
-                ${p.geo ? '' : '<span class="prev-sinubic">sin ubicación en el trazado</span>'}</div>
+                ${!p.geo ? '<span class="prev-sinubic">sin ubicación en el trazado</span>'
+                    : p.via === 'OTRA' ? '<span class="prev-sinubic">vía secundaria: no se avisa en marcha</span>'
+                    : prevSoloCarga(p) ? '<span class="prev-sinubic">solo carga: no se avisa</span>' : ''}</div>
             ${p.descripcion ? `<div class="prev-item-desc">${escHtml(p.descripcion)}</div>` : ''}
             ${p.restriccion && p.velocidad !== null && /TOQUE PITO/.test(prevNorm(p.restriccion))
                 ? `<div class="prev-item-extra">+ toque pito</div>` : ''}
