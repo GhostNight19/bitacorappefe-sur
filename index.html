@@ -396,6 +396,20 @@
         .prev-quitar-msg { min-height: 1.2em; font-size: 0.8rem; font-weight: 750; }
         .prev-quitar-msg.ok { color: #0a5b36; }
         .prev-quitar-msg.error { color: #b4232f; }
+        .prev-agregar { border: 1px solid #cbd7e6; border-radius: 10px; background: #f8fbff; }
+        .prev-agregar > summary { padding: 11px 13px; color: #1d2b45; font-size: 0.86rem; font-weight: 900; cursor: pointer; }
+        .prev-agregar[open] > summary { border-bottom: 1px solid #dbe3ec; }
+        .prev-ag-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; padding: 12px 13px 4px; }
+        .prev-ag-grid label { display: grid; gap: 4px; color: #2b3d5c; font-size: 0.76rem; font-weight: 850; }
+        .prev-ag-grid input, .prev-ag-grid select { min-height: 42px; padding: 0 10px; border: 2px solid #cbd7e6; border-radius: 9px; background: #fff; font: inherit; font-size: 0.95rem; font-weight: 750; }
+        .prev-ag-pk { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 6px; align-items: center; }
+        .prev-ag-pk b { color: #55637a; font-size: 0.85rem; }
+        .prev-ag-check { display: flex !important; align-items: center; gap: 8px !important; align-self: end; min-height: 42px; }
+        .prev-ag-check input { width: 22px; min-height: 22px; height: 22px; }
+        .prev-ag-ancho { grid-column: 1 / -1; }
+        .prev-ag-ayuda { margin: 6px 13px 10px; color: #55637a; font-size: 0.78rem; font-weight: 650; line-height: 1.4; }
+        .prev-ag-bt { margin: 0 13px 8px; min-height: 46px; padding: 0 18px; border: 0; border-radius: 9px; background: #b4232f; color: #fff; font: inherit; font-weight: 900; cursor: pointer; }
+        .prev-agregar .prev-quitar-msg { margin: 0 13px 12px; }
         .prev-quitada { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; padding: 9px 12px; border: 1px dashed #c3d0e0; border-radius: 10px; background: #f6f9fd; color: #55637a; font-size: 0.84rem; }
         .prev-quitada span { flex: 1; min-width: 0; }
         .prev-quitada button { min-height: 36px; padding: 0 12px; border: 1px solid #0756a5; border-radius: 8px; background: #fff; color: #0756a5; font: inherit; font-size: 0.78rem; font-weight: 850; cursor: pointer; }
@@ -753,6 +767,43 @@
                 </div>
                 <div id="prev-quitar-msg" class="prev-quitar-msg" aria-live="polite"></div>
             </div>
+
+            <details class="prev-agregar">
+                <summary>➕ Agregar una prevención que dictó tráfico</summary>
+                <div class="prev-ag-grid">
+                    <label>Línea
+                        <select id="prev-ag-linea">
+                            <option value="L1">L1 · Hualqui–Talcahuano</option>
+                            <option value="L2">L2 · Concepción–Coronel</option>
+                        </select></label>
+                    <label>Vía
+                        <select id="prev-ag-via">
+                            <option value="V1">Vía 1</option>
+                            <option value="V2">Vía 2</option>
+                            <option value="AMBAS" selected>Ambas vías</option>
+                            <option value="V4">Vía 4</option>
+                        </select></label>
+                    <label>Desde PK
+                        <span class="prev-ag-pk"><input id="prev-ag-km1" type="number" inputmode="numeric" min="0" placeholder="km">
+                        <b>P.</b><input id="prev-ag-p1" type="number" inputmode="numeric" min="0" placeholder="poste"></span></label>
+                    <label>Hasta PK
+                        <span class="prev-ag-pk"><input id="prev-ag-km2" type="number" inputmode="numeric" min="0" placeholder="km">
+                        <b>P.</b><input id="prev-ag-p2" type="number" inputmode="numeric" min="0" placeholder="poste"></span></label>
+                    <label>Velocidad (km/h)
+                        <input id="prev-ag-vel" type="number" inputmode="numeric" min="0" placeholder="ej. 30"></label>
+                    <label class="prev-ag-check"><input type="checkbox" id="prev-ag-pito"> Toque pito</label>
+                    <label>Desde las
+                        <input id="prev-ag-h1" type="time"></label>
+                    <label>Hasta las
+                        <input id="prev-ag-h2" type="time"></label>
+                    <label class="prev-ag-ancho">Motivo (opcional)
+                        <input id="prev-ag-motivo" type="text" placeholder="ej. trabajos en la vía"></label>
+                </div>
+                <p class="prev-ag-ayuda">El PK va como en el boletín: kilómetro y poste ("16 P. 15"). Sin "hasta" es un
+                    punto; sin horario vale todo el día. Se avisa igual que las del boletín, y vale solo para el boletín de hoy.</p>
+                <button type="button" class="prev-ag-bt" onclick="prevAgregar()">Agregar prevención</button>
+                <div id="prev-ag-msg" class="prev-quitar-msg" aria-live="polite"></div>
+            </details>
 
             <div class="plan-fila">
                 <div class="plan-campo">
@@ -3292,6 +3343,9 @@ function pautaHoraOCR(txt, esDuracion) {
 // fuente aparte: no es una suposición, es una lectura contrastada.
 // Formato: fecha -> número de turno -> campo -> hora.
 const PAUTA_CORRECCIONES = {
+    '2026-10-06': {
+        '5': { baseFin: 'LJ', forzar: ['baseFin'] }
+    },
     '2026-09-04': {
         '2':  { fin: '11:00' },
         '21': { apertura: '9:05' },
@@ -3452,16 +3506,16 @@ function pautaUnaLetraDe(a, b) {
 // inicial cuyo apellido se diferencia en una letra, es esa. La inicial no se
 // toca nunca: en la dotación hay apellidos que solo se distinguen por ella
 // (A. y M. ARRIAGADA, B., N. y W. GONZALEZ), y ahí adivinar sería peor.
-// Dos nombres en una misma celda de un listado: "J. MONTIEL C. ACUÑA". Se
-// corta donde aparece una inicial después de un apellido; "N. J. HENRIQUEZ"
-// queda entero porque ahí la inicial sigue a otra inicial.
+// Dos nombres en una misma celda: "J. MONTIEL C. ACUÑA", "J. CABEZA (+) A.
+// FUENTES". Se corta donde aparece una inicial después de algo que no es otra
+// inicial; "N. J. HENRIQUEZ" queda entero porque ahí sigue a otra inicial.
 function pautaPartirNombres(celda) {
     const tokens = String(celda == null ? '' : celda).trim().split(/\s+/).filter(Boolean);
     const partes = [];
     tokens.forEach(function (tk, i) {
         const inicial = /^[A-ZÁÉÍÓÚÑ]\.$/i.test(tk);
         const anterior = i > 0 ? tokens[i - 1] : '';
-        if (!partes.length || (inicial && anterior.length > 2 && !/\.$/.test(anterior))) partes.push(tk);
+        if (!partes.length || (inicial && !/^[A-ZÁÉÍÓÚÑ]\.$/i.test(anterior))) partes.push(tk);
         else partes[partes.length - 1] += ' ' + tk;
     });
     return partes.length > 1 && partes.every(pautaEsNombre) ? partes : [String(celda == null ? '' : celda)];
@@ -3586,6 +3640,11 @@ function pautaInterpretarHoja(hoja) {
     //    trae y el cierre está a siete.
     const conEntrega = cabNorm.some(x => x.indexOf('ENTREGA') >= 0);
     const compacta = !conEntrega && cabNorm.some(x => /TRASLADO\s*TERMINO/.test(x));
+    //    Hay pautas pasadas por el lector de fotos que juntan dos columnas en
+    //    una: "MAQUINISTA AYUDANTE" ("N. OLMOS E. RAMIREZ") y "APERTURA
+    //    TRASLADO" ("3:25 1:30"). Se separan al leer cada fila.
+    const nombresJuntos = iMq >= 0 && iMq === iAy;
+    const aperturaJunta = iAp >= 0 && /APERTURA\s*TRASLADO/.test(cabNorm[iAp]);
     const campos = conEntrega
         ? { aperturaLugar: b, apertura: b + 1, traslado: b + 2, base: b + 3, inicio: b + 4,
             baseTermino: b + 5, terminoServicio: b + 6, entrega: b + 9, fin: b + 10, baseFin: b + 11 }
@@ -3616,6 +3675,10 @@ function pautaInterpretarHoja(hoja) {
             Object.assign(campos, { traslado: iTras, base: iBase, inicio: iIni, baseTermino: iBaseT,
                                     entrega: iEnt, fin: iFin, baseFin: iFin + 1 });
         }
+    }
+    if (conEntrega && aperturaJunta) {
+        Object.assign(campos, { traslado: -1, base: b + 2, inicio: b + 3, baseTermino: b + 4,
+                                terminoServicio: b + 5, entrega: b + 8, fin: b + 9, baseFin: b + 10 });
     }
     //    Entre semana hay pautas que juntan TERMINO y TRASLADO en una sola
     //    columna ("10:55 0:00"): la entrega y el cierre quedan una columna
@@ -3688,8 +3751,9 @@ function pautaInterpretarHoja(hoja) {
                 if (!String(cab[c] || '').trim() && pautaEsNombre(celda(f, c))) { colMaquinista = c; break; }
             }
         }
-        const maquinista = pautaNombreDeLaDotacion(pautaLimpiarNombre(celda(f, colMaquinista)));
-        const ayudante   = pautaNombreDeLaDotacion(pautaLimpiarNombre(celda(f, iAyudante)));
+        const juntos = nombresJuntos ? pautaPartirNombres(celda(f, colMaquinista)) : null;
+        const maquinista = pautaNombreDeLaDotacion(pautaLimpiarNombre(juntos ? juntos[0] : celda(f, colMaquinista)));
+        const ayudante   = pautaNombreDeLaDotacion(pautaLimpiarNombre(juntos ? (juntos[1] || '') : celda(f, iAyudante)));
         const tieneHoras = f.slice(b).some(c => /\d\s*:\s*\d/.test(String(c || '')));
 
         // Dentro de un listado las filas solo traen nombres, repartidos en
@@ -3757,8 +3821,10 @@ function pautaInterpretarHoja(hoja) {
         if (previo && (previo.apertura || previo.fin) && !tieneHoras && pautaEsNombre(servicio)) {
             const gente = [];
             for (let c = iServicio; c <= iAyudante; c++) {
-                const n = pautaLimpiarNombre(celda(f, c));
-                if (pautaEsNombre(n) && gente.indexOf(n) < 0) gente.push(n);
+                pautaPartirNombres(celda(f, c)).forEach(function (parte) {
+                    const n = pautaLimpiarNombre(parte);
+                    if (pautaEsNombre(n) && gente.indexOf(n) < 0) gente.push(n);
+                });
             }
             gente.forEach(n => { if (previo.practicas.indexOf(n) < 0) previo.practicas.push(n); });
             if (gente.length) continue;
@@ -3818,14 +3884,14 @@ function pautaInterpretarHoja(hoja) {
         // En la planilla de feriado el traslado va pegado a la hora en la misma
         // celda: "9:45 0:45" es la apertura y su traslado, y "0:45 17:15" es el
         // traslado de vuelta y el término.
-        if (compacta) {
+        if (compacta || aperturaJunta) {
             const dos = t => String(t || '').match(/(\d{1,2}\s*:\s*\d{2})\s+(\d{1,2}\s*:\s*\d{2})/);
             const ida = dos(celda(f, campos.apertura));
             if (ida) {
                 turno.apertura = pautaHoraOCR(ida[1].replace(/\s/g, ''));
                 turno.traslado = pautaHoraOCR(ida[2].replace(/\s/g, ''), true);
             }
-            const vuelta = dos(celda(f, campos.fin));
+            const vuelta = compacta ? dos(celda(f, campos.fin)) : null;
             if (vuelta) {
                 turno.entrega = pautaHoraOCR(vuelta[1].replace(/\s/g, ''), true);
                 turno.fin = pautaHoraOCR(vuelta[2].replace(/\s/g, ''));
@@ -5231,11 +5297,120 @@ function prevGuardarQuitadas(bol, lineas) {
     } catch (e) {}
 }
 
-// Las del boletín que siguen en pie: todas menos las quitadas.
+// Las del boletín que siguen en pie: todas menos las quitadas, más las que se
+// agregaron a mano.
 function prevDelBoletin(bol) {
     if (!bol) return [];
     const fuera = prevQuitadas(bol);
-    return fuera.length ? bol.prevenciones.filter(p => fuera.indexOf(String(p.n)) < 0) : bol.prevenciones;
+    const base = fuera.length ? bol.prevenciones.filter(p => fuera.indexOf(String(p.n)) < 0) : bol.prevenciones;
+    const agregadas = prevAgregadas(bol);
+    return agregadas.length ? base.concat(agregadas) : base;
+}
+
+/* ------------------------------------------------ prevenciones agregadas -- */
+
+// Tráfico también dicta prevenciones que no vienen en el boletín. Se agregan
+// desde el panel y se avisan como cualquier otra. Igual que las quitadas,
+// valen solo para el boletín de ese día.
+const PREV_AGREGADAS_LLAVE = 'syncrored_prev_agregadas';
+
+function prevAgregadasGuardadas(bol) {
+    if (!bol) return [];
+    let d = null;
+    try { d = JSON.parse(localStorage.getItem(PREV_AGREGADAS_LLAVE) || 'null'); } catch (e) {}
+    return d && d.boletin === prevClaveBoletin(bol) && Array.isArray(d.lista) ? d.lista : [];
+}
+
+function prevGuardarAgregadas(bol, lista) {
+    try {
+        localStorage.setItem(PREV_AGREGADAS_LLAVE,
+            JSON.stringify({ boletin: prevClaveBoletin(bol), lista: lista }));
+    } catch (e) {}
+}
+
+function prevMinutosDe(hhmm) {
+    const m = String(hhmm || '').match(/^(\d{1,2}):(\d{2})/);
+    return m ? parseInt(m[1], 10) * 60 + parseInt(m[2], 10) : null;
+}
+
+// Cada agregada, con la forma de una prevención del boletín.
+function prevAgregadas(bol) {
+    return prevAgregadasGuardadas(bol).map(function (a) {
+        const grav = prevGravedad(a.restriccion);
+        const r = PREV_RANGO[a.eje];
+        const traz = PREV_TRAZADO[a.eje];
+        const fin = r && traz ? Math.min(r[1], traz[traz.length - 1][0]) : null;
+        const geo = !!r && a.desde >= r[0] && a.desde <= fin && (a.hasta - a.desde) <= PREV_TRAMO_MAX;
+        const conHora = !!(a.horaIni || a.horaFin);
+        return {
+            n: a.id, linea: a.linea, agregada: true,
+            bloque: 'Agregada por tráfico', viaTexto: a.viaTexto, via: a.via,
+            kmTexto: a.kmTexto, restriccion: a.restriccion, descripcion: a.motivo || '',
+            horaIni: a.horaIni || '00:00', horaFin: a.horaFin || '23:59',
+            minIni: conHora ? (prevMinutosDe(a.horaIni) || 0) : null,
+            minFin: conHora ? (a.horaFin ? prevMinutosDe(a.horaFin) : 1439) : null,
+            fechaIni: null, fechaFin: null, coordinado: false,
+            nivel: grav.nivel, velocidad: grav.velocidad,
+            tramos: [{ linea: a.eje, desde: a.desde, hasta: a.hasta, geo: geo }],
+            geo: geo, ajeno: false
+        };
+    });
+}
+
+function prevAgregar() {
+    const val = id => { const el = document.getElementById(id); return el ? String(el.value || '').trim() : ''; };
+    const msg = document.getElementById('prev-ag-msg');
+    const decir = function (texto, error) {
+        if (!msg) return;
+        msg.textContent = texto;
+        msg.className = 'prev-quitar-msg' + (error ? ' error' : ' ok');
+    };
+    const bol = prevBoletinActivo();
+    if (!bol) { decir('No hay boletín cargado.', true); return; }
+
+    const linea = val('prev-ag-linea') || 'L1';
+    const km1 = parseInt(val('prev-ag-km1'), 10);
+    if (!isFinite(km1)) { decir('Falta el PK de inicio (el kilómetro).', true); return; }
+    const p1 = parseInt(val('prev-ag-p1'), 10) || 0;
+    const km2r = parseInt(val('prev-ag-km2'), 10);
+    const km2 = isFinite(km2r) ? km2r : km1;
+    const p2 = isFinite(km2r) || val('prev-ag-p2') ? (parseInt(val('prev-ag-p2'), 10) || 0) : p1;
+
+    const pk = (km, poste) => km + poste * PREV_METROS_POSTE / 1000;
+    const txt = (km, poste) => poste ? km + ' P. ' + poste : String(km);
+    let a = [km1, p1], b = [km2, p2];
+    if (pk(b[0], b[1]) < pk(a[0], a[1])) { const x = a; a = b; b = x; }
+    const kmTexto = txt(a[0], a[1]) + (pk(b[0], b[1]) !== pk(a[0], a[1]) ? ' a ' + txt(b[0], b[1]) : '');
+
+    const vel = parseInt(val('prev-ag-vel'), 10);
+    const pito = !!(document.getElementById('prev-ag-pito') || {}).checked;
+    const motivo = val('prev-ag-motivo');
+    const restriccion = isFinite(vel) && vel > 0
+        ? vel + ' km/h' + (pito ? ' Y TOQUE PITO' : '')
+        : pito ? 'TOQUE PITO' : 'PRECAUCIÓN';
+
+    const via = val('prev-ag-via') || 'AMBAS';
+    const viaTexto = { V1: 'VÍA 1', V2: 'VÍA 2', AMBAS: 'AMBAS VÍAS', V4: 'VÍA 4' }[via] || 'AMBAS VÍAS';
+    // En la sección de L2 los PK 69 a 71 son del eje de L1, el tramo compartido
+    // de Concepción, igual que en el boletín.
+    const eje = linea === 'L2' && a[0] >= 60 ? 'L1' : linea;
+
+    const lista = prevAgregadasGuardadas(bol);
+    const id = 'A' + (lista.reduce((m, x) => Math.max(m, parseInt(String(x.id).slice(1), 10) || 0), 0) + 1);
+    lista.push({ id: id, linea: linea, eje: eje, desde: pk(a[0], a[1]), hasta: pk(b[0], b[1]),
+                 kmTexto: kmTexto, via: via, viaTexto: viaTexto, restriccion: restriccion,
+                 horaIni: val('prev-ag-h1'), horaFin: val('prev-ag-h2'), motivo: motivo, ts: Date.now() });
+    prevGuardarAgregadas(bol, lista);
+
+    ['prev-ag-km1', 'prev-ag-p1', 'prev-ag-km2', 'prev-ag-p2', 'prev-ag-vel', 'prev-ag-h1', 'prev-ag-h2', 'prev-ag-motivo']
+        .forEach(function (k) { const el = document.getElementById(k); if (el) el.value = ''; });
+    const pt = document.getElementById('prev-ag-pito');
+    if (pt) pt.checked = false;
+
+    const agregada = prevAgregadas(bol).find(x => x.n === id);
+    decir('Agregada ' + id + ': ' + prevRestriccionCorta(agregada) + ' · PK ' + kmTexto + ' · ' + viaTexto +
+          (agregada.geo ? '.' : '. Ojo: ese PK no cae en el trazado, se lista pero no se avisa.'), !agregada.geo);
+    prevQuitadasCambiaron();
 }
 
 function prevQuitadasCambiaron() {
@@ -5246,6 +5421,11 @@ function prevQuitadasCambiaron() {
 function prevQuitar(n) {
     const bol = prevBoletinActivo();
     if (!bol) return;
+    if (/^A\d+$/.test(String(n))) {
+        prevGuardarAgregadas(bol, prevAgregadasGuardadas(bol).filter(a => a.id !== String(n)));
+        prevQuitadasCambiaron();
+        return;
+    }
     const lineas = prevQuitadas(bol);
     if (lineas.indexOf(String(n)) < 0) lineas.push(String(n));
     prevGuardarQuitadas(bol, lineas);
@@ -5385,7 +5565,7 @@ function prevActualizar() {
                 <div class="prev-aviso-restr">${escHtml(prevRestriccionCorta(p))}
                     <span class="prev-aviso-via">${escHtml(p.viaTexto || '')}</span></div>
                 <div class="prev-aviso-km">PK ${escHtml(p.kmTexto)} · ${escHtml(p.bloque)}</div>
-                ${p.propia || !prevBoletinActivo() || prevBoletinEsDeHoy() ? '' :
+                ${p.propia || p.agregada || !prevBoletinActivo() || prevBoletinEsDeHoy() ? '' :
                     `<div class="prev-aviso-viejo">⚠ Boletín del ${escHtml(prevFechaBonita(prevBoletinActivo().fecha))}, no es el de hoy</div>`}
              </div>`;
         franja.hidden = false;
@@ -5458,8 +5638,9 @@ function prevRenderizar() {
 
     const pos = prevPosicionActual();
     const ahora = prevAhoraChile();
-    const vigentes = prevDelBoletin(bol).filter(p => prevVigente(p, ahora));
+    const vigentes = prevDelBoletin(bol).filter(p => !p.agregada && prevVigente(p, ahora));
     const quitadas = prevQuitadas(bol);
+    const agregadas = prevAgregadas(bol);
 
     if (cab) {
         const estado = PREV_MANUAL.activo
@@ -5490,7 +5671,13 @@ function prevRenderizar() {
     html += `<p class="plan-hint">Boletín folio <strong>${escHtml(bol.folio)}</strong> ·
         ${escHtml(bol.fecha)} · ${bol.prevenciones.length} prevenciones,
         <strong>${vigentes.length} vigentes</strong> a las ${escHtml(ahora.texto)}${quitadas.length
-            ? ` · ${quitadas.length} quitada${quitadas.length > 1 ? 's' : ''}` : ''}</p>`;
+            ? ` · ${quitadas.length} quitada${quitadas.length > 1 ? 's' : ''}` : ''}${agregadas.length
+            ? ` · ${agregadas.length} agregada${agregadas.length > 1 ? 's' : ''}` : ''}</p>`;
+
+    if (agregadas.length) {
+        html += `<div class="plan-seccion-titulo">Agregadas por tráfico (${agregadas.length})</div>`;
+        html += agregadas.map(prevTarjeta).join('');
+    }
 
     if (pos) {
         const cerca = prevCandidatas(pos, ahora, PREV_LISTA_KM);
