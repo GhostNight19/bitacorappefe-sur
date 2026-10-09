@@ -796,11 +796,12 @@
                         <input id="prev-ag-h1" type="time"></label>
                     <label>Hasta las
                         <input id="prev-ag-h2" type="time"></label>
-                    <label class="prev-ag-ancho">Motivo (opcional)
-                        <input id="prev-ag-motivo" type="text" placeholder="ej. trabajos en la vía"></label>
+                    <label class="prev-ag-ancho">Motivo o restricción
+                        <input id="prev-ag-motivo" type="text" placeholder="ej. bajada de pantógrafo"></label>
                 </div>
                 <p class="prev-ag-ayuda">El PK va como en el boletín: kilómetro y poste ("16 P. 15"). Sin "hasta" es un
-                    punto; sin horario vale todo el día. Se avisa igual que las del boletín, y vale solo para el boletín de hoy.</p>
+                    punto; sin horario vale todo el día. Si dejas en blanco la velocidad y el toque pito, el aviso muestra
+                    lo que escribas en el motivo. Se avisa igual que las del boletín, y vale solo para el boletín de hoy.</p>
                 <button type="button" class="prev-ag-bt" onclick="prevAgregar()">Agregar prevención</button>
                 <div id="prev-ag-msg" class="prev-quitar-msg" aria-live="polite"></div>
             </details>
@@ -5336,7 +5337,11 @@ function prevMinutosDe(hhmm) {
 // Cada agregada, con la forma de una prevención del boletín.
 function prevAgregadas(bol) {
     return prevAgregadasGuardadas(bol).map(function (a) {
-        const grav = prevGravedad(a.restriccion);
+        // Sin velocidad ni toque pito, lo que se avisa es el motivo ("Bajada de
+        // pantógrafo"). Con velocidad, el motivo va al lado del PK.
+        const sinRestriccion = a.restriccion === 'PRECAUCIÓN';
+        const restriccion = sinRestriccion && a.motivo ? a.motivo : a.restriccion;
+        const grav = prevGravedad(restriccion);
         const r = PREV_RANGO[a.eje];
         const traz = PREV_TRAZADO[a.eje];
         const fin = r && traz ? Math.min(r[1], traz[traz.length - 1][0]) : null;
@@ -5344,8 +5349,9 @@ function prevAgregadas(bol) {
         const conHora = !!(a.horaIni || a.horaFin);
         return {
             n: a.id, linea: a.linea, agregada: true,
-            bloque: 'Agregada por tráfico', viaTexto: a.viaTexto, via: a.via,
-            kmTexto: a.kmTexto, restriccion: a.restriccion, descripcion: a.motivo || '',
+            bloque: !sinRestriccion && a.motivo ? a.motivo : 'Agregada por tráfico',
+            viaTexto: a.viaTexto, via: a.via, kmTexto: a.kmTexto, restriccion: restriccion,
+            descripcion: !sinRestriccion && a.motivo ? 'Agregada por tráfico' : '',
             horaIni: a.horaIni || '00:00', horaFin: a.horaFin || '23:59',
             minIni: conHora ? (prevMinutosDe(a.horaIni) || 0) : null,
             minFin: conHora ? (a.horaFin ? prevMinutosDe(a.horaFin) : 1439) : null,
