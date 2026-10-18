@@ -6089,6 +6089,9 @@ function grafLeerValor(txt) {
     let m = s.match(/^\(\s*(\d+)\s*\)\s*(.+)$/);          // (41) VAC
     if (m) return { tipo: grafTipoEstado(m[2]), turno: m[1], etiqueta: m[2].trim(), texto: s };
 
+    m = s.match(/^(\d+)\s+(VAC\S*|CUM\S*|LM)$/i);          // 43 vac (sin paréntesis)
+    if (m) return { tipo: grafTipoEstado(m[2]), turno: m[1], etiqueta: m[2].trim(), texto: s };
+
     m = s.match(/^(\d+)\s*\.?\s*\((.+)\)\s*$/);           // 83 (859-46)
     if (m) return { tipo: 'TURNO', turno: m[1], detalle: m[2].trim(), texto: s };
 
@@ -6338,7 +6341,9 @@ function grafInterpretar(entrada) {
         if (/^PAREJAS?\b/.test(pautaNorm(c0)) || (pautaNorm(c0) === 'GRAFICO' && numerada)) {
             columnas = { parejas: {} };
             for (let i = 2; i < f.length; i++) {
-                if (celda(f, i)) columnas.parejas[i] = celda(f, i);
+                // "GRAFICO" entre bloques es la columna de fechas repetida, no
+                // una pareja.
+                if (celda(f, i) && pautaNorm(celda(f, i)) !== 'GRAFICO') columnas.parejas[i] = celda(f, i);
             }
             return;
         }
@@ -6350,7 +6355,8 @@ function grafInterpretar(entrada) {
             for (let i = 2; i < f.length; i++) {
                 if (columnas.parejas[i]) parejaActual = columnas.parejas[i];
                 const nombre = celda(f, i);
-                if (!nombre) continue;
+                // La columna de fechas repetida trae el mes ("nov-26"), no un nombre.
+                if (!nombre || /^[A-Za-zÁÉÍÓÚáéíóú]{3,}\.?-\d{2}$/.test(nombre)) continue;
                 const k = pautaNorm(nombre);
                 columnas.gente[i] = k;
                 if (!personas[k]) {
