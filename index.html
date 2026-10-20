@@ -5779,10 +5779,6 @@ function prevRenderizar() {
          no traer las de hoy. Sube el boletín del día al repositorio.</div>`;
 
     html += crucesResumenHTML();
-    if (vista === 'BUHQ') {
-        html += `<div class="pauta-aviso info">El tramo al sur de Hualqui aún no está medido con GPS: estas
-            prevenciones se ubican de forma estimada y el aviso puede adelantarse o atrasarse unos cientos de metros.</div>`;
-    }
     html += `<p class="plan-hint">${escHtml(PREV_FUENTES[vista])} folio <strong>${escHtml(bol.folio)}</strong> ·
         ${escHtml(bol.fecha)} · ${bol.prevenciones.length} prevenciones,
         <strong>${vigentes.length} vigentes</strong> a las ${escHtml(ahora.texto)}${quitadas.length
