@@ -4,7 +4,7 @@
    y conserva una copia para poder seguir usando la app sin señal.
    ============================================================ */
 
-const CACHE = 'bitacora-efe-v65';
+const CACHE = 'bitacora-efe-v66';
 
 // Archivos que componen la aplicación. Todos existen en el repositorio.
 const ASSETS = [
@@ -14,6 +14,7 @@ const ASSETS = [
   './logo-syncrored.png',
   './pautas/pautas.json',
   './prevenciones/boletin.json',
+  './prevenciones/boletin_buhq.json',
   './grafico/grafico.json',
   './personal/personal.json'
 ];
@@ -46,6 +47,7 @@ self.addEventListener('fetch', (event) => {
   // guardada solo si no hay señal.
   if (requestUrl.pathname.endsWith('/pautas/pautas.json') ||
       requestUrl.pathname.endsWith('/prevenciones/boletin.json') ||
+      requestUrl.pathname.endsWith('/prevenciones/boletin_buhq.json') ||
       requestUrl.pathname.endsWith('/grafico/grafico.json') ||
       requestUrl.pathname.endsWith('/personal/personal.json')) {
     event.respondWith(
