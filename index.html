@@ -330,6 +330,14 @@
         #cruces-overlay .cr-cruce { margin-bottom: 7px; border: 1px solid #dbe3ec; border-radius: 12px; background: #fff; }
         #cruces-overlay .cr-cruce.abierto { border-color: #0756a5; box-shadow: 0 0 0 2px rgba(7,86,165,0.15); }
         #cruces-overlay .cr-cruce.falla { border-color: #b4232f; }
+        /* Botón chico de cruces en cada fila del servicio: va a la derecha del
+           nombre de la estación, donde sobra espacio, sin tocar la fila de botones. */
+        .cruce-fila-bt { float: right; display: grid; place-items: center; width: 32px; height: 26px; margin: -3px 0 0 8px; padding: 0;
+            border: 1px solid #e6c766; border-radius: 7px; background: #fff8df; cursor: pointer; }
+        .cruce-fila-bt svg { width: 20px; height: 20px; display: block; }
+        .cruce-fila-bt:active { transform: scale(0.94); background: #ffeeb0; }
+        #cruces-overlay .cr-cruce.cerca { border-color: #e0a800; box-shadow: 0 0 0 3px rgba(224, 168, 0, 0.28); }
+        #cruces-overlay .cr-cruce.cerca > button small::after { content: ' · próximo'; color: #9a6b00; }
         #cruces-overlay .cr-cruce > button { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 52px;
             padding: 10px 13px; border: 0; background: none; color: #172033; font: inherit; text-align: left; cursor: pointer; }
         #cruces-overlay .cr-cruce > button strong { flex: 1; min-width: 0; font-size: 0.96rem; }
@@ -2246,7 +2254,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     };
 
     function estacionCellHTML(estacion, rowId) {
-        return `<td class="station-cell"><span class="station-name">${escHtml(estacion)}</span><span id="descenso-${rowId}" class="descenso-aviso" role="note" hidden></span></td>`;
+        return `<td class="station-cell">${cruceFilaBotonHTML(rowId)}<span class="station-name">${escHtml(estacion)}</span><span id="descenso-${rowId}" class="descenso-aviso" role="note" hidden></span></td>`;
     }
 
     function nombreEstacionFila(row) {
@@ -6148,6 +6156,73 @@ document.getElementById('cruces-overlay').addEventListener('click', function (e)
     if (e.target === this) cerrarCruces();
 });
 crucesBadge();
+
+/* ------------------------------------------- cruces desde cada fila ---- */
+
+// En cada estación del servicio, un botón chico (cruz de San Andrés sobre una
+// barrera) que abre el menú de cruces en la línea de ese servicio: L2 si la
+// ruta es Concepción–Coronel, L1 en las demás. Además deja a la vista el primer
+// cruce que viene después de esa estación, en el sentido del servicio.
+const CRUCE_FILA_ICONO =
+    '<svg viewBox="0 0 24 24" aria-hidden="true">' +
+    '<path d="M6 1.4 18 10M18 1.4 6 10" stroke="#fff" stroke-width="3.9" stroke-linecap="round"/>' +
+    '<path d="M6 1.4 18 10M18 1.4 6 10" stroke="#c8102e" stroke-width="2.3" stroke-linecap="round"/>' +
+    '<path d="M4.3 17.4h2.3v5.2H4.3zM17.4 17.4h2.3v5.2h-2.3z" fill="#7a4a1d"/>' +
+    '<rect x="1.6" y="11.4" width="20.8" height="6.4" rx="1.2" fill="#ffc400"/>' +
+    '<path d="M1.6 12.9 3.1 11.4 1.6 11.4ZM5.4 11.4 1.6 15.2 1.6 17.8 1.7 17.8 8.1 11.4ZM4 17.8 6.7 17.8 13.1 11.4 10.4 11.4Z' +
+    'M9 17.8 11.7 17.8 18.1 11.4 15.4 11.4ZM20.4 11.4 14 17.8 16.7 17.8 22.4 12.1 22.4 11.4ZM19 17.8 21.7 17.8 22.4 17.1 22.4 14.4Z" fill="#1d2b45"/>' +
+    '<rect x="1.6" y="11.4" width="20.8" height="6.4" rx="1.2" fill="none" stroke="#1d2b45" stroke-width="1"/>' +
+    '</svg>';
+
+function cruceFilaBotonHTML(rowId) {
+    return '<button type="button" class="cruce-fila-bt" onclick="cruceDesdeFila(\'' + rowId + '\')" ' +
+        'title="Cruces en falla" aria-label="Cruces en falla">' + CRUCE_FILA_ICONO + '</button>';
+}
+
+// El itinerario escribe "Talcamávida" o "H. Higueras" y el trazado "Talcamavida"
+// u "Hospital las Higueras": esta clave las hace coincidir.
+const CRUCE_ALIAS_ESTACION = {
+    VCHANCO: 'VALLECHANCO', LARENAS: 'LORENZOARENAS', PMEDINA: 'PEDROMEDINA', HHIGUERAS: 'HOSPITALLASHIGUERAS'
+};
+
+function cruceClaveEstacion(txt) {
+    const k = prevNorm(txt).replace(/[^A-Z0-9]/g, '');
+    return CRUCE_ALIAS_ESTACION[k] || k;
+}
+
+// PK de una estación del itinerario, sobre el trazado con que se ubican los cruces.
+function cruceEstacionPk(linea, nombre) {
+    const clave = cruceClaveEstacion(nombre);
+    const e = (PREV_ESTACIONES[linea] || []).find(x => cruceClaveEstacion(x[0]) === clave);
+    const pr = e ? prevProyectar(linea, e[1], e[2]) : null;
+    return pr ? pr.pk : null;
+}
+
+function cruceDesdeFila(rowId) {
+    const m = String(rowId).match(/^row-(\d+)-(\d+)$/);
+    const sel = m ? document.getElementById('route-' + m[1]) : null;
+    const ruta = sel ? sel.value : '';
+    const linea = /^l2_/.test(ruta) ? 'L2' : 'L1';
+    // L2 de ida va de Concepción a Coronel (PK creciente); en L1 la ida sale de
+    // Mercado hacia el sur (PK decreciente).
+    const sube = /_ida$/.test(ruta) ? linea === 'L2' : linea !== 'L2';
+
+    CRUCES_UI.linea = linea;
+    abrirCruces();
+
+    const estacion = m && rutas[ruta] ? rutas[ruta][parseInt(m[2], 10)] : '';
+    const pk = estacion ? cruceEstacionPk(linea, estacion) : null;
+    if (pk === null) return;
+    const cruces = CRUCES[linea] || [];
+    let i = -1;
+    if (sube) i = cruces.findIndex(c => c[1] >= pk - 0.05);
+    else for (let k = cruces.length - 1; k >= 0; k--) if (cruces[k][1] <= pk + 0.05) { i = k; break; }
+    const filas = document.querySelectorAll('#cruces-cuerpo .cr-cruce');
+    if (i >= 0 && filas[i]) {
+        filas[i].classList.add('cerca');
+        filas[i].scrollIntoView({ block: 'center' });
+    }
+}
 
 /* ---------------------------------------------------------------- arranque -- */
 
